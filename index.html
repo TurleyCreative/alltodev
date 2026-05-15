@@ -1059,7 +1059,7 @@ const SCENES = [
 //    b) Connect it at sheetdb.io → copy the API URL
 //    c) Replace the placeholder below with your URL
 // ─────────────────────────────────────────────────────
-const SHEETDB_URL = 'https://sheetdb.io/api/v1/ej5005kc2cry4';
+const SHEETDB_URL = 'https://sheetdb.io/api/v1/REPLACE_WITH_YOUR_ID';
 
 // ✏️  Category colours for feedback pins
 const CATEGORY_COLOURS = {
@@ -1476,18 +1476,25 @@ const HIDE_ON_FEEDBACK = [
   // 'road-label',   ← keep this out if you want road names to stay
 ];
 
+function swapStyle(styleUrl, afterIdx){
+  // Remove any existing styledata listener to avoid stacking
+  map.setStyle(styleUrl);
+  // Use 'idle' instead of 'styledata' — fires only when style is fully loaded and rendered
+  map.once('idle', () => {
+    // Re-add all our custom sources and layers on top of the new base style
+    addAllSources();
+    addAllLayers();
+    // Re-apply the current scene's layer visibility (no camera move)
+    applyScene(afterIdx, false);
+  });
+}
+
 function enableFeedbackMode(){
   feedbackMode = true;
   if(map) map.getCanvas().classList.add('drop-mode');
 
-  // Swap to clean style if configured
-  if(FEEDBACK_STYLE && map.getStyle().sprite !== FEEDBACK_STYLE){
-    map.setStyle(FEEDBACK_STYLE);
-    map.once('styledata', () => {
-      addAllSources();
-      addAllLayers();
-      applyScene(5, false);
-    });
+  if(FEEDBACK_STYLE){
+    swapStyle(FEEDBACK_STYLE, 5);
   }
 
   loadFeedbackPins();
@@ -1496,13 +1503,8 @@ function disableFeedbackMode(){
   feedbackMode = false;
   if(map) map.getCanvas().classList.remove('drop-mode');
 
-  // Swap back to main style if we changed it
   if(FEEDBACK_STYLE){
-    map.setStyle(MAPBOX_STYLE);
-    map.once('styledata', () => {
-      addAllSources();
-      addAllLayers();
-    });
+    swapStyle(MAPBOX_STYLE, currentScene);
   }
 }
 
