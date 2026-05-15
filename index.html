@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Site Consultation · Manchester</title>
+
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet"/>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<link rel="stylesheet" href="https://use.typekit.net/dfg2dug.css"/>
+
+<style>
+/* ════════════════════════════════════════════════════════════
+   ✏️  DESIGN TOKENS
+   Edit colours, fonts, and layout proportions here.
+   ════════════════════════════════════════════════════════════ */
+:root {
+  /* Layout */
+  --nav-w:   52px;
+  --prose-w: 38%;
+
+  /* Colours */
+  --ink:    #0f0e0d;
+  --paper:  #f8f6f1;
+  --mid:    #e9e5dc;
+  --ghost:  #9a9590;
+  --red:    #c0392b;
+  --amber:  #d4820a;
+  --teal:   #2a7c6b;
+  --blue:   #2255aa;
+  --purple: #8b5cf6;
+  --accent: #c0392b;
+
+  /* Fonts — from Typekit kit dfg2dug */
+  --f-heading: 'tt-commons-pro', system-ui, sans-serif;  /* h1 */
+  --f-body:    'tt-commons-pro', system-ui, sans-serif;  /* body copy */
+  --f-thin:    'tt-commons-pro', system-ui, sans-serif;  /* labels/UI */
+
+  --ease: cubic-bezier(.4,0,.2,1);
+}
+
+/* ════════════════════════════════════════════════════════════
+   BASE RESET
+   ════════════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:var(--f-body);background:var(--paper);color:var(--ink)}
+
+/* ════════════════════════════════════════════════════════════
+   SHELL — main flex container
+   ════════════════════════════════════════════════════════════ */
+#shell{display:flex;height:100vh;width:100vw;overflow:hidden}
+
+/* ════════════════════════════════════════════════════════════
+   NAVBAR — thin left strip with burger + scene pips
+   ════════════════════════════════════════════════════════════ */
+#navbar{
+  width:var(--nav-w);min-width:var(--nav-w);height:100vh;
+  background:#0f0e0d;display:flex;flex-direction:column;
+  align-items:center;padding:18px 0;gap:0;z-index:100
+}
+#burger{
+  width:38px;height:38px;background:none;border:none;cursor:pointer;
+  display:flex;flex-direction:column;justify-content:center;
+  align-items:center;gap:5px;border-radius:4px;transition:background .2s
+}
+#burger:hover{background:rgba(255,255,255,.07)}
+#burger span{
+  display:block;width:18px;height:1.5px;background:#f8f6f1;
+  transition:transform .3s var(--ease),opacity .2s
+}
+#burger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+#burger.open span:nth-child(2){opacity:0}
+#burger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+
+.scene-pips{display:flex;flex-direction:column;gap:14px;margin-top:28px;align-items:center}
+.scene-pip{position:relative;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+.scene-pip-dot{
+  width:10px;height:10px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.25);background:transparent;
+  transition:background .25s,border-color .25s,transform .25s
+}
+.scene-pip.active .scene-pip-dot{background:var(--accent);border-color:var(--accent);transform:scale(1.25)}
+.scene-pip:hover .scene-pip-dot{border-color:rgba(255,255,255,.6)}
+.scene-pip-line{width:1px;height:14px;background:rgba(255,255,255,.1)}
+.scene-pip:last-child .scene-pip-line{display:none}
+.nav-brand{
+  margin-top:auto;writing-mode:vertical-rl;transform:rotate(180deg);
+  font-size:8px;letter-spacing:.2em;text-transform:uppercase;
+  color:#4a4845;padding-bottom:18px;user-select:none;font-family:var(--f-thin)
+}
+
+/* ════════════════════════════════════════════════════════════
+   SLIDE-OUT NAV DRAWER
+   ════════════════════════════════════════════════════════════ */
+#drawer{
+  position:fixed;top:0;left:var(--nav-w);width:272px;height:100vh;
+  background:#0f0e0d;z-index:99;
+  transform:translateX(-110%);transition:transform .38s var(--ease);
+  display:flex;flex-direction:column;padding:0;
+  border-right:1px solid rgba(255,255,255,.05)
+}
+#drawer.open{transform:translateX(0)}
+.drawer-header{padding:32px 28px 20px;border-bottom:1px solid rgba(255,255,255,.06)}
+.drawer-project{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;font-family:var(--f-thin)}
+.drawer-title{font-family:var(--f-body);font-size:18px;font-weight:700;color:#f8f6f1;line-height:1.25}
+.drawer-items{flex:1;overflow-y:auto;padding:16px 0}
+.drawer-item{
+  display:flex;align-items:center;gap:16px;padding:14px 28px;cursor:pointer;
+  transition:background .18s;border-left:2px solid transparent
+}
+.drawer-item:hover{background:rgba(255,255,255,.04)}
+.drawer-item.active{border-left-color:var(--accent);background:rgba(192,57,43,.06)}
+.drawer-scene-num{font-size:11px;color:var(--ghost);font-family:var(--f-thin);font-style:italic;min-width:18px}
+.drawer-scene-label{font-size:13px;color:#e8e4dd;font-weight:400;line-height:1.35}
+.drawer-item.active .drawer-scene-label{color:#fff}
+
+#drawer-overlay{display:none;position:fixed;inset:0;z-index:98;cursor:pointer}
+#drawer-overlay.open{display:block}
+
+/* ════════════════════════════════════════════════════════════
+   PROSE PANEL — scrollable story content
+   ════════════════════════════════════════════════════════════ */
+#prose{
+  width:var(--prose-w);height:100vh;overflow-y:scroll;
+  background:var(--paper);scroll-behavior:smooth;
+  scroll-snap-type:y mandatory;border-right:1px solid var(--mid);
+  scrollbar-width:none;position:relative;z-index:10
+}
+#prose::-webkit-scrollbar{display:none}
+
+/* ════════════════════════════════════════════════════════════
+   CHAPTER SECTIONS
+   ════════════════════════════════════════════════════════════ */
+.chapter{
+  min-height:100vh;padding:72px 52px 88px 44px;
+  scroll-snap-align:start;
+  display:flex;flex-direction:column;justify-content:center;
+  position:relative
+}
+.chapter+.chapter::before{
+  content:'';position:absolute;top:0;left:44px;right:52px;height:1px;
+  background:linear-gradient(90deg,var(--mid),transparent)
+}
+.scene-tag{
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:9px;letter-spacing:.24em;text-transform:uppercase;
+  margin-bottom:20px;font-family:var(--f-thin)
+}
+.scene-tag-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.scene-tag span{opacity:.7}
+
+/* ════════════════════════════════════════════════════════════
+   ✏️  TYPOGRAPHY
+   ════════════════════════════════════════════════════════════ */
+.chapter h1{
+  font-family:var(--f-heading);font-size:clamp(26px,3vw,36px);
+  font-weight:700;line-height:1.1;margin-bottom:10px;color:var(--ink)
+}
+.chapter h2{
+  font-family:var(--f-body);font-size:clamp(20px,2.4vw,26px);
+  font-weight:700;line-height:1.2;margin-bottom:18px
+}
+.chapter .lead{
+  font-family:var(--f-body);font-size:15px;line-height:1.8;
+  color:#3a3733;margin-bottom:14px;font-weight:400;max-width:50ch
+}
+.chapter p{
+  font-family:var(--f-body);font-size:13.5px;line-height:1.75;
+  color:#5a5652;margin-bottom:12px;max-width:52ch;font-weight:400
+}
+.chapter p:last-child{margin-bottom:0}
+
+/* Map instruction badge */
+.map-instruction{
+  display:inline-flex;align-items:center;gap:8px;margin-top:20px;
+  padding:10px 16px;border-radius:4px;background:rgba(15,14,13,.05);
+  font-size:11px;letter-spacing:.06em;color:var(--ink);
+  border:1px solid var(--mid);font-family:var(--f-thin)
+}
+.map-instruction svg{flex-shrink:0;opacity:.5}
+
+/* Legend */
+.legend{margin-top:24px;display:flex;flex-direction:column;gap:8px}
+.legend-item{display:flex;align-items:center;gap:12px;font-size:12px;color:#4a4845;font-family:var(--f-body)}
+.legend-swatch{width:28px;height:10px;border-radius:2px;flex-shrink:0}
+.legend-swatch.line{height:0;border-top:2.5px dashed;background:transparent!important}
+
+/* Constraint cards */
+.constraint-grid{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+.constraint-card{
+  padding:14px 16px;border-radius:6px;border-left:3px solid;
+  cursor:pointer;transition:opacity .2s,transform .15s;background:rgba(15,14,13,.03)
+}
+.constraint-card:hover{opacity:.8;transform:translateX(2px)}
+.constraint-card-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px;opacity:.7;font-family:var(--f-thin)}
+.constraint-card-title{font-size:13px;font-weight:700;font-family:var(--f-body)}
+.constraint-card-desc{font-size:11.5px;font-family:var(--f-body);color:#6a6561;margin-top:4px;line-height:1.5;font-weight:400}
+
+/* Progress bar */
+#progress-bar{
+  position:fixed;bottom:0;left:var(--nav-w);width:var(--prose-w);height:3px;
+  background:var(--mid);z-index:50
+}
+#progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--red),var(--amber),var(--teal),var(--purple));
+  width:0%;transition:width .25s var(--ease)
+}
+
+/* ════════════════════════════════════════════════════════════
+   MAP PANEL
+   ════════════════════════════════════════════════════════════ */
+#map-panel{flex:1;height:100vh;position:relative}
+#map{width:100%;height:100%}
+
+/* Bottom-left scene label */
+#map-label{
+  position:absolute;bottom:28px;left:24px;
+  background:rgba(15,14,13,.82);backdrop-filter:blur(8px);
+  padding:12px 18px;border-radius:4px;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#e8e4dd;
+  pointer-events:none;transition:opacity .4s;
+  border-top:2px solid var(--accent);font-family:var(--f-thin)
+}
+/* Top-right scene counter */
+#scene-counter{
+  position:absolute;top:20px;right:20px;
+  font-family:var(--f-thin);font-style:italic;
+  font-size:13px;color:#e8e4dd;
+  background:rgba(15,14,13,.7);backdrop-filter:blur(6px);
+  padding:8px 14px;border-radius:4px;pointer-events:none
+}
+/* 3D orbit pulse ring */
+#pulse-ring{
+  position:absolute;top:50%;left:50%;
+  width:80px;height:80px;margin:-40px 0 0 -40px;
+  border-radius:50%;border:2px solid var(--red);
+  opacity:0;pointer-events:none
+}
+#pulse-ring.active{animation:pulse-anim 2s ease-out infinite}
+@keyframes pulse-anim{0%{transform:scale(.5);opacity:.8}100%{transform:scale(2.5);opacity:0}}
+
+/* Map buttons */
+#map-controls{position:absolute;bottom:28px;right:16px;display:flex;flex-direction:column;gap:8px}
+.map-btn{
+  background:rgba(248,246,241,.92);backdrop-filter:blur(6px);
+  border:1px solid var(--mid);padding:8px 14px;
+  font-family:var(--f-thin);font-size:10px;letter-spacing:.1em;
+  color:var(--ink);border-radius:4px;cursor:pointer;
+  text-transform:uppercase;transition:background .18s,border-color .18s
+}
+.map-btn:hover{background:var(--mid);border-color:var(--accent)}
+
+/* ════════════════════════════════════════════════════════════
+   CUSTOM MAP PIN MARKER
+   ════════════════════════════════════════════════════════════ */
+.site-pin{
+  display:flex;flex-direction:column;align-items:center;
+  pointer-events:none;transform:translateY(-100%)
+}
+.site-pin-label{
+  background:#0f0e0d;color:#f8f6f1;
+  font-family:'tt-commons-pro',sans-serif;font-size:11px;
+  font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:5px 10px;border-radius:3px;white-space:nowrap;
+  margin-bottom:4px
+}
+.site-pin-dot{
+  width:14px;height:14px;border-radius:50%;
+  background:var(--red);border:2px solid #fff;
+  box-shadow:0 2px 8px rgba(192,57,43,.5)
+}
+.site-pin-stem{width:2px;height:12px;background:var(--red);margin-top:0}
+.site-pin-base{
+  width:8px;height:4px;border-radius:50%;
+  background:rgba(192,57,43,.3)
+}
+
+/* ════════════════════════════════════════════════════════════
+   ✏️  INFO PANEL (bottom-right slide-out)
+   Edit content inside #info-panel-body in the HTML below
+   ════════════════════════════════════════════════════════════ */
+#info-toggle{
+  position:fixed;bottom:70px;right:16px;z-index:200;
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(15,14,13,.85);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.15);
+  color:#f8f6f1;font-size:15px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s,transform .2s;font-family:var(--f-body)
+}
+#info-toggle:hover{background:#0f0e0d;transform:scale(1.08)}
+#info-toggle.open{background:var(--accent);border-color:var(--accent)}
+
+#info-panel{
+  position:fixed;bottom:116px;right:16px;z-index:199;
+  width:300px;
+  background:#0f0e0d;border-radius:8px;
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 8px 40px rgba(0,0,0,.4);
+  transform:translateY(12px) scale(.97);opacity:0;
+  pointer-events:none;
+  transition:transform .28s var(--ease),opacity .22s var(--ease)
+}
+#info-panel.open{transform:translateY(0) scale(1);opacity:1;pointer-events:all}
+.info-panel-header{
+  padding:18px 20px 14px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;gap:12px
+}
+.info-panel-logo{
+  width:32px;height:32px;border-radius:4px;
+  background:var(--accent);display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;color:#fff;font-family:var(--f-body);flex-shrink:0
+}
+.info-panel-name{font-size:14px;font-weight:700;color:#f8f6f1;font-family:var(--f-body)}
+.info-panel-tagline{font-size:10px;color:var(--ghost);font-family:var(--f-thin);letter-spacing:.06em;margin-top:1px}
+#info-panel-body{padding:16px 20px 20px;display:flex;flex-direction:column;gap:14px}
+.info-section-title{
+  font-size:8px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--accent);font-family:var(--f-thin);margin-bottom:5px
+}
+.info-section-text{font-size:11.5px;color:#9a9590;font-family:var(--f-body);line-height:1.6;font-weight:400}
+.info-section-text a{color:#e8e4dd;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.15)}
+.info-section-text a:hover{color:#fff}
+.info-divider{height:1px;background:rgba(255,255,255,.06)}
+
+/* ════════════════════════════════════════════════════════════
+   TOKEN NOTICE (shown if no token)
+   ════════════════════════════════════════════════════════════ */
+#token-notice{
+  position:absolute;inset:0;z-index:30;background:var(--mid);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;padding:48px;text-align:center
+}
+#token-notice h3{font-family:var(--f-heading);font-size:22px;font-weight:700}
+#token-notice p{font-size:13px;color:var(--ghost);max-width:38ch;line-height:1.7;font-family:var(--f-body)}
+#token-input{
+  width:100%;max-width:400px;padding:11px 16px;
+  border:1px solid #c4bfb8;border-radius:4px;
+  font-family:var(--f-body);font-size:13px;
+  background:var(--paper);color:var(--ink);outline:none
+}
+#token-input:focus{border-color:var(--accent)}
+#token-btn{
+  padding:11px 32px;background:var(--red);color:#fff;border:none;
+  border-radius:4px;font-family:var(--f-body);font-size:12px;font-weight:700;
+  letter-spacing:.1em;cursor:pointer;text-transform:uppercase;transition:background .2s
+}
+#token-btn:hover{background:#a93224}
+#token-notice small{font-size:10px;color:#aaa;font-family:var(--f-thin)}
+
+/* Loading spinner */
+#map-loading{
+  position:absolute;inset:0;background:var(--mid);z-index:20;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  transition:opacity .5s var(--ease)
+}
+#map-loading.hidden{opacity:0;pointer-events:none}
+.loading-ring{width:34px;height:34px;border:2px solid var(--mid);border-top-color:var(--red);border-radius:50%;animation:spin 1s linear infinite}
+#map-loading p{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ghost);font-family:var(--f-thin)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ════════════════════════════════════════════════════════════
+   ANIMATED ZONE PULSE (scene 3)
+   ════════════════════════════════════════════════════════════ */
+@keyframes zone-pulse{
+  0%,100%{opacity:.15}
+  50%{opacity:.35}
+}
+
+/* ════════════════════════════════════════════════════════════
+   MOBILE STYLES  (≤ 768px)
+   ════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Shell stays as a row — navbar left, prose fills the rest */
+  #shell{flex-direction:row}
+
+  /* Prose fills remaining width beside the navbar, natural scroll (no snap) */
+  #prose{
+    width:calc(100vw - var(--nav-w));
+    min-width:0;
+    height:100vh;
+    scroll-snap-type:none;
+  }
+
+  /* Chapters: natural height, no snap, comfortable mobile padding */
+  .chapter{
+    min-height:auto;
+    padding:60px 24px 80px 24px;
+    scroll-snap-align:none;
+    justify-content:flex-start;
+  }
+
+  /* Map panel: full-screen overlay sliding up from bottom */
+  #map-panel{
+    position:fixed;
+    top:0;left:0;right:0;bottom:0;
+    z-index:150;
+    transform:translateY(100%);
+    transition:transform .4s var(--ease);
+    width:100vw;
+  }
+  #map-panel.map-visible{transform:translateY(0)}
+
+  /* Show Map toggle button — sits at bottom left beside navbar */
+  #map-toggle-btn{
+    display:flex;
+    position:fixed;
+    bottom:24px;
+    left:calc(var(--nav-w) + 12px);
+    transform:none;
+    z-index:60;
+    align-items:center;gap:8px;
+    background:#0f0e0d;color:#f8f6f1;
+    border:1px solid rgba(255,255,255,.2);
+    padding:11px 18px;border-radius:100px;
+    font-family:var(--f-body);font-size:11px;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;
+    cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.35);
+    transition:background .2s,border-color .2s;
+    white-space:nowrap;
+  }
+  #map-toggle-btn:hover{background:#1a1917}
+  #map-toggle-btn.map-open{background:var(--accent);border-color:var(--accent)}
+  #map-toggle-btn svg{width:13px;height:13px;flex-shrink:0}
+
+  /* Close map button — top-right when map overlay is open */
+  #map-close-btn{
+    display:flex;
+    position:fixed;top:16px;right:16px;z-index:161;
+    width:40px;height:40px;border-radius:50%;
+    background:rgba(15,14,13,.88);
+    border:1px solid rgba(255,255,255,.15);
+    color:#f8f6f1;font-size:16px;cursor:pointer;
+    align-items:center;justify-content:center;
+    box-shadow:0 2px 12px rgba(0,0,0,.3);
+  }
+
+  /* Progress bar: offset by navbar width */
+  #progress-bar{
+    left:var(--nav-w);
+    width:calc(100% - var(--nav-w));
+  }
+
+  /* Info panel: sits above Show Map button */
+  #info-panel{
+    right:12px;
+    bottom:72px;
+    width:calc(100vw - var(--nav-w) - 24px);
+    max-width:320px;
+  }
+  #info-toggle{bottom:24px;right:12px}
+
+  /* Map overlays: tuck inside safe area */
+  #scene-counter{top:16px;right:52px;font-size:11px;padding:6px 12px}
+  #map-label{bottom:18px;left:14px;font-size:10px;padding:8px 12px}
+  #map-controls{bottom:18px;right:12px}
+}
+
+/* Desktop: hide mobile-only elements */
+@media (min-width: 769px) {
+  #map-toggle-btn{display:none!important}
+  #map-close-btn{display:none!important}
+}
+/* ════════════════════════════════════════════════════════════
+   FEEDBACK PIN FORM (Have Your Say scene)
+   ════════════════════════════════════════════════════════════ */
+#feedback-form-wrap{
+  position:fixed;inset:0;z-index:300;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.45);backdrop-filter:blur(3px);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s var(--ease)
+}
+#feedback-form-wrap.open{opacity:1;pointer-events:all}
+
+#feedback-form{
+  background:#0f0e0d;border-radius:10px;
+  border:1px solid rgba(255,255,255,.1);
+  padding:28px 28px 24px;
+  width:min(400px,calc(100vw - 48px));
+  box-shadow:0 16px 60px rgba(0,0,0,.5);
+  transform:translateY(12px) scale(.98);
+  transition:transform .28s var(--ease)
+}
+#feedback-form-wrap.open #feedback-form{transform:translateY(0) scale(1)}
+
+.ff-title{
+  font-family:var(--f-body);font-size:16px;font-weight:700;
+  color:#f8f6f1;margin-bottom:4px
+}
+.ff-subtitle{
+  font-size:11px;color:var(--ghost);font-family:var(--f-thin);
+  letter-spacing:.04em;margin-bottom:20px
+}
+
+/* Category pills */
+.ff-cat-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.ff-cat{
+  padding:7px 14px;border-radius:100px;font-size:11px;font-weight:700;
+  font-family:var(--f-body);border:1.5px solid rgba(255,255,255,.15);
+  color:#9a9590;background:transparent;cursor:pointer;
+  transition:all .18s var(--ease);letter-spacing:.04em
+}
+.ff-cat:hover{color:#f8f6f1;border-color:rgba(255,255,255,.35)}
+.ff-cat.selected{color:#fff;border-color:transparent}
+
+/* Comment textarea */
+.ff-label{
+  font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ghost);font-family:var(--f-thin);margin-bottom:6px;display:block
+}
+#ff-comment{
+  width:100%;min-height:90px;resize:vertical;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);border-radius:6px;
+  color:#f8f6f1;font-family:var(--f-body);font-size:13px;
+  padding:10px 12px;outline:none;
+  transition:border-color .18s
+}
+#ff-comment:focus{border-color:rgba(255,255,255,.3)}
+#ff-comment::placeholder{color:#4a4845}
+
+/* Form buttons */
+.ff-actions{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+.ff-cancel{
+  padding:9px 18px;background:transparent;
+  border:1px solid rgba(255,255,255,.12);color:var(--ghost);
+  border-radius:4px;font-family:var(--f-body);font-size:12px;
+  cursor:pointer;transition:all .18s
+}
+.ff-cancel:hover{border-color:rgba(255,255,255,.3);color:#f8f6f1}
+.ff-submit{
+  padding:9px 22px;background:var(--accent);color:#fff;
+  border:none;border-radius:4px;font-family:var(--f-body);
+  font-size:12px;font-weight:700;letter-spacing:.06em;
+  cursor:pointer;text-transform:uppercase;transition:background .18s
+}
+.ff-submit:hover{background:#a93224}
+.ff-submit:disabled{background:#555;cursor:not-allowed}
+
+/* Feedback pin marker */
+.fb-pin{
+  width:28px;height:28px;border-radius:50%;
+  border:2.5px solid rgba(255,255,255,.6);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  box-shadow:0 2px 10px rgba(0,0,0,.4);
+  transition:transform .15s;
+  font-size:12px;font-weight:700;color:#fff;
+  font-family:var(--f-body);
+  transform:translate(-50%,-50%);
+}
+.fb-pin:hover{transform:translate(-50%,-50%) scale(1.15)}
+
+/* Crosshair cursor when in drop mode */
+#map.drop-mode{cursor:crosshair!important}
+#map.drop-mode .mapboxgl-canvas{cursor:crosshair!important}
+
+/* Toast notification */
+#fb-toast{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#0f0e0d;color:#f8f6f1;
+  padding:10px 20px;border-radius:100px;
+  font-family:var(--f-body);font-size:12px;font-weight:600;
+  letter-spacing:.04em;white-space:nowrap;
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+  opacity:0;pointer-events:none;z-index:400;
+  transition:opacity .25s var(--ease),transform .25s var(--ease)
+}
+#fb-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+</style>
+</head>
+<body>
+<div id="shell">
+
+<!-- ════════════════════════════════════════════════════════════
+     NAVBAR
+     ════════════════════════════════════════════════════════════ -->
+<nav id="navbar">
+  <button id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  <div class="scene-pips" id="scene-pips"></div>
+  <div class="nav-brand">Manchester · Site</div>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDE-OUT DRAWER
+     ════════════════════════════════════════════════════════════ -->
+<div id="drawer">
+  <div class="drawer-header">
+    <!-- ✏️  PROJECT NAME & TITLE — edit these two lines -->
+    <div class="drawer-project">Site Consultation</div>
+    <div class="drawer-title">Northern Quarter<br>Development Site</div>
+  </div>
+  <div class="drawer-items" id="drawer-items"></div>
+</div>
+<div id="drawer-overlay"></div>
+
+<!-- ════════════════════════════════════════════════════════════
+     PROSE PANEL
+     ✏️  Edit chapter content here.
+     Each <section class="chapter"> = one scroll scene.
+     data-scene="N" must match index in SCENES array in JS.
+     ════════════════════════════════════════════════════════════ -->
+<div id="prose">
+
+  <!-- ✏️  SCENE 0: RED LINE BOUNDARY -->
+  <section class="chapter" data-scene="0">
+    <div class="scene-tag"><div class="scene-tag-dot" style="background:var(--red)"></div><span>Scene 01 · Site Boundary</span></div>
+    <h1>The Red Line</h1>
+    <p class="lead">This is the defined application boundary for the proposed development — commonly referred to as the 'red line' boundary.</p>
+    <p>The site sits at the edge of Manchester's Northern Quarter, approximately 0.3 hectares of brownfield land bounded by Oldham Street to the west and a service lane to the east.</p>
+    <p>The red line defines the full extent of land within the planning application. All proposed works, access arrangements, and land ownership fall within this boundary.</p>
+    <div class="map-instruction">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+      Map showing: site boundary with pin marker
+    </div>
+    <div class="legend" style="margin-top:20px">
+      <div class="legend-item"><div class="legend-swatch line" style="border-color:var(--red);width:32px"></div>Application boundary (red line)</div>
+    </div>
+  </section>
+
+  <!-- ✏️  SCENE 1: WIDER CONTEXT -->
+  <section class="chapter" data-scene="1">
+    <div class="scene-tag"><div class="scene-tag-dot" style="background:var(--amber)"></div><span>Scene 02 · Wider Context</span></div>
+    <h2>Setting &amp; Surroundings</h2>
+    <p class="lead">Zooming out to understand the site within its neighbourhood and city context.</p>
+    <p>The site is located 400m north-east of Piccadilly Gardens and within the Northern Quarter Conservation Area. The surrounding area is characterised by Victorian brick warehouses, independent businesses, and a high footfall pedestrian network.</p>
+    <p>Key infrastructure — Piccadilly Station, Metrolink, and the A62 — all fall within 600m. The site benefits from exceptional connectivity.</p>
+    <div class="map-instruction">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+      Click any marker to learn more
+    </div>
+    <div class="legend" style="margin-top:20px">
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--red);border-radius:50%;width:12px;height:12px"></div>Site location</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--blue);border-radius:50%;width:12px;height:12px"></div>Key context markers</div>
+    </div>
+  </section>
+
+  <!-- ✏️  SCENE 2: ANIMATED ZONE (new scene — add your polygon area here)
+       The animated polygon is defined in JS under ✏️ ANIMATED ZONE below -->
+  <section class="chapter" data-scene="2">
+    <div class="scene-tag"><div class="scene-tag-dot" style="background:var(--purple)"></div><span>Scene 03 · Study Area</span></div>
+    <h2>The Study Area</h2>
+    <p class="lead">This animated boundary highlights the wider study area considered as part of this consultation — the zone within which impacts, opportunities, and connections have been assessed.</p>
+    <p>The study area extends approximately 500m from the site boundary, encompassing key streets, public spaces, and heritage assets that may be affected by or benefit from the proposed development.</p>
+    <p>This boundary is not a planning designation — it is a working area used to frame the evidence base and consultation scope.</p>
+    <div class="map-instruction">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Animated boundary showing study zone
+    </div>
+    <div class="legend" style="margin-top:20px">
+      <div class="legend-item"><div class="legend-swatch line" style="border-color:var(--purple);width:32px"></div>Study area boundary (animated)</div>
+    </div>
+  </section>
+
+  <!-- ✏️  SCENE 3: CONSTRAINTS & PROPOSALS -->
+  <section class="chapter" data-scene="3">
+    <div class="scene-tag"><div class="scene-tag-dot" style="background:var(--teal)"></div><span>Scene 04 · Constraints &amp; Proposals</span></div>
+    <h2>Constraints &amp; Opportunities</h2>
+    <p class="lead">Several planning constraints and opportunities shape what can be proposed on this site. Click any zone on the map, or the cards below, to explore each one.</p>
+    <div class="constraint-grid">
+      <div class="constraint-card" style="border-color:var(--amber);background:rgba(212,130,10,.05)" onclick="highlightConstraint('heritage')">
+        <div class="constraint-card-label" style="color:var(--amber)">Planning Constraint</div>
+        <div class="constraint-card-title">Conservation Area</div>
+        <div class="constraint-card-desc">The site falls within the Northern Quarter Conservation Area. New development must preserve or enhance the area's character.</div>
+      </div>
+      <div class="constraint-card" style="border-color:var(--teal);background:rgba(42,124,107,.05)" onclick="highlightConstraint('green')">
+        <div class="constraint-card-label" style="color:var(--teal)">Opportunity</div>
+        <div class="constraint-card-title">Public Realm Improvement</div>
+        <div class="constraint-card-desc">A 6m public realm strip along the street frontage creates an opportunity for a high-quality pedestrian environment.</div>
+      </div>
+      <div class="constraint-card" style="border-color:var(--blue);background:rgba(34,85,170,.05)" onclick="highlightConstraint('access')">
+        <div class="constraint-card-label" style="color:var(--blue)">Access</div>
+        <div class="constraint-card-title">Servicing &amp; Access Route</div>
+        <div class="constraint-card-desc">Primary access must be taken from the rear service lane. The Oldham Street frontage is to remain pedestrian-only.</div>
+      </div>
+    </div>
+    <div class="map-instruction" style="margin-top:16px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Click zones on map for detail
+    </div>
+  </section>
+
+  <!-- ✏️  SCENE 4: 3D VISUALISATION -->
+  <section class="chapter" data-scene="4">
+    <div class="scene-tag"><div class="scene-tag-dot" style="background:var(--purple)"></div><span>Scene 05 · 3D Visualisation</span></div>
+    <h2>The Proposal in Context</h2>
+    <p class="lead">The map now shows a 3D aerial view with building heights extruded, so you can understand the proposed massing in relation to its surroundings.</p>
+    <p>The proposed development rises to 7 storeys at its tallest point — stepping down to 4 storeys toward the conservation area to respect the established street hierarchy.</p>
+    <p>The camera will slowly orbit the site. Use the map controls to pause rotation, or drag to explore manually.</p>
+    <div class="map-instruction">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      Drag to explore · Scroll to zoom
+    </div>
+    <div style="margin-top:24px;padding:16px;background:rgba(139,92,246,.06);border-radius:6px;border-left:3px solid var(--purple)">
+      <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--purple);margin-bottom:6px;font-family:var(--f-thin)">Production note</div>
+      <p style="font-size:12px;color:#5a5652;margin:0">Replace Mapbox's built-in 3D buildings with your own glTF model or Mapbox Studio tileset for the actual proposed structure.</p>
+    </div>
+  </section>
+
+
+  <!-- ✏️  SCENE 5: HAVE YOUR SAY — feedback pin map -->
+  <section class="chapter" data-scene="5">
+    <div class="scene-tag"><div class="scene-tag-dot" style="background:#2255aa"></div><span>Scene 06 · Have Your Say</span></div>
+    <h2>Have Your Say</h2>
+    <p class="lead">We want to hear from you. Click anywhere on the map to drop a pin and leave a comment about the site, its surroundings, or the proposals.</p>
+    <p>Your feedback is public and will be visible to other participants. All responses will be reviewed as part of the consultation process.</p>
+
+    <!-- Category legend -->
+    <div class="legend" style="margin-top:20px">
+      <div class="legend-item"><div class="legend-swatch" style="background:#2a7c6b;border-radius:50%;width:12px;height:12px"></div>Support</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#c0392b;border-radius:50%;width:12px;height:12px"></div>Object</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#d4820a;border-radius:50%;width:12px;height:12px"></div>Question</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#2255aa;border-radius:50%;width:12px;height:12px"></div>General</div>
+    </div>
+
+    <!-- Live counter -->
+    <div style="margin-top:24px;padding:14px 16px;background:rgba(34,85,170,.06);border-radius:6px;border-left:3px solid #2255aa">
+      <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#2255aa;margin-bottom:4px;font-family:var(--f-thin)">Responses so far</div>
+      <div id="pin-counter" style="font-size:28px;font-weight:700;font-family:var(--f-body);color:var(--ink);line-height:1">—</div>
+    </div>
+
+    <div class="map-instruction" style="margin-top:20px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Click map to place your pin
+    </div>
+  </section>
+
+</div><!-- /prose -->
+
+<div id="progress-bar"><div id="progress-fill"></div></div>
+
+<!-- ════════════════════════════════════════════════════════════
+     MAP PANEL
+     ════════════════════════════════════════════════════════════ -->
+<div id="map-panel">
+  <div id="map"></div>
+  <div id="map-label">Scene 01 · Site Boundary</div>
+  <div id="scene-counter">01 / 05</div>
+  <div id="pulse-ring"></div>
+  <div id="map-controls">
+    <button class="map-btn" id="orbit-btn" onclick="toggleOrbit()" style="display:none">⏸ Pause Orbit</button>
+    <button class="map-btn" onclick="resetToScene()">Reset Scene</button>
+  </div>
+  <div id="map-loading"><div class="loading-ring"></div><p>Loading map…</p></div>
+  <div id="token-notice">
+    <h3>Add Your Mapbox Token</h3>
+    <p>Paste your Mapbox public access token to load the map.</p>
+    <input id="token-input" type="text" placeholder="pk.eyJ1IjoiY…"/>
+    <button id="token-btn" onclick="initMap()">Load Map →</button>
+    <small>Token used client-side only · not stored</small>
+  </div>
+  <!-- Mobile close button -->
+  <button id="map-close-btn" onclick="toggleMapMobile()" aria-label="Close map">✕</button>
+</div>
+
+<!-- Mobile map toggle button -->
+<button id="map-toggle-btn" onclick="toggleMapMobile()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l6-4 6 4 6-4v14l-6 4-6-4-6 4V7z"/><line x1="9" y1="3" x2="9" y2="17"/><line x1="15" y1="7" x2="15" y2="21"/></svg>
+  Show Map
+</button>
+
+<!-- ════════════════════════════════════════════════════════════
+     ✏️  INFO PANEL
+     Edit the content in the sections below.
+     Logo, company name, data notice, contact etc.
+     ════════════════════════════════════════════════════════════ -->
+<button id="info-toggle" onclick="toggleInfo()" aria-label="Information">ℹ</button>
+
+<div id="info-panel">
+  <div class="info-panel-header">
+    <!-- ✏️  COMPANY LOGO + NAME — replace text/initials with your own -->
+    <div class="info-panel-logo">HC</div>
+    <div>
+      <div class="info-panel-name">Hemsley Christopher</div>
+      <div class="info-panel-tagline">Planning &amp; Design Consultants</div>
+    </div>
+  </div>
+
+  <div id="info-panel-body">
+
+    <!-- ✏️  ABOUT THIS TOOL -->
+    <div>
+      <div class="info-section-title">About This Tool</div>
+      <div class="info-section-text">
+        This interactive narrative map has been produced to support public consultation on the proposed development. It is intended as a clear, accessible guide to the site, its context, and the emerging proposals.
+      </div>
+    </div>
+
+    <div class="info-divider"></div>
+
+    <!-- ✏️  DATA USAGE NOTICE -->
+    <div>
+      <div class="info-section-title">Data &amp; Privacy</div>
+      <div class="info-section-text">
+        This tool does not collect personal data or set tracking cookies. Map tiles are served by <a href="https://mapbox.com" target="_blank">Mapbox</a> — please refer to their <a href="https://www.mapbox.com/legal/privacy" target="_blank">privacy policy</a> for details of tile request logging.
+      </div>
+    </div>
+
+    <div class="info-divider"></div>
+
+    <!-- ✏️  MAP DATA SOURCES -->
+    <div>
+      <div class="info-section-title">Map Data Sources</div>
+      <div class="info-section-text">
+        Base map © <a href="https://mapbox.com" target="_blank">Mapbox</a> &amp; © <a href="https://openstreetmap.org" target="_blank">OpenStreetMap</a> contributors. Site boundary, constraints, and proposals produced by Hemsley Christopher. Study area boundary indicative only.
+      </div>
+    </div>
+
+    <div class="info-divider"></div>
+
+    <!-- ✏️  CONTACT / DISCLAIMER -->
+    <div>
+      <div class="info-section-title">Contact</div>
+      <div class="info-section-text">
+        For queries about this consultation contact <a href="mailto:hello@hemsleychristopher.com">hello@hemsleychristopher.com</a>. Content correct at time of publication. Subject to change without notice.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     FEEDBACK PIN FORM — shown when user clicks map on scene 5
+     ════════════════════════════════════════════════════════════ -->
+<div id="feedback-form-wrap">
+  <div id="feedback-form">
+    <div class="ff-title">Leave your feedback</div>
+    <div class="ff-subtitle" id="ff-coords-label">Pinned to your chosen location</div>
+
+    <!-- Category selector -->
+    <div class="ff-cat-row">
+      <button class="ff-cat" data-cat="Support"  onclick="selectCat(this)">Support</button>
+      <button class="ff-cat" data-cat="Object"   onclick="selectCat(this)">Object</button>
+      <button class="ff-cat" data-cat="Question" onclick="selectCat(this)">Question</button>
+      <button class="ff-cat" data-cat="General"  onclick="selectCat(this)">General</button>
+    </div>
+
+    <label class="ff-label" for="ff-comment">Your comment</label>
+    <textarea id="ff-comment" placeholder="Tell us your thoughts about this location…" maxlength="500"></textarea>
+
+    <div class="ff-actions">
+      <button class="ff-cancel" onclick="closeFeedbackForm()">Cancel</button>
+      <button class="ff-submit" id="ff-submit-btn" onclick="submitFeedback()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="fb-toast"></div>
+
+
+</div><!-- /shell -->
+
+<!-- ════════════════════════════════════════════════════════════
+     POPUP STYLES
+     ════════════════════════════════════════════════════════════ -->
+<style>
+.mapboxgl-popup-content{
+  font-family:'tt-commons-pro',sans-serif;font-size:13px;
+  background:#0f0e0d;color:#f8f6f1;
+  border-radius:6px;padding:14px 18px;
+  box-shadow:0 6px 30px rgba(0,0,0,.4);
+  border-top:2px solid #c0392b;max-width:240px
+}
+.mapboxgl-popup-content strong{display:block;font-size:14px;font-weight:700;margin-bottom:6px;color:#fff;font-family:'tt-commons-pro',sans-serif}
+.mapboxgl-popup-content span{font-size:12px;color:#9a9590;line-height:1.6;display:block;font-family:'tt-commons-pro',sans-serif;font-weight:400}
+.popup-icon{font-size:22px;margin-bottom:6px}
+.mapboxgl-popup-close-button{color:#9a9590;font-size:16px;right:8px;top:8px}
+.mapboxgl-popup-close-button:hover{color:#fff;background:none}
+.mapboxgl-popup-tip{border-top-color:#0f0e0d!important;border-bottom-color:#0f0e0d!important}
+</style>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  ✏️  EDIT ZONE
+//  All customisable values are in this section.
+//  Lines marked ✏️ are the most commonly changed.
+// ════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────────────────
+//  ✏️  1. MAPBOX TOKEN
+// ─────────────────────────────────────────────────────
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGVtc2xleWNocmlzdG9waGVyIiwiYSI6ImNtcDVwZjZnMjBtb20yc3M3OTdtcWUzNTIifQ.ZGpE7HmaIwUHopGj1nWW3A';
+
+// ─────────────────────────────────────────────────────
+//  ✏️  2. MAP STYLE URL
+//  Use a Mapbox default or your own Studio style
+// ─────────────────────────────────────────────────────
+const MAPBOX_STYLE = 'mapbox://styles/hemsleychristopher/cmp6mw2uo004p01s8b6mzcz6h';
+
+// ─────────────────────────────────────────────────────
+//  ✏️  2b. HAVE YOUR SAY — CLEAN STYLE (optional)
+//  The cleanest fix for label clutter on scene 6 is a
+//  second Mapbox Studio style with POI/place labels removed.
+//
+//  How to set it up:
+//    1. Go to studio.mapbox.com → open your style
+//    2. Duplicate it (⋯ menu → Duplicate)
+//    3. In the duplicate, delete or hide POI / place / label layers
+//    4. Publish the duplicate → copy its Style URL
+//    5. Paste it below, replacing null
+//
+//  Set to null to use the same style as all other scenes.
+// ─────────────────────────────────────────────────────
+const FEEDBACK_STYLE = 'mapbox://styles/hemsleychristopher/cmp6rf7u6000h01qv7pvv12qw';
+
+// ─────────────────────────────────────────────────────
+//  ✏️  3. SITE CENTRE  [longitude, latitude]
+// ─────────────────────────────────────────────────────
+const SITE_CENTRE = [-2.2345, 53.4824];
+
+// ─────────────────────────────────────────────────────
+//  ✏️  4. SITE PIN LABEL TEXT
+//  Shown on the map marker in scene 1
+// ─────────────────────────────────────────────────────
+const SITE_PIN_LABEL = 'The Site';
+
+// ─────────────────────────────────────────────────────
+//  ✏️  5. RED LINE BOUNDARY
+//  Draw on geojson.io → copy the coordinates array.
+//  First and last coordinate must be identical (closed ring).
+// ─────────────────────────────────────────────────────
+const RED_LINE = {
+  type: 'Feature',
+  geometry: {
+    type: 'Polygon',
+    coordinates: [[
+      [-2.2350831, 53.4822622],
+      [-2.2343975, 53.4827263],
+      [-2.2339446, 53.4825055],
+      [-2.2345925, 53.4820189],
+      [-2.2350831, 53.4822622]
+    ]]
+  },
+  properties: { name: 'Application Boundary' }
+};
+
+// ─────────────────────────────────────────────────────
+//  ✏️  6. ANIMATED ZONE (scene 3 — study area)
+//  Draw on geojson.io → paste coordinates here.
+//  This polygon will pulse with an animated stroke.
+// ─────────────────────────────────────────────────────
+const ANIMATED_ZONE = {
+  type: 'Feature',
+  geometry: {
+    type: 'Polygon',
+    coordinates: [[
+      [-2.2430, 53.4780],
+      [-2.2240, 53.4780],
+      [-2.2240, 53.4875],
+      [-2.2430, 53.4875],
+      [-2.2430, 53.4780]
+    ]]
+  },
+  properties: { name: 'Study Area' }
+};
+
+// ─────────────────────────────────────────────────────
+//  ✏️  7. CONTEXT MARKERS (scene 2)
+//  Add/remove markers. Each needs:
+//    coordinates: [lng, lat]
+//    name, desc, icon (emoji), color (hex)
+// ─────────────────────────────────────────────────────
+const CONTEXT_MARKERS = {
+  type: 'FeatureCollection',
+  features: [
+    { type:'Feature', geometry:{type:'Point',coordinates:[-2.2310,53.4806]}, properties:{name:'Manchester Piccadilly',desc:'Main rail terminus. 400m south of the site.',icon:'🚉',color:'#2255aa'}},
+    { type:'Feature', geometry:{type:'Point',coordinates:[-2.2365,53.4843]}, properties:{name:'Northern Quarter CA',desc:'Northern Quarter Conservation Area boundary runs approx. 100m north of the site.',icon:'🏛',color:'#d4820a'}},
+    { type:'Feature', geometry:{type:'Point',coordinates:[-2.2380,53.4810]}, properties:{name:'Piccadilly Gardens',desc:'Major city centre public space and Metrolink interchange. 350m south-west.',icon:'🌳',color:'#2a7c6b'}},
+    { type:'Feature', geometry:{type:'Point',coordinates:[-2.2295,53.4855]}, properties:{name:'Ancoats',desc:'Adjacent regeneration area to the north-east.',icon:'🏗',color:'#8b5cf6'}},
+  ]
+};
+
+// ─────────────────────────────────────────────────────
+//  ✏️  8. CONSTRAINT ZONES (scene 4)
+//  id must match keys in CONSTRAINT_INFO below.
+//  color: hex  opacity: 0–1
+// ─────────────────────────────────────────────────────
+const HERITAGE_ZONE = {
+  type:'Feature', geometry:{type:'Polygon',coordinates:[[[-2.2380,53.4840],[-2.2280,53.4840],[-2.2280,53.4855],[-2.2380,53.4855],[-2.2380,53.4840]]]},
+  properties:{id:'heritage',name:'Conservation Area',color:'#d4820a',opacity:.15}
+};
+const GREEN_ZONE = {
+  type:'Feature', geometry:{type:'Polygon',coordinates:[[[-2.2338,53.4820],[-2.2315,53.4820],[-2.2315,53.4817],[-2.2338,53.4817],[-2.2338,53.4820]]]},
+  properties:{id:'green',name:'Public Realm Strip',color:'#2a7c6b',opacity:.25}
+};
+const ACCESS_ZONE = {
+  type:'Feature', geometry:{type:'Polygon',coordinates:[[[-2.2340,53.4821],[-2.2336,53.4821],[-2.2336,53.4832],[-2.2340,53.4832],[-2.2340,53.4821]]]},
+  properties:{id:'access',name:'Service Lane Access',color:'#2255aa',opacity:.2}
+};
+const CONSTRAINTS = { type:'FeatureCollection', features:[HERITAGE_ZONE, GREEN_ZONE, ACCESS_ZONE] };
+
+// ─────────────────────────────────────────────────────
+//  ✏️  9. CONSTRAINT POPUP TEXT
+//  Keys must match id values in zones above.
+// ─────────────────────────────────────────────────────
+const CONSTRAINT_INFO = {
+  heritage: { title:'Conservation Area',  body:'New buildings must preserve or enhance the character and appearance of the Northern Quarter Conservation Area. Design must respond to the Victorian warehouse vernacular.' },
+  green:    { title:'Public Realm Strip', body:'A minimum 6m pedestrian zone along the Oldham Street frontage. Active ground-floor uses are required to animate this space.' },
+  access:   { title:'Servicing & Access', body:'All vehicular access must be taken from the rear service lane. No new vehicular crossings on Oldham Street are permitted.' }
+};
+
+// ─────────────────────────────────────────────────────
+//  ✏️  10. SCENES
+//  One entry per chapter section in the HTML above.
+//  data-scene="N" in HTML must match index N here.
+//
+//  camera:  center[lng,lat]  zoom(0-22)  pitch(0-85)
+//           bearing(0-360)   duration(ms fly animation)
+//  layers:  which data layers are visible
+//  animZone: true = show pulsing study area polygon
+// ─────────────────────────────────────────────────────
+const SCENES = [
+  {
+    label:  'Scene 01 · Site Boundary',
+    camera: { center:SITE_CENTRE, zoom:17.5, pitch:30, bearing:-15, duration:2000 },
+    layers: { redline:true, context:false, constraints:false, buildings3d:false, animZone:false }
+  },
+  {
+    label:  'Scene 02 · Wider Context',
+    camera: { center:[-2.2345,53.4825], zoom:14.5, pitch:20, bearing:0, duration:2400 },
+    layers: { redline:true, context:true, constraints:false, buildings3d:false, animZone:false }
+  },
+  {
+    label:  'Scene 03 · Study Area',
+    camera: { center:[-2.2335,53.4827], zoom:14, pitch:15, bearing:0, duration:2000 },
+    layers: { redline:true, context:false, constraints:false, buildings3d:false, animZone:true }
+  },
+  {
+    label:  'Scene 04 · Constraints & Proposals',
+    camera: { center:SITE_CENTRE, zoom:17, pitch:40, bearing:10, duration:2200 },
+    layers: { redline:true, context:false, constraints:true, buildings3d:false, animZone:false }
+  },
+  {
+    label:  'Scene 05 · 3D Visualisation',
+    camera: { center:SITE_CENTRE, zoom:16.5, pitch:65, bearing:0, duration:2600 },
+    layers: { redline:true, context:false, constraints:false, buildings3d:true, animZone:false }
+  },
+  {
+    label:  'Scene 06 · Have Your Say',
+    camera: { center:SITE_CENTRE, zoom:16.5, pitch:0, bearing:0, duration:2000 },
+    layers: { redline:true, context:false, constraints:false, buildings3d:false, animZone:false }
+  },
+];
+
+
+// ─────────────────────────────────────────────────────
+//  ✏️  12. SHEETDB — "Have Your Say" feedback pins
+//  Steps to activate:
+//    a) Create a Google Sheet with columns:
+//       id | lat | lng | category | comment | timestamp
+//    b) Connect it at sheetdb.io → copy the API URL
+//    c) Replace the placeholder below with your URL
+// ─────────────────────────────────────────────────────
+const SHEETDB_URL = 'https://sheetdb.io/api/v1/ej5005kc2cry4';
+
+// ✏️  Category colours for feedback pins
+const CATEGORY_COLOURS = {
+  'Support':  '#2a7c6b',
+  'Object':   '#c0392b',
+  'Question': '#d4820a',
+  'General':  '#2255aa',
+};
+
+// ─────────────────────────────────────────────────────
+//  ✏️  11. DRAWER LABELS
+//  One label per scene, in order.
+// ─────────────────────────────────────────────────────
+const SCENE_LABELS = ['Site Boundary','Wider Context','Study Area','Constraints','3D View','Have Your Say'];
+
+// ════════════════════════════════════════════════════════════
+//  STATE — do not edit below this line
+// ════════════════════════════════════════════════════════════
+let map=null, currentScene=0, orbitActive=false, orbitRAF=null, orbitBearing=0, orbitTimeout=null, orbitSession=0;
+let sitePinMarker=null, animZoneInterval=null;
+let mapVisibleMobile=false, infoOpen=false;
+
+const prose    = document.getElementById('prose');
+const sections = document.querySelectorAll('.chapter');
+
+// ════════════════════════════════════════════════════════════
+//  MAP INIT
+// ════════════════════════════════════════════════════════════
+function initMap(){
+  const inp=document.getElementById('token-input');
+  const token=inp?inp.value.trim():'';
+  if(!token.startsWith('pk.')){inp.style.borderColor='var(--red)';inp.placeholder='Must start with pk.…';return;}
+  document.getElementById('token-notice').style.display='none';
+  mapboxgl.accessToken=token;
+
+  map=new mapboxgl.Map({
+    container:'map',style:MAPBOX_STYLE,
+    center:SCENES[0].camera.center,zoom:SCENES[0].camera.zoom,
+    pitch:SCENES[0].camera.pitch,bearing:SCENES[0].camera.bearing,
+    antialias:true
+  });
+  map.addControl(new mapboxgl.NavigationControl({showCompass:true}),'top-right');
+
+  map.on('load',()=>{
+    document.getElementById('map-loading').classList.add('hidden');
+    addAllSources();
+    addAllLayers();
+    addSitePin();
+    setupFeedbackClick();
+    buildNavUI();
+    applyScene(0,false);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+//  SITE PIN MARKER
+// ════════════════════════════════════════════════════════════
+function addSitePin(){
+  const el=document.createElement('div');
+  el.className='site-pin';
+  el.innerHTML=`
+    <div class="site-pin-label">${SITE_PIN_LABEL}</div>
+    <div class="site-pin-dot"></div>
+    <div class="site-pin-stem"></div>
+    <div class="site-pin-base"></div>
+  `;
+  sitePinMarker=new mapboxgl.Marker({element:el,anchor:'bottom'})
+    .setLngLat(SITE_CENTRE)
+    .addTo(map);
+  // Hidden by default — shown/hidden via applyScene
+  el.style.display='none';
+  sitePinMarker._el=el;
+}
+
+// ════════════════════════════════════════════════════════════
+//  SOURCES
+// ════════════════════════════════════════════════════════════
+function addAllSources(){
+  map.addSource('redline',         {type:'geojson',data:RED_LINE});
+  map.addSource('context-markers', {type:'geojson',data:CONTEXT_MARKERS});
+  map.addSource('constraints',     {type:'geojson',data:CONSTRAINTS});
+  map.addSource('anim-zone',       {type:'geojson',data:ANIMATED_ZONE});
+}
+
+// ════════════════════════════════════════════════════════════
+//  LAYERS
+// ════════════════════════════════════════════════════════════
+function addAllLayers(){
+  // Red line
+  map.addLayer({id:'redline-fill',   type:'fill',   source:'redline', paint:{'fill-color':'#c0392b','fill-opacity':0.1}, layout:{visibility:'none'}});
+  map.addLayer({id:'redline-stroke', type:'line',   source:'redline', paint:{'line-color':'#e74c3c','line-width':2.5,'line-dasharray':[6,3]}, layout:{visibility:'none'}});
+  map.addLayer({id:'redline-label',  type:'symbol', source:'redline',
+    layout:{'text-field':'The Site','text-font':['TT Commons Pro Bold','Arial Unicode MS Regular'],'text-size':13,'text-anchor':'center',visibility:'none'},
+    paint:{'text-color':'#ffffff','text-halo-color':'rgba(0,0,0,.4)','text-halo-width':1.5}
+  });
+
+  // Animated study zone
+  map.addLayer({id:'anim-zone-fill',   type:'fill', source:'anim-zone', paint:{'fill-color':'#8b5cf6','fill-opacity':0.08}, layout:{visibility:'none'}});
+  map.addLayer({id:'anim-zone-stroke', type:'line', source:'anim-zone',
+    paint:{'line-color':'#8b5cf6','line-width':2,'line-dasharray':[8,4],'line-opacity':0.8},
+    layout:{visibility:'none'}
+  });
+
+  // Constraints
+  map.addLayer({id:'constraint-fill',   type:'fill', source:'constraints', paint:{'fill-color':['get','color'],'fill-opacity':['get','opacity']}, layout:{visibility:'none'}});
+  map.addLayer({id:'constraint-stroke', type:'line', source:'constraints', paint:{'line-color':['get','color'],'line-width':1.5}, layout:{visibility:'none'}});
+
+  // Context markers
+  map.addLayer({id:'ctx-circles', type:'circle', source:'context-markers',
+    paint:{'circle-radius':10,'circle-color':['get','color'],'circle-stroke-color':'rgba(255,255,255,.3)','circle-stroke-width':1.5,'circle-opacity':0.9},
+    layout:{visibility:'none'}
+  });
+  map.addLayer({id:'ctx-labels', type:'symbol', source:'context-markers',
+    layout:{'text-field':['get','name'],'text-font':['TT Commons Pro','Arial Unicode MS Regular'],'text-offset':[0,1.5],'text-size':11,visibility:'none'},
+    paint:{'text-color':'#f8f6f1','text-halo-color':'rgba(0,0,0,.7)','text-halo-width':2}
+  });
+
+  // 3D buildings
+  // 3D buildings — only works with styles that include the 'composite' source
+  // (Mapbox default styles). Custom Studio styles may not include it.
+  const firstSym=map.getStyle().layers.find(l=>l.type==='symbol')?.id;
+  try {
+    if(map.getSource('composite')){
+      map.addLayer({
+        id:'3d-buildings',type:'fill-extrusion',source:'composite','source-layer':'building',
+        filter:['==','extrude','true'],minzoom:14,
+        paint:{
+          'fill-extrusion-color':['interpolate',['linear'],['get','height'],0,'#1a2332',20,'#243040',50,'#2d3d52',100,'#364a62'],
+          'fill-extrusion-height':['get','height'],'fill-extrusion-base':['get','min_height'],'fill-extrusion-opacity':0.85
+        },
+        layout:{visibility:'none'}
+      },firstSym);
+      console.log('3D buildings layer added successfully');
+    } else {
+      console.warn('3D buildings: composite source not found in this style. Scene 5 will show a flat view. To fix: either use a default Mapbox style (dark-v11/light-v11) or add the Mapbox Streets tileset as a source in your Studio style.');
+    }
+  } catch(e){
+    console.warn('3D buildings layer skipped:', e.message);
+  }
+
+  try {
+    map.addLayer({
+      id:'site-highlight',type:'fill-extrusion',source:'redline',
+      paint:{'fill-extrusion-color':'#c0392b','fill-extrusion-height':25,'fill-extrusion-base':0,'fill-extrusion-opacity':0.5},
+      layout:{visibility:'none'}
+    });
+  } catch(e){
+    console.warn('site-highlight layer skipped:', e.message);
+  }
+
+  setupPopups();
+}
+
+// ════════════════════════════════════════════════════════════
+//  ANIMATED ZONE STROKE
+//  Animates the dash offset so the dashes appear to march
+// ════════════════════════════════════════════════════════════
+let animOffset=0;
+function startAnimZone(){
+  clearInterval(animZoneInterval);
+  animZoneInterval=setInterval(()=>{
+    animOffset=(animOffset-0.5+100)%100;
+    if(map&&map.getLayer('anim-zone-stroke')){
+      map.setPaintProperty('anim-zone-stroke','line-dasharray',[8,4]);
+      // Fake marching ants via line-offset cycling
+      map.setPaintProperty('anim-zone-fill','fill-opacity', 0.06+0.04*Math.sin(animOffset*0.15));
+    }
+  },50);
+}
+function stopAnimZone(){
+  clearInterval(animZoneInterval);
+  animZoneInterval=null;
+}
+
+// ════════════════════════════════════════════════════════════
+//  POPUPS
+// ════════════════════════════════════════════════════════════
+function setupPopups(){
+  map.on('click','ctx-circles',e=>{
+    const p=e.features[0].properties;
+    new mapboxgl.Popup({offset:14,closeButton:true,className:'narrative-popup'})
+      .setLngLat(e.features[0].geometry.coordinates)
+      .setHTML(`<div class="popup-icon">${p.icon}</div><strong>${p.name}</strong><span>${p.desc}</span>`)
+      .addTo(map);
+  });
+  map.on('mouseenter','ctx-circles',()=>map.getCanvas().style.cursor='pointer');
+  map.on('mouseleave','ctx-circles',()=>map.getCanvas().style.cursor='');
+
+  map.on('click','constraint-fill',e=>{
+    const info=CONSTRAINT_INFO[e.features[0].properties.id];
+    if(!info)return;
+    new mapboxgl.Popup({offset:8,closeButton:true,className:'narrative-popup'})
+      .setLngLat(e.lngLat)
+      .setHTML(`<strong>${info.title}</strong><span>${info.body}</span>`)
+      .addTo(map);
+  });
+  map.on('mouseenter','constraint-fill',()=>map.getCanvas().style.cursor='pointer');
+  map.on('mouseleave','constraint-fill',()=>map.getCanvas().style.cursor='');
+}
+
+// ════════════════════════════════════════════════════════════
+//  APPLY SCENE
+// ════════════════════════════════════════════════════════════
+function applyScene(idx,animate=true){
+  const sc=SCENES[idx];
+  if(!sc||!map)return;
+
+  stopOrbit();
+  if(orbitTimeout){clearTimeout(orbitTimeout);orbitTimeout=null;}
+  stopAnimZone();
+  document.getElementById('orbit-btn').style.display='none';
+
+  // Camera
+  if(animate){
+    map.flyTo({center:sc.camera.center,zoom:sc.camera.zoom,pitch:sc.camera.pitch,bearing:sc.camera.bearing,duration:sc.camera.duration,essential:true});
+  }
+
+  // Layer visibility helper
+  const show=(id,vis)=>{if(map.getLayer(id))map.setLayoutProperty(id,'visibility',vis?'visible':'none');};
+  const L=sc.layers;
+
+  show('redline-fill',    L.redline);
+  show('redline-stroke',  L.redline);
+  show('redline-label',   L.redline);
+  show('ctx-circles',     L.context);
+  show('ctx-labels',      L.context);
+  show('constraint-fill', L.constraints);
+  show('constraint-stroke',L.constraints);
+  show('3d-buildings',    L.buildings3d);
+  show('site-highlight',  L.buildings3d);
+  show('anim-zone-fill',  L.animZone);
+  show('anim-zone-stroke',L.animZone);
+
+  // Site pin (scene 0 only)
+  if(sitePinMarker&&sitePinMarker._el){
+    sitePinMarker._el.style.display = (idx===0) ? 'flex' : 'none';
+  }
+
+  // Animated zone
+  if(L.animZone) startAnimZone();
+
+  // 3D orbit
+  // Feedback mode — enable only on scene 5
+  if(typeof enableFeedbackMode==='function'){
+    if(idx===5){ enableFeedbackMode(); } else { disableFeedbackMode(); }
+  }
+
+  if(L.buildings3d){
+    const delay=animate?sc.camera.duration+400:100;
+    const mySession=++orbitSession;
+    orbitTimeout=setTimeout(()=>{
+      orbitTimeout=null;
+      if(mySession!==orbitSession) return; // stale — scene changed before timer fired
+      if(currentScene!==idx) return;       // double-check scene hasn't moved on
+      orbitBearing=sc.camera.bearing;
+      document.getElementById('orbit-btn').style.display='block';
+      startOrbit();
+      document.getElementById('pulse-ring').classList.add('active');
+    },delay);
+  } else {
+    document.getElementById('pulse-ring').classList.remove('active');
+  }
+
+  // UI
+  document.getElementById('map-label').textContent=sc.label;
+  document.getElementById('scene-counter').textContent=`${String(idx+1).padStart(2,'0')} / ${String(SCENES.length).padStart(2,'0')}`;
+  document.querySelectorAll('.scene-pip').forEach((p,i)=>p.classList.toggle('active',i===idx));
+  document.querySelectorAll('.drawer-item').forEach((d,i)=>d.classList.toggle('active',i===idx));
+
+  currentScene=idx;
+}
+
+// ════════════════════════════════════════════════════════════
+//  ORBIT
+// ════════════════════════════════════════════════════════════
+function startOrbit(){
+  orbitActive=true;
+  const mySession=orbitSession;
+  document.getElementById('orbit-btn').textContent='⏸ Pause Orbit';
+  (function frame(){
+    if(!orbitActive||mySession!==orbitSession)return;
+    orbitBearing=(orbitBearing+0.12)%360;
+    map.setBearing(orbitBearing);
+    orbitRAF=requestAnimationFrame(frame);
+  })();
+}
+function stopOrbit(){orbitActive=false;orbitSession++;if(orbitRAF){cancelAnimationFrame(orbitRAF);orbitRAF=null;}}
+function toggleOrbit(){if(orbitActive){stopOrbit();document.getElementById('orbit-btn').textContent='▶ Resume Orbit';}else startOrbit();}
+
+// ════════════════════════════════════════════════════════════
+//  HIGHLIGHT CONSTRAINT from prose card
+// ════════════════════════════════════════════════════════════
+function highlightConstraint(id){
+  if(!map||currentScene!==3)return;
+  const f=CONSTRAINTS.features.find(f=>f.properties.id===id);if(!f)return;
+  const c=f.geometry.coordinates[0];
+  const centre=[(Math.min(...c.map(p=>p[0]))+Math.max(...c.map(p=>p[0])))/2,(Math.min(...c.map(p=>p[1]))+Math.max(...c.map(p=>p[1])))/2];
+  const info=CONSTRAINT_INFO[id];
+  new mapboxgl.Popup({closeButton:true,className:'narrative-popup'})
+    .setLngLat(centre)
+    .setHTML(`<strong>${info.title}</strong><span>${info.body}</span>`)
+    .addTo(map);
+  map.easeTo({center:centre,zoom:17.5,duration:800});
+}
+
+// ════════════════════════════════════════════════════════════
+//  SCROLL DETECTION
+// ════════════════════════════════════════════════════════════
+prose.addEventListener('scroll',()=>{
+  const max=prose.scrollHeight-prose.clientHeight;
+  document.getElementById('progress-fill').style.width=(max>0?(prose.scrollTop/max)*100:0)+'%';
+  const midY=prose.scrollTop+prose.clientHeight/2;
+  let active=0;
+  sections.forEach((s,i)=>{if(s.offsetTop<=midY)active=i;});
+  if(active!==currentScene)applyScene(active,true);
+});
+
+function scrollToScene(idx){const s=sections[idx];if(s)prose.scrollTo({top:s.offsetTop,behavior:'smooth'});}
+function resetToScene(){applyScene(currentScene,true);}
+
+// ════════════════════════════════════════════════════════════
+//  BUILD NAV UI (pips + drawer items)
+// ════════════════════════════════════════════════════════════
+function buildNavUI(){
+  const pe=document.getElementById('scene-pips'),de=document.getElementById('drawer-items');
+  pe.innerHTML='';de.innerHTML='';
+  SCENES.forEach((sc,i)=>{
+    const pip=document.createElement('div');
+    pip.className='scene-pip'+(i===0?' active':'');
+    pip.innerHTML='<div class="scene-pip-dot"></div><div class="scene-pip-line"></div>';
+    pip.title=SCENE_LABELS[i]||`Scene ${i+1}`;
+    pip.addEventListener('click',()=>scrollToScene(i));
+    pe.appendChild(pip);
+
+    const item=document.createElement('div');
+    item.className='drawer-item'+(i===0?' active':'');
+    item.innerHTML=`<span class="drawer-scene-num">${String(i+1).padStart(2,'0')}</span><span class="drawer-scene-label">${SCENE_LABELS[i]||`Scene ${i+1}`}</span>`;
+    item.addEventListener('click',()=>{scrollToScene(i);closeDrawer();});
+    de.appendChild(item);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+//  BURGER / DRAWER
+// ════════════════════════════════════════════════════════════
+const burger=document.getElementById('burger');
+const drawer=document.getElementById('drawer');
+const overlay=document.getElementById('drawer-overlay');
+burger.addEventListener('click',()=>{const o=drawer.classList.toggle('open');burger.classList.toggle('open',o);overlay.classList.toggle('open',o);});
+overlay.addEventListener('click',closeDrawer);
+function closeDrawer(){drawer.classList.remove('open');burger.classList.remove('open');overlay.classList.remove('open');}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeDrawer();closeInfo();}
+  if(e.key==='ArrowDown')scrollToScene(Math.min(currentScene+1,SCENES.length-1));
+  if(e.key==='ArrowUp')  scrollToScene(Math.max(currentScene-1,0));
+});
+
+// ════════════════════════════════════════════════════════════
+//  INFO PANEL
+// ════════════════════════════════════════════════════════════
+function toggleInfo(){
+  infoOpen=!infoOpen;
+  document.getElementById('info-panel').classList.toggle('open',infoOpen);
+  document.getElementById('info-toggle').classList.toggle('open',infoOpen);
+}
+function closeInfo(){
+  infoOpen=false;
+  document.getElementById('info-panel').classList.remove('open');
+  document.getElementById('info-toggle').classList.remove('open');
+}
+// Close info if clicking outside
+document.addEventListener('click',e=>{
+  const panel=document.getElementById('info-panel');
+  const toggle=document.getElementById('info-toggle');
+  if(infoOpen&&!panel.contains(e.target)&&!toggle.contains(e.target))closeInfo();
+});
+
+// ════════════════════════════════════════════════════════════
+//  MOBILE MAP TOGGLE
+// ════════════════════════════════════════════════════════════
+function toggleMapMobile(){
+  mapVisibleMobile=!mapVisibleMobile;
+  const panel=document.getElementById('map-panel');
+  const btn=document.getElementById('map-toggle-btn');
+  panel.classList.toggle('map-visible',mapVisibleMobile);
+  btn.classList.toggle('map-open',mapVisibleMobile);
+  btn.innerHTML=mapVisibleMobile
+    ?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Close Map`
+    :`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l6-4 6 4 6-4v14l-6 4-6-4-6 4V7z"/><line x1="9" y1="3" x2="9" y2="17"/><line x1="15" y1="7" x2="15" y2="21"/></svg> Show Map`;
+  // Trigger map resize so tiles load correctly
+  if(mapVisibleMobile&&map){setTimeout(()=>map.resize(),50);}
+}
+
+
+// ════════════════════════════════════════════════════════════
+//  FEEDBACK PIN SYSTEM — Have Your Say (scene 5)
+// ════════════════════════════════════════════════════════════
+let feedbackMode  = false;   // true when scene 5 is active
+let pendingLngLat = null;    // coordinates of the pending pin
+let selectedCat   = null;    // chosen category
+let feedbackPins  = [];      // array of mapboxgl.Marker objects
+
+// Called when scene 5 becomes active
+// ✏️  POI / label layers to hide on the Have Your Say scene.
+//  To find your layer IDs: open DevTools console and scroll to
+//  scene 6 — all symbol layer IDs will be printed automatically.
+//  Paste the ones you want hidden into this array:
+const HIDE_ON_FEEDBACK = [
+  // Examples — replace with IDs printed in your console:
+  // 'poi-label',
+  // 'airport-label',
+  // 'transit-label',
+  // 'road-label',   ← keep this out if you want road names to stay
+];
+
+function enableFeedbackMode(){
+  feedbackMode = true;
+  if(map) map.getCanvas().classList.add('drop-mode');
+
+  // Swap to clean style if configured
+  if(FEEDBACK_STYLE && map.getStyle().sprite !== FEEDBACK_STYLE){
+    map.setStyle(FEEDBACK_STYLE);
+    map.once('styledata', () => {
+      addAllSources();
+      addAllLayers();
+      applyScene(5, false);
+    });
+  }
+
+  loadFeedbackPins();
+}
+function disableFeedbackMode(){
+  feedbackMode = false;
+  if(map) map.getCanvas().classList.remove('drop-mode');
+
+  // Swap back to main style if we changed it
+  if(FEEDBACK_STYLE){
+    map.setStyle(MAPBOX_STYLE);
+    map.once('styledata', () => {
+      addAllSources();
+      addAllLayers();
+    });
+  }
+}
+
+// Map click → open form (only in feedback mode)
+function setupFeedbackClick(){
+  map.on('click', e => {
+    if(!feedbackMode) return;
+    // Ignore clicks on existing markers / popups
+    if(e.originalEvent.target.closest('.fb-pin,.mapboxgl-popup')) return;
+    pendingLngLat = e.lngLat;
+    openFeedbackForm(e.lngLat);
+  });
+}
+
+function openFeedbackForm(lngLat){
+  selectedCat = null;
+  document.querySelectorAll('.ff-cat').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('ff-comment').value = '';
+  document.getElementById('ff-coords-label').textContent =
+    `${lngLat.lat.toFixed(5)}, ${lngLat.lng.toFixed(5)}`;
+  document.getElementById('feedback-form-wrap').classList.add('open');
+  setTimeout(()=>document.getElementById('ff-comment').focus(), 300);
+}
+
+function closeFeedbackForm(){
+  document.getElementById('feedback-form-wrap').classList.remove('open');
+  pendingLngLat = null;
+}
+
+function selectCat(btn){
+  selectedCat = btn.dataset.cat;
+  const col = CATEGORY_COLOURS[selectedCat];
+  document.querySelectorAll('.ff-cat').forEach(b=>{
+    b.classList.remove('selected');
+    b.style.background='transparent';
+    b.style.color='';
+  });
+  btn.classList.add('selected');
+  btn.style.background = col;
+  btn.style.color = '#fff';
+}
+
+async function submitFeedback(){
+  const comment = document.getElementById('ff-comment').value.trim();
+  if(!selectedCat){ showToast('Please choose a category'); return; }
+  if(!comment)    { showToast('Please add a comment');     return; }
+
+  const btn = document.getElementById('ff-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  const row = {
+    id:        Date.now().toString(),
+    lat:       pendingLngLat.lat.toFixed(6),
+    lng:       pendingLngLat.lng.toFixed(6),
+    category:  selectedCat,
+    comment:   comment,
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    const res = await fetch(SHEETDB_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: [row] })
+    });
+    if(!res.ok) throw new Error('Save failed');
+
+    closeFeedbackForm();
+    addPinToMap(row);
+    updatePinCounter();
+    showToast('Thanks — your pin has been saved!');
+  } catch(err) {
+    // If SheetDB URL not yet set, show pin locally anyway (demo mode)
+    console.warn('SheetDB not configured — showing pin locally only:', err);
+    closeFeedbackForm();
+    addPinToMap(row);
+    updatePinCounter();
+    showToast('Pin added (demo mode — SheetDB not connected)');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit';
+  }
+}
+
+// Load existing pins from SheetDB
+async function loadFeedbackPins(){
+  // Clear existing
+  feedbackPins.forEach(m=>m.remove());
+  feedbackPins=[];
+  try {
+    const res = await fetch(SHEETDB_URL);
+    if(!res.ok) throw new Error('Load failed');
+    const rows = await res.json();
+    if(Array.isArray(rows)){
+      rows.forEach(row=>addPinToMap(row));
+      updatePinCounter();
+    }
+  } catch(err){
+    console.warn('SheetDB not configured — no existing pins loaded');
+  }
+}
+
+function addPinToMap(row){
+  const col = CATEGORY_COLOURS[row.category] || '#888';
+  const el  = document.createElement('div');
+  el.className = 'fb-pin';
+  el.style.background = col;
+  el.textContent = row.category ? row.category[0] : '?';
+  el.title = row.category;
+
+  const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+    .setLngLat([parseFloat(row.lng), parseFloat(row.lat)])
+    .setPopup(
+      new mapboxgl.Popup({ offset: 18, closeButton: true, className: 'narrative-popup' })
+        .setHTML(`
+          <strong style="color:${col}">${row.category}</strong>
+          <span>${row.comment}</span>
+          <span style="font-size:10px;color:#555;margin-top:4px;display:block">${row.timestamp ? new Date(row.timestamp).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : ''}</span>
+        `)
+    )
+    .addTo(map);
+
+  feedbackPins.push(marker);
+}
+
+function updatePinCounter(){
+  const el = document.getElementById('pin-counter');
+  if(el) el.textContent = feedbackPins.length;
+}
+
+function showToast(msg){
+  const t = document.getElementById('fb-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// ════════════════════════════════════════════════════════════
+//  AUTO-LOAD on page open
+// ════════════════════════════════════════════════════════════
+document.getElementById('token-input').value=MAPBOX_TOKEN;
+initMap();
+</script>
+</body>
+</html>
