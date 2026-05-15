@@ -276,6 +276,21 @@ html,body{height:100%;overflow:hidden;font-family:var(--f-body);background:var(-
   background:rgba(192,57,43,.3)
 }
 
+
+/* ════════════════════════════════════════════════════════════
+   MAP WASHOUT — shown on study area scene to push polygon fwd
+   ════════════════════════════════════════════════════════════ */
+#map-washout{
+  position:absolute;inset:0;
+  background:rgba(248,246,241,0); /* paper colour */
+  pointer-events:none;
+  transition:background .8s ease;
+  z-index:1
+}
+#map-washout.active{
+  background:rgba(248,246,241,0.55);
+}
+
 /* ════════════════════════════════════════════════════════════
    ✏️  INFO PANEL (bottom-right slide-out)
    Edit content inside #info-panel-body in the HTML below
@@ -887,29 +902,13 @@ html,body{height:100%;overflow:hidden;font-family:var(--f-body);background:var(-
 // ─────────────────────────────────────────────────────
 //  ✏️  1. MAPBOX TOKEN
 // ─────────────────────────────────────────────────────
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGVtc2xleWNocmlzdG9waGVyIiwiYSI6ImNtcDVwZjZnMjBtb20yc3M3OTdtcWUzNTIifQ.ZGpE7HmaIwUHopGj1nWW3A';
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGVtc2xleWNocmlzdG9waGVyIiwiYSI6ImNtY29ueTg4eDE1c20ya3IwNjluM3M0Y3oifQ.hqIBpVVRveQ_HZ56Au2GmQ';
 
 // ─────────────────────────────────────────────────────
 //  ✏️  2. MAP STYLE URL
 //  Use a Mapbox default or your own Studio style
 // ─────────────────────────────────────────────────────
 const MAPBOX_STYLE = 'mapbox://styles/hemsleychristopher/cmp6mw2uo004p01s8b6mzcz6h';
-
-// ─────────────────────────────────────────────────────
-//  ✏️  2b. HAVE YOUR SAY — CLEAN STYLE (optional)
-//  The cleanest fix for label clutter on scene 6 is a
-//  second Mapbox Studio style with POI/place labels removed.
-//
-//  How to set it up:
-//    1. Go to studio.mapbox.com → open your style
-//    2. Duplicate it (⋯ menu → Duplicate)
-//    3. In the duplicate, delete or hide POI / place / label layers
-//    4. Publish the duplicate → copy its Style URL
-//    5. Paste it below, replacing null
-//
-//  Set to null to use the same style as all other scenes.
-// ─────────────────────────────────────────────────────
-const FEEDBACK_STYLE = 'mapbox://styles/hemsleychristopher/cmp6rf7u6000h01qv7pvv12qw';
 
 // ─────────────────────────────────────────────────────
 //  ✏️  3. SITE CENTRE  [longitude, latitude]
@@ -952,11 +951,86 @@ const ANIMATED_ZONE = {
   geometry: {
     type: 'Polygon',
     coordinates: [[
-      [-2.2430, 53.4780],
-      [-2.2240, 53.4780],
-      [-2.2240, 53.4875],
-      [-2.2430, 53.4875],
-      [-2.2430, 53.4780]
+      [
+              -2.2442507,
+              53.4823248
+            ],
+            [
+              -2.2400317,
+              53.4876224
+            ],
+            [
+              -2.2362268,
+              53.4863984
+            ],
+            [
+              -2.2347112,
+              53.4855832
+            ],
+            [
+              -2.2292882,
+              53.4828302
+            ],
+            [
+              -2.2272093,
+              53.4815936
+            ],
+            [
+              -2.2256992,
+              53.4811098
+            ],
+            [
+              -2.2281131,
+              53.4802403
+            ],
+            [
+              -2.2289436,
+              53.4803162
+            ],
+            [
+              -2.2298285,
+              53.479977
+            ],
+            [
+              -2.2326054,
+              53.4789582
+            ],
+            [
+              -2.233806,
+              53.4784646
+            ],
+            [
+              -2.2347704,
+              53.4792954
+            ],
+            [
+              -2.2359588,
+              53.4801274
+            ],
+            [
+              -2.2374831,
+              53.4791523
+            ],
+            [
+              -2.2400154,
+              53.4805167
+            ],
+            [
+              -2.2417822,
+              53.4810226
+            ],
+            [
+              -2.2420527,
+              53.4807297
+            ],
+            [
+              -2.2447643,
+              53.4810191
+            ],
+            [
+              -2.2442507,
+              53.4823248
+            ]
     ]]
   },
   properties: { name: 'Study Area' }
@@ -971,10 +1045,10 @@ const ANIMATED_ZONE = {
 const CONTEXT_MARKERS = {
   type: 'FeatureCollection',
   features: [
-    { type:'Feature', geometry:{type:'Point',coordinates:[-2.2310,53.4806]}, properties:{name:'Manchester Piccadilly',desc:'Main rail terminus. 400m south of the site.',icon:'🚉',color:'#2255aa'}},
-    { type:'Feature', geometry:{type:'Point',coordinates:[-2.2365,53.4843]}, properties:{name:'Northern Quarter CA',desc:'Northern Quarter Conservation Area boundary runs approx. 100m north of the site.',icon:'🏛',color:'#d4820a'}},
-    { type:'Feature', geometry:{type:'Point',coordinates:[-2.2380,53.4810]}, properties:{name:'Piccadilly Gardens',desc:'Major city centre public space and Metrolink interchange. 350m south-west.',icon:'🌳',color:'#2a7c6b'}},
-    { type:'Feature', geometry:{type:'Point',coordinates:[-2.2295,53.4855]}, properties:{name:'Ancoats',desc:'Adjacent regeneration area to the north-east.',icon:'🏗',color:'#8b5cf6'}},
+    { type:'Feature', geometry:{type:'Point',coordinates:[-2.2310,53.4806]}, properties:{name:'Manchester Piccadilly',desc:'Main rail terminus. 400m south of the site.',icon:'🚆',color:'#2255aa'}},
+    { type:'Feature', geometry:{type:'Point',coordinates:[-2.2365,53.4843]}, properties:{name:'Northern Quarter CA',desc:'Northern Quarter Conservation Area boundary runs approx. 100m north of the site.',icon:'🏗️',color:'#8c5e0a'}},
+    { type:'Feature', geometry:{type:'Point',coordinates:[-2.2380,53.4810]}, properties:{name:'Piccadilly Gardens',desc:'Major city centre public space and Metrolink interchange. 350m south-west.',icon:'🌳',color:'#4a7c39'}},
+    { type:'Feature', geometry:{type:'Point',coordinates:[-2.2295,53.4855]}, properties:{name:'Ancoats',desc:'Adjacent regeneration area to the north-east.',icon:'🏘️',color:'#b07a4d'}},
   ]
 };
 
@@ -984,15 +1058,236 @@ const CONTEXT_MARKERS = {
 //  color: hex  opacity: 0–1
 // ─────────────────────────────────────────────────────
 const HERITAGE_ZONE = {
-  type:'Feature', geometry:{type:'Polygon',coordinates:[[[-2.2380,53.4840],[-2.2280,53.4840],[-2.2280,53.4855],[-2.2380,53.4855],[-2.2380,53.4840]]]},
+  type:'Feature', geometry:{type:'Polygon',coordinates:[[[
+              -2.2375247,
+              53.4830922
+            ],
+            [
+              -2.2363425,
+              53.4828912
+            ],
+            [
+              -2.2353283,
+              53.4834226
+            ],
+            [
+              -2.2342962,
+              53.4829101
+            ],
+            [
+              -2.2342303,
+              53.4829815
+            ],
+            [
+              -2.2330995,
+              53.4824367
+            ],
+            [
+              -2.2334205,
+              53.4822085
+            ],
+            [
+              -2.2338879,
+              53.4824379
+            ],
+            [
+              -2.2345222,
+              53.4819898
+            ],
+            [
+              -2.2334273,
+              53.4814459
+            ],
+            [
+              -2.2309881,
+              53.4831718
+            ],
+            [
+              -2.2331582,
+              53.4842313
+            ],
+            [
+              -2.2337181,
+              53.4838737
+            ],
+            [
+              -2.2349699,
+              53.4844962
+            ],
+            [
+              -2.2352913,
+              53.4843173
+            ],
+            [
+              -2.235765,
+              53.4845597
+            ],
+            [
+              -2.2363137,
+              53.4842639
+            ],
+            [
+              -2.2368524,
+              53.4846149
+            ],
+            [
+              -2.2375018,
+              53.4843194
+            ],
+            [
+              -2.2383047,
+              53.4840466
+            ],
+            [
+              -2.2372126,
+              53.4835692
+            ],
+            [
+              -2.2374293,
+              53.4833943
+            ],
+            [
+              -2.2375247,
+              53.4830922
+            ]]]},
   properties:{id:'heritage',name:'Conservation Area',color:'#d4820a',opacity:.15}
 };
 const GREEN_ZONE = {
-  type:'Feature', geometry:{type:'Polygon',coordinates:[[[-2.2338,53.4820],[-2.2315,53.4820],[-2.2315,53.4817],[-2.2338,53.4817],[-2.2338,53.4820]]]},
+  type:'Feature', geometry:{type:'Polygon',coordinates:[[ [
+            -2.2351423,
+            53.4822796
+          ],
+          [
+            -2.2344337,
+            53.4827915
+          ],
+          [
+            -2.2339117,
+            53.4825415
+          ],
+          [
+            -2.2338843,
+            53.4824381
+          ],
+          [
+            -2.2334256,
+            53.4822026
+          ],
+          [
+            -2.2331073,
+            53.4824308
+          ],
+          [
+            -2.2342088,
+            53.482974
+          ],
+          [
+            -2.2342777,
+            53.4828973
+          ],
+          [
+            -2.2353272,
+            53.4834193
+          ],
+          [
+            -2.2354573,
+            53.4833459
+          ],
+          [
+            -2.2348818,
+            53.4830661
+          ],
+          [
+            -2.2356285,
+            53.482524
+          ],
+          [
+            -2.2351401,
+            53.4822819
+          ]]]},
   properties:{id:'green',name:'Public Realm Strip',color:'#2a7c6b',opacity:.25}
 };
 const ACCESS_ZONE = {
-  type:'Feature', geometry:{type:'Polygon',coordinates:[[[-2.2340,53.4821],[-2.2336,53.4821],[-2.2336,53.4832],[-2.2340,53.4832],[-2.2340,53.4821]]]},
+  type:'Feature', geometry:{type:'Polygon',coordinates:[[[
+              -2.2375127,
+              53.4830689
+            ],
+            [
+              -2.236335,
+              53.4828708
+            ],
+            [
+              -2.2334271,
+              53.4814493
+            ],
+            [
+              -2.2344304,
+              53.4807197
+            ],
+            [
+              -2.2346706,
+              53.4807765
+            ],
+            [
+              -2.2349208,
+              53.4807669
+            ],
+            [
+              -2.2350823,
+              53.4807109
+            ],
+            [
+              -2.2351598,
+              53.4808408
+            ],
+            [
+              -2.2353185,
+              53.4809145
+            ],
+            [
+              -2.2356191,
+              53.4810563
+            ],
+            [
+              -2.2357174,
+              53.481132
+            ],
+            [
+              -2.2367772,
+              53.4813786
+            ],
+            [
+              -2.2368384,
+              53.4814073
+            ],
+            [
+              -2.2368761,
+              53.4814458
+            ],
+            [
+              -2.2368286,
+              53.481513
+            ],
+            [
+              -2.2365361,
+              53.4818613
+            ],
+            [
+              -2.2376279,
+              53.4821445
+            ],
+            [
+              -2.2372426,
+              53.4823319
+            ],
+            [
+              -2.2377414,
+              53.4824254
+            ],
+            [
+              -2.2375127,
+              53.4830689
+            ]]]},
   properties:{id:'access',name:'Service Lane Access',color:'#2255aa',opacity:.2}
 };
 const CONSTRAINTS = { type:'FeatureCollection', features:[HERITAGE_ZONE, GREEN_ZONE, ACCESS_ZONE] };
@@ -1040,7 +1335,7 @@ const SCENES = [
   },
   {
     label:  'Scene 05 · 3D Visualisation',
-    camera: { center:SITE_CENTRE, zoom:16.5, pitch:65, bearing:0, duration:2600 },
+    camera: { center:SITE_CENTRE, zoom:17.5, pitch:70, bearing:30, duration:2600 },
     layers: { redline:true, context:false, constraints:false, buildings3d:true, animZone:false }
   },
   {
@@ -1059,7 +1354,8 @@ const SCENES = [
 //    b) Connect it at sheetdb.io → copy the API URL
 //    c) Replace the placeholder below with your URL
 // ─────────────────────────────────────────────────────
-const SHEETDB_URL = 'https://sheetdb.io/api/v1/REPLACE_WITH_YOUR_ID';
+const SHEETDB_URL = 'https://sheetdb.io/api/v1/ej5005kc2cry4';
+
 
 // ✏️  Category colours for feedback pins
 const CATEGORY_COLOURS = {
@@ -1068,6 +1364,20 @@ const CATEGORY_COLOURS = {
   'Question': '#d4820a',
   'General':  '#2255aa',
 };
+
+
+// ─────────────────────────────────────────────────────
+//  ✏️  13. 3D MODEL
+//  Replace MODEL_URL with your own .glb file URL when ready.
+//  Upload your .glb to GitHub alongside index.html, then use:
+//    const MODEL_URL = './your-model.glb';
+//  Scale: 1 = real-world metres. Adjust to fit your site.
+//  Rotation: bearing in degrees (0 = north-facing)
+// ─────────────────────────────────────────────────────
+const MODEL_URL      = 'https://mapbox-api-downloads.s3.amazonaws.com/v2/markers/mapbox-marker-icon-20px-blue.glb'; // ← swap this
+const MODEL_SCALE    = 50;      // ✏️ scale up/down to fit site
+const MODEL_ROTATION = 0;       // ✏️ rotation in degrees
+const MODEL_ALT      = 0;       // ✏️ altitude in metres above ground
 
 // ─────────────────────────────────────────────────────
 //  ✏️  11. DRAWER LABELS
@@ -1090,7 +1400,7 @@ const sections = document.querySelectorAll('.chapter');
 // ════════════════════════════════════════════════════════════
 function initMap(){
   const inp=document.getElementById('token-input');
-  const token=inp?inp.value.trim():'';
+const token = MAPBOX_TOKEN || (inp ? inp.value.trim() : '');
   if(!token.startsWith('pk.')){inp.style.borderColor='var(--red)';inp.placeholder='Must start with pk.…';return;}
   document.getElementById('token-notice').style.display='none';
   mapboxgl.accessToken=token;
@@ -1156,6 +1466,30 @@ function addAllLayers(){
     paint:{'text-color':'#ffffff','text-halo-color':'rgba(0,0,0,.4)','text-halo-width':1.5}
   });
 
+
+    // ── World washout layer — sits below our data, above base map ──
+  // Covers the entire world with a semi-transparent paper colour
+  map.addSource('washout', {
+    type: 'geojson',
+    data: {
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[[-180,-90],[180,-90],[180,90],[-180,90],[-180,-90]]]
+      }
+    }
+  });
+  map.addLayer({
+    id: 'map-washout',
+    type: 'fill',
+    source: 'washout',
+    paint: {
+      'fill-color': '#f8f6f1',
+      'fill-opacity': 0
+    },
+    layout: { visibility: 'none' }
+  });
+
   // Animated study zone
   map.addLayer({id:'anim-zone-fill',   type:'fill', source:'anim-zone', paint:{'fill-color':'#8b5cf6','fill-opacity':0.08}, layout:{visibility:'none'}});
   map.addLayer({id:'anim-zone-stroke', type:'line', source:'anim-zone',
@@ -1210,28 +1544,154 @@ function addAllLayers(){
     console.warn('site-highlight layer skipped:', e.message);
   }
 
+  map.addSource('feedback-pins', { type:'geojson', data:feedbackGeoJSON });
+  map.addLayer({
+    id:'feedback-circles', type:'circle', source:'feedback-pins',
+    paint:{
+      'circle-radius':14,
+      'circle-color':['get','color'],
+      'circle-stroke-color':'rgba(255,255,255,.75)',
+      'circle-stroke-width':2.5,
+      'circle-opacity':0.95
+    },
+    layout:{ visibility:'none' }
+  });
+  map.addLayer({
+    id:'feedback-labels', type:'symbol', source:'feedback-pins',
+    layout:{
+      'text-field':['slice',['get','category'],0,1],
+      'text-font':['DIN Pro Bold','Arial Unicode MS Regular'],
+      'text-size':11,'text-anchor':'center',visibility:'none'
+    },
+    paint:{'text-color':'#fff','text-halo-color':'rgba(0,0,0,.2)','text-halo-width':1}
+  });
+
+  // ── 3D Model layer ──
+  map.addSource('model-source', {
+    type: 'geojson',
+    data: {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [SITE_CENTRE[0], SITE_CENTRE[1], MODEL_ALT] },
+        properties: { name: 'Proposed Development' }
+      }]
+    }
+  });
+
+  // Mapbox GL JS v3 native model layer
+  try {
+    map.addLayer({
+      id: '3d-model',
+      type: 'model',
+      source: 'model-source',
+      layout: {
+        'model-id': MODEL_URL,
+        visibility: 'none'
+      },
+      paint: {
+        'model-scale':    [MODEL_SCALE, MODEL_SCALE, MODEL_SCALE],
+        'model-rotation': [0, 0, MODEL_ROTATION],
+        'model-opacity':  1
+      }
+    });
+    console.log('3D model layer added successfully');
+  } catch(e) {
+    console.warn('3D model layer failed — check MODEL_URL and Mapbox GL JS version:', e.message);
+  }
+
   setupPopups();
+  setupFeedbackPopups();
 }
+
+function setupFeedbackPopups(){
+  map.on('click','feedback-circles',e=>{
+    if(!e.features.length) return;
+    const p=e.features[0].properties;
+    const col=p.color||'#888';
+    const date=p.timestamp?new Date(p.timestamp).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+    new mapboxgl.Popup({offset:16,closeButton:true,className:'narrative-popup'})
+      .setLngLat(e.features[0].geometry.coordinates)
+      .setHTML(`<strong style="color:${col}">${p.category}</strong><span>${p.comment}</span><span style="font-size:10px;color:#666;margin-top:4px;display:block">${date}</span>`)
+      .addTo(map);
+  });
+  map.on('mouseenter','feedback-circles',()=>map.getCanvas().style.cursor='pointer');
+  map.on('mouseleave','feedback-circles',()=>map.getCanvas().style.cursor='');
+}
+
+
 
 // ════════════════════════════════════════════════════════════
 //  ANIMATED ZONE STROKE
-//  Animates the dash offset so the dashes appear to march
+//  Phase 1: draws the line on. Phase 2: marching ants.
 // ════════════════════════════════════════════════════════════
-let animOffset=0;
+let animRAF = null;
+let animOffset = 0;
+let animPhase = 0;
+let drawProgress = 0;
+const DASH = 12;
+const GAP  = 5;
+const TOTAL = DASH + GAP;
+
 function startAnimZone(){
-  clearInterval(animZoneInterval);
-  animZoneInterval=setInterval(()=>{
-    animOffset=(animOffset-0.5+100)%100;
-    if(map&&map.getLayer('anim-zone-stroke')){
-      map.setPaintProperty('anim-zone-stroke','line-dasharray',[8,4]);
-      // Fake marching ants via line-offset cycling
-      map.setPaintProperty('anim-zone-fill','fill-opacity', 0.06+0.04*Math.sin(animOffset*0.15));
+  if(animRAF) cancelAnimationFrame(animRAF);
+  animPhase = 0;
+  drawProgress = 0;
+  animOffset = 0;
+
+  // Reset to invisible before drawing on
+  if(map && map.getLayer('anim-zone-stroke')){
+    map.setPaintProperty('anim-zone-stroke','line-opacity', 0);
+    map.setPaintProperty('anim-zone-fill','fill-opacity', 0);
+  }
+
+  function frame(){
+    if(!map) return;
+
+    if(animPhase === 0){
+      // ── Draw-on phase ──
+      drawProgress = Math.min(drawProgress + 0.012, 1);
+
+      if(map.getLayer('anim-zone-stroke')){
+        map.setPaintProperty('anim-zone-stroke','line-opacity', drawProgress);
+        const dashLen = DASH * drawProgress;
+        const gapLen  = GAP + (DASH * (1 - drawProgress));
+        map.setPaintProperty('anim-zone-stroke','line-dasharray',[dashLen, gapLen]);
+        map.setPaintProperty('anim-zone-stroke','line-width', 1.5 + drawProgress * 1.5);
+      }
+      if(map.getLayer('anim-zone-fill')){
+        // Fill fades in during second half of draw
+        map.setPaintProperty('anim-zone-fill','fill-opacity',
+          Math.max(0, (drawProgress - 0.5) * 0.2));
+      }
+
+      if(drawProgress >= 1) animPhase = 1;
+
+    } else {
+      // ── Settled state — stop animating, hold final values ──
+      if(map.getLayer('anim-zone-stroke')){
+        map.setPaintProperty('anim-zone-stroke','line-dasharray',[DASH, GAP]);
+        map.setPaintProperty('anim-zone-stroke','line-width', 3);
+        map.setPaintProperty('anim-zone-fill','fill-opacity', 0.1);
+      }
+      // Cancel the loop — no more frames needed
+      cancelAnimationFrame(animRAF);
+      animRAF = null;
+      return;
     }
-  },50);
+
+    animRAF = requestAnimationFrame(frame);
+  }
+
+  animRAF = requestAnimationFrame(frame);
 }
+
 function stopAnimZone(){
+  if(animRAF){ cancelAnimationFrame(animRAF); animRAF = null; }
   clearInterval(animZoneInterval);
-  animZoneInterval=null;
+  animZoneInterval = null;
+  animPhase = 0;
+  drawProgress = 0;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1288,10 +1748,27 @@ function applyScene(idx,animate=true){
   show('ctx-labels',      L.context);
   show('constraint-fill', L.constraints);
   show('constraint-stroke',L.constraints);
-  show('3d-buildings',    L.buildings3d);
+show('3d-buildings',    L.buildings3d);
   show('site-highlight',  L.buildings3d);
-  show('anim-zone-fill',  L.animZone);
-  show('anim-zone-stroke',L.animZone);
+  show('3d-model',        L.buildings3d);
+  show('anim-zone-fill',    L.animZone);
+  show('anim-zone-stroke',  L.animZone);
+
+  // Fade washout layer in/out — sits below our polygon layers
+  if(map.getLayer('map-washout')){
+    map.setLayoutProperty('map-washout','visibility', L.animZone ? 'visible' : 'none');
+    // Animate opacity
+    if(L.animZone){
+      let op = 0;
+      const fadeIn = setInterval(()=>{
+        op = Math.min(op + 0.04, 0.55);
+        map.setPaintProperty('map-washout','fill-opacity', op);
+        if(op >= 0.55) clearInterval(fadeIn);
+      }, 20);
+    }
+  }
+  show('feedback-circles',  idx===5);
+  show('feedback-labels',   idx===5);
 
   // Site pin (scene 0 only)
   if(sitePinMarker&&sitePinMarker._el){
@@ -1299,7 +1776,8 @@ function applyScene(idx,animate=true){
   }
 
   // Animated zone
-  if(L.animZone) startAnimZone();
+   if(L.animZone) startAnimZone();
+
 
   // 3D orbit
   // Feedback mode — enable only on scene 5
@@ -1476,26 +1954,21 @@ const HIDE_ON_FEEDBACK = [
   // 'road-label',   ← keep this out if you want road names to stay
 ];
 
-function swapStyle(styleUrl, afterIdx){
-  // Remove any existing styledata listener to avoid stacking
-  map.setStyle(styleUrl);
-  // Use 'idle' instead of 'styledata' — fires only when style is fully loaded and rendered
-  map.once('idle', () => {
-    // Re-add all our custom sources and layers on top of the new base style
-    addAllSources();
-    addAllLayers();
-    // Re-apply the current scene's layer visibility (no camera move)
-    applyScene(afterIdx, false);
-  });
-}
-
 function enableFeedbackMode(){
   feedbackMode = true;
   if(map) map.getCanvas().classList.add('drop-mode');
 
-  if(FEEDBACK_STYLE){
-    swapStyle(FEEDBACK_STYLE, 5);
-  }
+  // Log all symbol layers so you can pick which ones to hide
+  const symLayers = map.getStyle().layers
+    .filter(l => l.type === 'symbol')
+    .map(l => l.id);
+  console.log('%c Scene 6 — symbol layers available to hide:', 'color:#8b5cf6;font-weight:bold');
+  console.table(symLayers);
+
+  // Hide the ones listed in HIDE_ON_FEEDBACK
+  HIDE_ON_FEEDBACK.forEach(id => {
+    if(map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+  });
 
   loadFeedbackPins();
 }
@@ -1503,9 +1976,10 @@ function disableFeedbackMode(){
   feedbackMode = false;
   if(map) map.getCanvas().classList.remove('drop-mode');
 
-  if(FEEDBACK_STYLE){
-    swapStyle(MAPBOX_STYLE, currentScene);
-  }
+  // Restore hidden layers when leaving scene 6
+  HIDE_ON_FEEDBACK.forEach(id => {
+    if(map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'visible');
+  });
 }
 
 // Map click → open form (only in feedback mode)
@@ -1513,7 +1987,9 @@ function setupFeedbackClick(){
   map.on('click', e => {
     if(!feedbackMode) return;
     // Ignore clicks on existing markers / popups
-    if(e.originalEvent.target.closest('.fb-pin,.mapboxgl-popup')) return;
+    if(map.queryRenderedFeatures(e.point,{layers:['feedback-circles']}).length) return;
+    if(e.originalEvent.target.closest('.mapboxgl-popup')) return;
+    e.originalEvent.stopPropagation();
     pendingLngLat = e.lngLat;
     openFeedbackForm(e.lngLat);
   });
@@ -1592,9 +2068,10 @@ async function submitFeedback(){
 
 // Load existing pins from SheetDB
 async function loadFeedbackPins(){
-  // Clear existing
-  feedbackPins.forEach(m=>m.remove());
-  feedbackPins=[];
+  feedbackGeoJSON = { type:'FeatureCollection', features:[] };
+  feedbackPins = [];
+  if(map&&map.getSource('feedback-pins'))
+    map.getSource('feedback-pins').setData(feedbackGeoJSON);
   try {
     const res = await fetch(SHEETDB_URL);
     if(!res.ok) throw new Error('Load failed');
@@ -1608,32 +2085,33 @@ async function loadFeedbackPins(){
   }
 }
 
+// Feedback pins stored as GeoJSON features for smooth canvas rendering
+let feedbackGeoJSON = { type:'FeatureCollection', features:[] };
+
 function addPinToMap(row){
-  const col = CATEGORY_COLOURS[row.category] || '#888';
-  const el  = document.createElement('div');
-  el.className = 'fb-pin';
-  el.style.background = col;
-  el.textContent = row.category ? row.category[0] : '?';
-  el.title = row.category;
+  const feature = {
+    type: 'Feature',
+    geometry: { type:'Point', coordinates:[parseFloat(row.lng), parseFloat(row.lat)] },
+    properties: {
+      id:        row.id,
+      category:  row.category,
+      comment:   row.comment,
+      timestamp: row.timestamp,
+      color:     CATEGORY_COLOURS[row.category] || '#888'
+    }
+  };
+  feedbackGeoJSON.features.push(feature);
 
-  const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
-    .setLngLat([parseFloat(row.lng), parseFloat(row.lat)])
-    .setPopup(
-      new mapboxgl.Popup({ offset: 18, closeButton: true, className: 'narrative-popup' })
-        .setHTML(`
-          <strong style="color:${col}">${row.category}</strong>
-          <span>${row.comment}</span>
-          <span style="font-size:10px;color:#555;margin-top:4px;display:block">${row.timestamp ? new Date(row.timestamp).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : ''}</span>
-        `)
-    )
-    .addTo(map);
-
-  feedbackPins.push(marker);
+  // Update the map source if it exists
+  if(map.getSource('feedback-pins')){
+    map.getSource('feedback-pins').setData(feedbackGeoJSON);
+  }
 }
 
 function updatePinCounter(){
   const el = document.getElementById('pin-counter');
-  if(el) el.textContent = feedbackPins.length;
+  if(el) el.textContent = feedbackGeoJSON.features.length;
+
 }
 
 function showToast(msg){
@@ -1646,8 +2124,10 @@ function showToast(msg){
 // ════════════════════════════════════════════════════════════
 //  AUTO-LOAD on page open
 // ════════════════════════════════════════════════════════════
-document.getElementById('token-input').value=MAPBOX_TOKEN;
-initMap();
+window.addEventListener('load', () => {
+  document.getElementById('token-notice').style.display = 'none';
+  initMap();
+});
 </script>
 </body>
 </html>
