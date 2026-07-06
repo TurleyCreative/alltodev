@@ -2706,9 +2706,12 @@ function lnGJ() {
   return {type:'FeatureCollection', features:features};
 }
 function lnPtsGJ() {
+  var sceneId = P.scenes[AS] ? P.scenes[AS].id : null;
   var features = [];
   (P.lines||[]).forEach(function(ln) {
     if(!ln.showEndpoints||!ln.geojson) return;
+    var ls = ln.scenes||[];
+    if(ls.length>0 && (!sceneId || ls.indexOf(sceneId)<0)) return;
     try {
       var gj = JSON.parse(ln.geojson);
       var geoms = [];
