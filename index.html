@@ -3153,8 +3153,8 @@ function buildOutputHTML() {
     + '<link href="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.css" rel="stylesheet"/>\n'
     + '<script src="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js"><' + '/script>\n'
     + '<link rel="stylesheet" href="https://use.typekit.net/' + (P.typekitId||'dfg2dug') + '.css"/>\n'
+     + '<style>\n' + css + '\n' + lbcss + '\n' + buildTextStyleCSS() + '\n</style>\n'
     + (function(){ var cc=''; if(P.accentColor&&P.accentColor!=='#c0392b')cc+='--accent:'+P.accentColor+';--red:'+P.accentColor+';'; if(P.paperColor&&P.paperColor!=='#f8f6f1')cc+='--paper:'+P.paperColor+';'; if(P.progressColor&&P.progressColor!=='#2a7c6b')cc+='--teal:'+P.progressColor+';'; if(P.fontFamily&&P.fontFamily!=='tt-commons-pro')cc+='--f-body:\"'+P.fontFamily+'\",system-ui,sans-serif;'; return cc?'<style>:root{'+cc+'}</style>\n':''; })()
-    + '<style>\n' + css + '\n' + lbcss + '\n' + buildTextStyleCSS() + '\n</style>\n'
     + '</head>\n<body>\n'
     + '<div id="shell">\n'
     + buildNav()
