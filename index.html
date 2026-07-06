@@ -1551,7 +1551,6 @@ function renderRightPanel() {
   html += lyr('sc-l-context','Context Markers', sc.layers.context);
   html += lyr('sc-l-constraints','Constraint Zones', sc.layers.constraints);
   html += lyr('sc-l-custom-bld','Custom Buildings', sc.layers.buildings!==false);
-  html += '<div style="padding:4px 0 8px"><button class="btn btn-g" id="btn-manage-bld" style="width:100%;font-size:11px">&#9651; Manage Custom Buildings</button></div>';
   html += lyr('sc-l-buildings3d','3D Buildings', sc.layers.buildings3d);
   html += lyr('sc-l-orbit','3D Buildings + Orbit', sc.layers.orbit||false);
   html += '</div></div>';
@@ -1650,8 +1649,6 @@ function renderRightPanel() {
   bindTg('sc-l-context', function(v) { P.scenes[AS].layers.context=v; updatePreview(); });
   bindTg('sc-l-constraints', function(v) { P.scenes[AS].layers.constraints=v; updatePreview(); });
   bindTg('sc-l-custom-bld', function(v){ P.scenes[AS].layers.buildings=v; markDirty(); updatePreview(); });
-  var manageBld = el('btn-manage-bld');
-  if(manageBld) manageBld.addEventListener('click', function(){ ABLD=-1; renderBuildingsPanel(); });
   bindTg('sc-l-buildings3d', function(v) { P.scenes[AS].layers.buildings3d=v; updatePreview(); });
   bindTg('sc-l-orbit', function(v) { if(!P.scenes[AS].layers) P.scenes[AS].layers={}; P.scenes[AS].layers.orbit=v; updatePreview(); });
 
@@ -2247,6 +2244,28 @@ function renderSettings() {
   html += '<div class="f"><label class="fl">Body font family</label><input type="text" id="cfg-font" value="'+h(P.fontFamily||'tt-commons-pro')+'" placeholder="tt-commons-pro"/></div>';
   html += '<div class="nt">The Typekit kit ID is the code in your <code>use.typekit.net/XXXX.css</code> embed URL. Change font family to match the font name in your kit.</div>';
   html += '</div>';
+  html += '<div class="rs"><div class="st">Text Styles &#128221;</div>';
+  html += '<div class="nt" style="margin-bottom:10px">Controls how scene titles and body text look in the exported/preview output.</div>';
+  function styleGroup(label, key, defSize, defWeight, defColor) {
+    var size = P[key+'Size'] || defSize;
+    var weight = P[key+'Weight'] || defWeight;
+    var color = P[key+'Color'] || defColor;
+    var out = '<div class="f" style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px">';
+    out += '<label class="fl">'+label+'</label>';
+    out += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">';
+    out += '<input type="number" id="cfg-'+key+'-size" value="'+size+'" min="8" max="96" style="width:70px" title="Font size (px)"/><span style="font-size:10px;color:var(--ghost)">px</span>';
+    out += '<select id="cfg-'+key+'-weight" style="flex:1">'
+      + [300,400,500,600,700,800].map(function(w){return '<option value="'+w+'"'+(parseInt(weight)===w?' selected':'')+'>'+w+'</option>';}).join('')
+      + '</select>';
+    out += '</div>';
+    out += '<div class="cr"><input type="color" id="cfg-'+key+'-color-p" value="'+color+'"/><input type="text" id="cfg-'+key+'-color-t" value="'+color+'"/></div>';
+    out += '</div>';
+    return out;
+  }
+  html += styleGroup('Heading 1 (first title / main scene titles)','h1',32,700,'#0f0e0d');
+  html += styleGroup('Heading 2 (sub-headings)','h2',24,400,'#0f0e0d');
+  html += styleGroup('Paragraph (body text)','p',15,400,'#3a3733');
+  html += '</div>';
   html += '<div class="rs"><div class="st">Project</div>';
   html += '<button class="btn btn-g" id="btn-reset-project" style="width:100%;margin-bottom:8px">&#9851; Reset to blank project</button>';
   html += '<div style="font-size:10px;color:var(--ghost);font-family:var(--mono)">Clears all scenes, markers, zones and settings. Auto-saved project will be cleared.</div>';
@@ -2307,6 +2326,12 @@ function renderSettings() {
   applyPreviewCSSVars();
   bindInput('cfg-kit', function(v){P.typekitId=v;});
   bindInput('cfg-font', function(v){P.fontFamily=v;});
+  ['h1','h2','p'].forEach(function(key){
+    bindInput('cfg-'+key+'-size', function(v){ P[key+'Size']=parseInt(v)||undefined; markDirty(); });
+    var sel = el('cfg-'+key+'-weight');
+    if(sel) sel.addEventListener('change', function(){ P[key+'Weight']=parseInt(this.value); markDirty(); });
+    bindColPair('cfg-'+key+'-color-p','cfg-'+key+'-color-t', function(v){ P[key+'Color']=v; });
+  });
   var rl = el('cfg-rl');
   if (rl) rl.addEventListener('input', function() {
     try { var v=JSON.parse(this.value); if(Array.isArray(v)){P.redLine.coordinates=v;refreshRL();} } catch(e) {}
@@ -3050,7 +3075,7 @@ function buildOutputHTML() {
     + '<script src="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js"><' + '/script>\n'
     + '<link rel="stylesheet" href="https://use.typekit.net/' + (P.typekitId||'dfg2dug') + '.css"/>\n'
     + (function(){ var cc=''; if(P.accentColor&&P.accentColor!=='#c0392b')cc+='--accent:'+P.accentColor+';--red:'+P.accentColor+';'; if(P.paperColor&&P.paperColor!=='#f8f6f1')cc+='--paper:'+P.paperColor+';'; if(P.progressColor&&P.progressColor!=='#2a7c6b')cc+='--teal:'+P.progressColor+';'; if(P.fontFamily&&P.fontFamily!=='tt-commons-pro')cc+='--f-body:\"'+P.fontFamily+'\",system-ui,sans-serif;'; return cc?'<style>:root{'+cc+'}</style>\n':''; })()
-    + '<style>\n' + css + '\n' + lbcss + '\n</style>\n'
+    + '<style>\n' + css + '\n' + lbcss + '\n' + buildTextStyleCSS() + '\n</style>\n'
     + '</head>\n<body>\n'
     + '<div id="shell">\n'
     + buildNav()
@@ -3171,6 +3196,13 @@ function sanitizeBody(html) {
     .trim();
 }
 
+function buildTextStyleCSS() {
+  var out = '';
+  if(P.h1Size||P.h1Weight||P.h1Color) out += '.chapter h1{'+(P.h1Size?'font-size:'+P.h1Size+'px;':'')+(P.h1Weight?'font-weight:'+P.h1Weight+';':'')+(P.h1Color?'color:'+P.h1Color+';':'')+'}\n';
+  if(P.h2Size||P.h2Weight||P.h2Color) out += '.chapter h2{'+(P.h2Size?'font-size:'+P.h2Size+'px;':'')+(P.h2Weight?'font-weight:'+P.h2Weight+';':'')+(P.h2Color?'color:'+P.h2Color+';':'')+'}\n';
+  if(P.pSize||P.pWeight||P.pColor) out += '.chapter .lead,.chapter p{'+(P.pSize?'font-size:'+P.pSize+'px;':'')+(P.pWeight?'font-weight:'+P.pWeight+';':'')+(P.pColor?'color:'+P.pColor+';':'')+'}\n';
+  return out;
+}
 function buildChapters() {
   var cols = ['#c0392b','#d4820a','#2a7c6b','#2255aa','#8b5cf6','#c0392b','#d4820a'];
   var out = '';
