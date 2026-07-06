@@ -1783,8 +1783,8 @@ function renderMarkerEditor(i) {
     html += '<div style="display:grid;grid-template-columns:repeat(9,1fr);gap:3px;margin-bottom:6px">';
     ICONS[cat].forEach(function(name) {
       var isSel = (curIcon === name);
-      html += '<button class="icon-btn'+(isSel?' on':'')+'" data-ico="'+name+'" title="'+name+'" style="width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:'+(isSel?'var(--accent)':'rgba(255,255,255,.08)')+';border:1px solid '+(isSel?'var(--accent)':'rgba(255,255,255,.1)')+';border-radius:4px;cursor:pointer;padding:0">'
-        + lucideSVG(name,15,'rgba(255,255,255,'+(isSel?'1':'.75')+')')
+      html += '<button class="icon-btn'+(isSel?' on':'')+'" data-ico="'+name+'" title="'+name+'" aria-label="'+name+'" style="width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:'+(isSel?'var(--accent)':'var(--mid)')+';border:1px solid '+(isSel?'var(--accent)':'var(--border2)')+';border-radius:4px;cursor:pointer;padding:0">'
+        + lucideSVG(name,15,isSel?'#fff':'var(--ghost)')
         + '</button>';
     });
     html += '</div>';
@@ -1921,11 +1921,11 @@ function renderMarkerEditor(i) {
     var grid = el('mk-icon-grid');
     if(grid) grid.querySelectorAll('.icon-btn').forEach(function(b){
       var isSel = b.dataset.ico===v;
-      b.style.background = isSel ? 'var(--accent)' : 'rgba(255,255,255,.08)';
-      b.style.borderColor = isSel ? 'var(--accent)' : 'rgba(255,255,255,.1)';
+      b.style.background = isSel ? 'var(--accent)' : 'var(--mid)';
+      b.style.borderColor = isSel ? 'var(--accent)' : 'var(--border2)';
       b.classList.toggle('on', isSel);
       if(isLucide(b.dataset.ico)) {
-        b.innerHTML = lucideSVG(b.dataset.ico, 15, isSel ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,.75)');
+                b.innerHTML = lucideSVG(b.dataset.ico, 15, isSel ? '#fff' : 'var(--ghost)');
       }
     });
   });
@@ -1945,11 +1945,11 @@ function renderMarkerEditor(i) {
     }
     grid.querySelectorAll('.icon-btn').forEach(function(b){
       var isSel = b.dataset.ico===ico;
-      b.style.background = isSel ? 'var(--accent)' : 'rgba(255,255,255,.08)';
-      b.style.borderColor = isSel ? 'var(--accent)' : 'rgba(255,255,255,.1)';
+      b.style.background = isSel ? 'var(--accent)' : 'var(--mid)';
+      b.style.borderColor = isSel ? 'var(--accent)' : 'var(--border2)';
       b.classList.toggle('on', isSel);
       if(isLucide(b.dataset.ico)) {
-        b.innerHTML = lucideSVG(b.dataset.ico, 15, isSel ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,.75)');
+                b.innerHTML = lucideSVG(b.dataset.ico, 15, isSel ? '#fff' : 'var(--ghost)');
       }
     });
   });
