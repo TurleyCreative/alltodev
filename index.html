@@ -3178,7 +3178,7 @@ function buildChapters() {
     var col = cols[i % cols.length];
     var isHYS = (sc.label||'').toLowerCase().indexOf('say') >= 0 || (sc.label||'').toLowerCase().indexOf('your say') >= 0;
     if (isHYS) { out += buildHYS(i, col); return; }
-    var tag = i===0 ? 'h1' : 'h2';
+    var tag = 'h1';
     out += '  <section class="chapter'+' data-scene="' + i + '">\n'
       + '    <div class="scene-tag"><div class="scene-tag-dot" style="background:'+col+'"></div><span>'+h(sc.label)+'</span></div>\n'
       + '    <'+tag+'>'+h(sc.title)+'</'+tag+'>\n'
@@ -3192,7 +3192,7 @@ function buildChapters() {
 function buildHYS(i, col) {
   return '  <section class="chapter" data-scene="' + i + '">\n'
     + '    <div class="scene-tag"><div class="scene-tag-dot" style="background:'+col+'"></div><span>Have Your Say</span></div>\n'
-    + '    <h2>Have Your Say</h2>\n'
+    + '    <h1>Have Your Say</h1>\n'
     + '    <p class="lead">We want to hear from you. Click anywhere on the map to drop a pin and leave a comment.</p>\n'
     + '    <div class="legend" style="margin-top:20px">\n'
     + '      <div class="legend-item"><div class="legend-swatch" style="background:#2a7c6b;border-radius:50%;width:12px;height:12px"></div>Support</div>\n'
