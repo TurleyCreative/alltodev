@@ -109,11 +109,20 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 .mh h3{font-size:14px;font-weight:800}
 .mx{width:26px;height:26px;border-radius:4px;background:var(--mid);border:none;cursor:pointer;color:var(--ghost);font-size:14px;display:flex;align-items:center;justify-content:center}
 .mx:hover{color:var(--ink)}
-.md{padding:18px 22px}
+.md{padding:18px 22px;max-height:70vh;overflow-y:auto}
 .mo{padding:13px 16px;border-radius:7px;border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all .18s}
 .mo:hover{border-color:var(--accent);background:rgba(32,122,182,.05)}
 .mo h4{font-size:13px;font-weight:700;margin-bottom:3px}
 .mo p{font-size:11px;color:var(--ghost);font-family:var(--mono);line-height:1.5}
+.a11y-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)}
+.a11y-item:last-child{border-bottom:none}
+.a11y-badge{flex-shrink:0;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:3px;white-space:nowrap;font-family:var(--sans)}
+.a11y-pass .a11y-badge{background:rgba(74,155,127,.15);color:var(--accent2)}
+.a11y-warn .a11y-badge{background:rgba(212,130,10,.15);color:#d4820a}
+.a11y-fail .a11y-badge{background:rgba(192,57,43,.15);color:#e2564a}
+.a11y-manual .a11y-badge{background:var(--mid);color:var(--ghost)}
+.a11y-item-label{font-size:12px;font-weight:600;line-height:1.4}
+.a11y-item-detail{font-size:10px;color:var(--ghost);font-family:var(--mono);line-height:1.5;margin-top:2px}
 .sr{display:flex;gap:7px;margin-top:8px}
 .sr input{flex:1;padding:7px 10px;background:var(--bg);border:1px solid var(--border2);border-radius:4px;color:var(--ghost);font-family:var(--mono);font-size:11px;outline:none}
 /* Consistent keyboard focus ring across custom controls */
@@ -222,6 +231,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="mb">
     <div class="mh"><h3>Export Your Consultation</h3><button class="mx" id="btn-em-close" aria-label="Close export dialog">&#10005;</button></div>
     <div class="md">
+      <div class="mo"><h4>&#9878; Accessibility Checklist</h4><p>A quick check before you publish. This never blocks export — it's just a heads-up.</p>
+        <div id="a11y-checklist-list" style="margin-top:10px"></div>
+      </div>
       <div class="mo" id="mo-dl"><h4>&#8595; Download HTML File</h4><p>A single self-contained file. Upload to GitHub Pages to publish.</p></div>
       <div class="mo"><h4>&#128190; Project Data (JSON)</h4><p>Save your project settings as a JSON file to back up, version control, or hand off to a colleague.</p>
         <div style="display:flex;gap:8px;margin-top:10px">
@@ -415,6 +427,7 @@ function lucideSVG(name, size, color) {
   return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex-shrink:0">'+paths+'</svg>';
 }
 
+
 // Auto-rotated scene-tag dot colors, used unless a scene sets its own tagColor
 var SCENE_TAG_COLORS = ['#c0392b','#d4820a','#2a7c6b','#2255aa','#8b5cf6','#c0392b','#d4820a'];
 
@@ -572,6 +585,67 @@ function initA11yObserver() {
   var app = el('app');
   if(!app) return;
   new MutationObserver(function() { enhanceA11y(app); }).observe(app, {childList:true, subtree:true});
+}
+
+// ── PRE-EXPORT ACCESSIBILITY CHECKLIST ──────────────
+function relLuminance(hex) {
+  hex = (hex||'').replace('#','');
+  if(hex.length===3) hex = hex.split('').map(function(c){return c+c;}).join('');
+  if(hex.length!==6) return null;
+  var r=parseInt(hex.substr(0,2),16)/255, g=parseInt(hex.substr(2,2),16)/255, b=parseInt(hex.substr(4,2),16)/255;
+  function f(c){ return c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055,2.4); }
+  r=f(r);g=f(g);b=f(b);
+  return 0.2126*r+0.7152*g+0.0722*b;
+}
+function contrastRatio(hex1,hex2) {
+  var l1=relLuminance(hex1), l2=relLuminance(hex2);
+  if(l1===null||l2===null) return null;
+  var lighter=Math.max(l1,l2), darker=Math.min(l1,l2);
+  return (lighter+0.05)/(darker+0.05);
+}
+function buildA11yChecklist() {
+  var items = [];
+  var paper = P.paperColor || '#f8f6f1';
+  var bodyInk = '#3a3733';
+  var r1 = contrastRatio(paper, bodyInk);
+  items.push({label:'Body text contrast (Paper colour vs body copy)', status: r1>=4.5?'pass':(r1>=3?'warn':'fail'),
+    detail: r1.toFixed(2)+':1 — needs 4.5:1 for normal-size text'});
+  var accent = P.accentColor || '#c0392b';
+  var r2 = contrastRatio(accent, '#ffffff');
+  items.push({label:'Accent colour contrast (white button text on Accent colour)', status: r2>=4.5?'pass':(r2>=3?'warn':'fail'),
+    detail: r2.toFixed(2)+':1 — needs 4.5:1 (3:1 if the button text is large/bold)'});
+  var pSize = P.pSize || 15;
+  items.push({label:'Body text size', status: pSize>=12?'pass':'warn',
+    detail: pSize+'px — recommended minimum is 12px'});
+  var emptyScenes = (P.scenes||[]).filter(function(s){ return !s.title || !(s.body||'').replace(/<[^>]*>/g,'').trim(); });
+  items.push({label:'Every scene has a heading and body copy', status: emptyScenes.length===0?'pass':'warn',
+    detail: emptyScenes.length===0 ? 'All '+(P.scenes||[]).length+' scenes have content' : emptyScenes.length+' scene(s) are missing a title or body — screen reader users rely on this text since they can\'t see the map'});
+  var unnamedMarkers = (P.markers||[]).filter(function(m){ return !m.name || /^new marker$/i.test(m.name.trim()); });
+  items.push({label:'Markers have descriptive names', status: unnamedMarkers.length===0?'pass':'warn',
+    detail: unnamedMarkers.length===0 ? 'All markers have descriptive names' : unnamedMarkers.length+' marker(s) still use the placeholder name "New Marker"'});
+  var unnamedZones = (P.zones||[]).filter(function(z){ return !z.name || /^new zone$/i.test(z.name.trim()); });
+  items.push({label:'Constraint zones have descriptive names', status: unnamedZones.length===0?'pass':'warn',
+    detail: unnamedZones.length===0 ? 'All zones have descriptive names' : unnamedZones.length+' zone(s) still use the placeholder name "New Zone"'});
+  [
+    'Tab through the exported site with a keyboard only — check you can reach and use the scene nav, drawer, and feedback form.',
+    'Try it with a screen reader (VoiceOver on Mac, NVDA on Windows) at least once before publishing.',
+    'Make sure marker and zone descriptions make sense when read aloud, not just visually.',
+    'If any lightbox embeds video, make sure that video has captions.'
+  ].forEach(function(msg){ items.push({label:msg, status:'manual', detail:''}); });
+  return items;
+}
+function renderA11yChecklist() {
+  var target = el('a11y-checklist-list');
+  if(!target) return;
+  var badgeText = {pass:'Pass', warn:'Check', fail:'Fix', manual:'Remember'};
+  var html = buildA11yChecklist().map(function(it) {
+    return '<div class="a11y-item a11y-'+it.status+'">'
+      + '<span class="a11y-badge">'+badgeText[it.status]+'</span>'
+      + '<div><div class="a11y-item-label">'+h(it.label)+'</div>'
+      + (it.detail ? '<div class="a11y-item-detail">'+h(it.detail)+'</div>' : '')
+      + '</div></div>';
+  }).join('');
+  target.innerHTML = html;
 }
 // ═══════════════════════════════════════════════════
 //  OVERLAY LIST + EDITOR
@@ -1124,7 +1198,7 @@ function renderAll() {
 }
 function clearAutoSave() {
   try { localStorage.removeItem(autoSaveKey); } catch(e) {}
-    P = JSON.parse(JSON.stringify(DEF));
+  P = JSON.parse(JSON.stringify(DEF));
   renderAll();
   el('save-status-text').textContent = 'Project reset';
 }
@@ -1141,7 +1215,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }, 1400);
 
-    try {
+  try {
     initTheme();
     initA11yObserver();
     bindTopbar();
@@ -1197,7 +1271,7 @@ function bindTopbar() {
   el('tt-editor').addEventListener('click', function() { switchMain('editor'); });
   el('tt-settings').addEventListener('click', function() { switchMain('settings'); });
   el('btn-theme-toggle').addEventListener('click', toggleTheme);
-  el('btn-export').addEventListener('click', function() { el('em').classList.add('on'); });
+  el('btn-export').addEventListener('click', function() { el('em').classList.add('on'); renderA11yChecklist(); });
   el('btn-dl').addEventListener('click', downloadHTML);
   el('btn-preview').addEventListener('click', previewInNewTab);
   el('btn-copy-link').addEventListener('click', function() {
@@ -1665,7 +1739,7 @@ function renderRightPanel() {
     });
   });
 
-    // Bind scene editor inputs
+  // Bind scene editor inputs
   bindInput('sc-label', function(v) { P.scenes[AS].label=v; renderScenes(); });
 
   var scTagP = el('sc-tag-col-p'), scTagT = el('sc-tag-col-t'), scTagReset = el('sc-tag-col-reset');
@@ -1685,7 +1759,6 @@ function renderRightPanel() {
   });
 
   bindInput('sc-title', function(v) { P.scenes[AS].title=v; });
-  
   // Rich text scene body
   var scBodyEl = el('sc-body');
   if(scBodyEl) {
@@ -1950,7 +2023,7 @@ function renderMarkerEditor(i) {
       b.style.borderColor = isSel ? 'var(--accent)' : 'var(--border2)';
       b.classList.toggle('on', isSel);
       if(isLucide(b.dataset.ico)) {
-                b.innerHTML = lucideSVG(b.dataset.ico, 15, isSel ? '#fff' : 'var(--ghost)');
+        b.innerHTML = lucideSVG(b.dataset.ico, 15, isSel ? '#fff' : 'var(--ghost)');
       }
     });
   });
@@ -1974,7 +2047,7 @@ function renderMarkerEditor(i) {
       b.style.borderColor = isSel ? 'var(--accent)' : 'var(--border2)';
       b.classList.toggle('on', isSel);
       if(isLucide(b.dataset.ico)) {
-                b.innerHTML = lucideSVG(b.dataset.ico, 15, isSel ? '#fff' : 'var(--ghost)');
+        b.innerHTML = lucideSVG(b.dataset.ico, 15, isSel ? '#fff' : 'var(--ghost)');
       }
     });
   });
@@ -3178,13 +3251,13 @@ function buildOutputHTML() {
     + '<link href="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.css" rel="stylesheet"/>\n'
     + '<script src="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js"><' + '/script>\n'
     + '<link rel="stylesheet" href="https://use.typekit.net/' + (P.typekitId||'dfg2dug') + '.css"/>\n'
-     + '<style>\n' + css + '\n' + lbcss + '\n' + buildTextStyleCSS() + '\n</style>\n'
+    + '<style>\n' + css + '\n' + lbcss + '\n' + buildTextStyleCSS() + '\n</style>\n'
     + (function(){ var cc=''; if(P.accentColor&&P.accentColor!=='#c0392b')cc+='--accent:'+P.accentColor+';--red:'+P.accentColor+';'; if(P.paperColor&&P.paperColor!=='#f8f6f1')cc+='--paper:'+P.paperColor+';'; if(P.progressColor&&P.progressColor!=='#2a7c6b')cc+='--teal:'+P.progressColor+';'; if(P.fontFamily&&P.fontFamily!=='tt-commons-pro')cc+='--f-body:\"'+P.fontFamily+'\",system-ui,sans-serif;'; return cc?'<style>:root{'+cc+'}</style>\n':''; })()
     + '</head>\n<body>\n'
     + '<div id="shell">\n'
     + buildNav()
     + buildDrawer()
-    + '<div id="prose">\n' + chaps + '\n</div>\n'
+    + '<main id="prose">\n' + chaps + '\n</main>\n'
     + '<div id="progress-bar"><div id="progress-fill"></div></div>\n'
     + buildMapPanel()
     + '<button id="map-toggle-btn" onclick="toggleMapMobile()">'
@@ -3192,7 +3265,7 @@ function buildOutputHTML() {
     + ' Show Map</button>\n'
     + buildInfoPanel()
     + buildFeedbackForm()
-    + '<div id="fb-toast"></div>\n'
+    + '<div id="fb-toast" role="status" aria-live="polite"></div>\n'
     + '</div>\n'
     + '<style>\n' + pcss + '\n</style>\n'
     + '<script>\n' + cfg + '\n' + js + '\n<' + '/script>\n'
@@ -3201,17 +3274,17 @@ function buildOutputHTML() {
 
 function buildNav() {
   return '<nav id="navbar">\n'
-    + '  <button id="burger" aria-label="Menu"><span></span><span></span><span></span></button>\n'
+    + '  <button id="burger" aria-label="Menu" aria-expanded="false" aria-controls="drawer"><span></span><span></span><span></span></button>\n'
     + '  <div class="scene-pips" id="scene-pips"></div>\n'
     + '  <div class="nav-brand">' + h(P.siteTitle) + '</div>\n'
     + '</nav>\n';
 }
 
 function buildDrawer() {
-  return '<div id="drawer">\n'
+  return '<div id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title-label" tabindex="-1">\n'
     + '  <div class="drawer-header">\n'
     + '    <div class="drawer-project">' + h(P.name) + '</div>\n'
-    + '    <div class="drawer-title">' + h(P.siteTitle) + '<br>' + h(P.siteSubtitle) + '</div>\n'
+    + '    <div class="drawer-title" id="drawer-title-label">' + h(P.siteTitle) + '<br>' + h(P.siteSubtitle) + '</div>\n'
     + '  </div>\n'
     + '  <div class="drawer-items" id="drawer-items"></div>\n'
     + '</div>\n'
@@ -3229,9 +3302,9 @@ function buildMapPanel() {
     + '  </div>\n'
     + '  <div id="map-loading"><div class="loading-ring"></div><p>Loading map\u2026</p></div>\n'
     + '  <div id="token-notice" style="display:none"></div>\n'
-    + '  <div id="lb-overlay">'+'<div id="lb-box">'+'<div id="lb-content"></div></div>'+'<div id="lb-stem"></div></div>\n'
-    + '  <div id="lb-fs"><img/><button id="lb-fs-close" onclick="closeLbFs()">&#10005;</button></div>\n'
-    + '  <button id="map-close-btn" onclick="toggleMapMobile()">&#10005;</button>\n'
+    + '  <div id="lb-overlay">'+'<div id="lb-box" role="dialog" aria-modal="true">'+'<div id="lb-content"></div></div>'+'<div id="lb-stem"></div></div>\n'
+    + '  <div id="lb-fs"><img alt=""/><button id="lb-fs-close" onclick="closeLbFs()" aria-label="Close full-size image">&#10005;</button></div>\n'
+    + '  <button id="map-close-btn" onclick="toggleMapMobile()" aria-label="Close map">&#10005;</button>\n'
     + '</div>\n';
 }
 
@@ -3246,7 +3319,7 @@ function buildInfoPanel() {
   var appAbout   = h(P.appAbout||'This interactive narrative map supports public consultation on the proposed development.');
   var appPrivacy = h(P.appPrivacy||'This tool does not collect personal data. Map tiles served by Mapbox.');
   var hasClient  = clientLogo || clientAbout;
-  return '<button id="info-toggle" onclick="toggleInfo()" title="About this tool">&#10033;</button>\n'
+  return '<button id="info-toggle" onclick="toggleInfo()" title="About this tool" aria-label="About this tool" aria-expanded="false" aria-controls="info-panel">&#10033;</button>\n'
     + '<div id="info-panel">\n'
     + (hasClient
       ? '  <div class="ip-client-block">\n'
@@ -3266,20 +3339,20 @@ function buildInfoPanel() {
 
 function buildFeedbackForm() {
   return '<div id="feedback-form-wrap">\n'
-    + '  <div id="feedback-form">\n'
-    + '    <div class="ff-title">Leave your feedback</div>\n'
+    + '  <div id="feedback-form" role="dialog" aria-modal="true" aria-labelledby="ff-title">\n'
+    + '    <div class="ff-title" id="ff-title">Leave your feedback</div>\n'
     + '    <div class="ff-subtitle" id="ff-coords-label">Pinned to your chosen location</div>\n'
-    + '    <div class="ff-cat-row">\n'
-    + '      <button class="ff-cat" data-cat="Support" onclick="selectCat(this)">Support</button>\n'
-    + '      <button class="ff-cat" data-cat="Object" onclick="selectCat(this)">Object</button>\n'
-    + '      <button class="ff-cat" data-cat="Question" onclick="selectCat(this)">Question</button>\n'
-    + '      <button class="ff-cat" data-cat="General" onclick="selectCat(this)">General</button>\n'
+    + '    <div class="ff-cat-row" role="radiogroup" aria-label="Feedback category">\n'
+    + '      <button type="button" class="ff-cat" role="radio" aria-checked="false" data-cat="Support" onclick="selectCat(this)">Support</button>\n'
+    + '      <button type="button" class="ff-cat" role="radio" aria-checked="false" data-cat="Object" onclick="selectCat(this)">Object</button>\n'
+    + '      <button type="button" class="ff-cat" role="radio" aria-checked="false" data-cat="Question" onclick="selectCat(this)">Question</button>\n'
+    + '      <button type="button" class="ff-cat" role="radio" aria-checked="false" data-cat="General" onclick="selectCat(this)">General</button>\n'
     + '    </div>\n'
     + '    <label class="ff-label" for="ff-comment">Your comment</label>\n'
     + '    <textarea id="ff-comment" placeholder="Tell us your thoughts\u2026" maxlength="500"></textarea>\n'
     + '    <div class="ff-actions">\n'
-    + '      <button class="ff-cancel" onclick="closeFeedbackForm()">Cancel</button>\n'
-    + '      <button class="ff-submit" id="ff-submit-btn" onclick="submitFeedback()">Submit</button>\n'
+    + '      <button type="button" class="ff-cancel" onclick="closeFeedbackForm()">Cancel</button>\n'
+    + '      <button type="button" class="ff-submit" id="ff-submit-btn" onclick="submitFeedback()">Submit</button>\n'
     + '    </div>\n'
     + '  </div>\n'
     + '</div>\n';
@@ -3339,7 +3412,8 @@ function buildHYS(i, col) {
     + '      <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#2255aa;margin-bottom:4px">Responses so far</div>\n'
     + '      <div id="pin-counter" style="font-size:28px;font-weight:700;line-height:1">\u2014</div>\n'
     + '    </div>\n'
-    + '    <div class="map-instruction" style="margin-top:20px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Click map to place your pin</div>\n'
+    + '    <div class="map-instruction" style="margin-top:20px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Click map to place your pin</div>\n'
+    + '    <button type="button" class="ff-no-pin-btn" onclick="openFbFormNoPin()">Prefer not to use the map? Leave feedback without picking a location</button>\n'
     + '  </section>\n';
 }
 
@@ -3435,7 +3509,7 @@ function buildJS() {
 'var map=null,cS=0,orbitActive=false,orbitRAF=null,orbitBearing=0,orbitTO=null,orbitSess=0;',
 'var ctxMarkers=[];',
 'var sitePin=null,animRAF=null,animPhase=0,drawProg=0,animIntvl=null;',
-'var mobVisible=false,infoOpen=false,fbMode=false,pendLL=null,selCat=null;',
+'var mobVisible=false,infoOpen=false,fbMode=false,pendLL=null,selCat=null,fbFormOpener=null,lbOpener=null;',
 'var fbGJ={type:"FeatureCollection",features:[]},fbPins=[];',
 'var DASH=12,GAP=5;',
 'var prose=document.getElementById("prose");',
@@ -3539,7 +3613,7 @@ function buildJS() {
 'function mkIconHtml(icon){',
 '  if(!icon) return "";',
 '  if(icon.length>1 && icon===icon.toLowerCase() && /^[a-z][a-z0-9-]+$/.test(icon)){',
-'    return ["<img src=\'https://unpkg.com/lucide-static@latest/icons/",icon,".svg\' width=\'20\' height=\'20\' style=\'filter:invert(1);opacity:.7;margin-bottom:6px;display:block\'/>" ].join("");',
+'    return ["<img src=\'https://unpkg.com/lucide-static@latest/icons/",icon,".svg\' alt=\'\' width=\'20\' height=\'20\' style=\'filter:invert(1);opacity:.7;margin-bottom:6px;display:block\'/>" ].join("");',
 '  }',
 '  return "<span style=\'font-size:22px;display:block;margin-bottom:6px\'>"+icon+"</span>";',
 '}',
@@ -3554,6 +3628,7 @@ function buildJS() {
 '  if(icon&&/^[a-z][a-z0-9-]+$/.test(icon)){',
 '    var img=document.createElement("img");',
 '    img.src="https://unpkg.com/lucide-static@latest/icons/"+icon+".svg";',
+'    img.alt="";',
 '    img.style.cssText="width:16px;height:16px;filter:invert(1);pointer-events:none";',
 '    dot.appendChild(img);',
 '  } else if(icon) {',
@@ -3770,7 +3845,9 @@ function buildJS() {
 '    openLB({name:p.name,color:p.color||"#d4820a",coords:[e.lngLat.lng,e.lngLat.lat],lightboxLayout:p.lightboxLayout,lightboxHeading:p.lightboxHeading,lightboxSubheading:p.lightboxSubheading,lightboxBody:p.lightboxBody,lightboxImg:p.lightboxImg,lightboxImgCaption:p.lightboxImgCaption,lightboxEmbedUrl:p.lightboxEmbedUrl});',
 '  });','}',
 ,
+'function focusLbClose(){setTimeout(function(){var b=document.querySelector("#lb-overlay .lb-close-btn");if(b)b.focus();},50);}',
 'function openLB(p){',
+'  lbOpener=document.activeElement;',
 '  document.querySelectorAll(".mapboxgl-popup").forEach(function(e){e.remove();});',
 '  var layout = p.lightboxLayout || "popover";',
 '  var ov = document.getElementById("lb-overlay");',
@@ -3784,11 +3861,12 @@ function buildJS() {
 '',
 '  if(layout === "full") {',
 '    var url = p.lightboxEmbedUrl||"";',
-'    html = url ? "<div class=\\"lb-iframe-wrap\\"><iframe src=\\"" + url + "\\" allowfullscreen allow=\\"fullscreen\\" scrolling=\\"no\\"></iframe></div>"',
+'    html = url ? "<div class=\\"lb-iframe-wrap\\"><iframe src=\\"" + url + "\\" title=\\"" + (heading||"Embedded content") + "\\" allowfullscreen allow=\\"fullscreen\\" scrolling=\\"no\\"></iframe></div>"',
 '               : "<div style=\\"display:flex;align-items:center;justify-content:center;height:100%;color:#888;font-size:14px\\">No embed URL set</div>";',
-'    html += "<button class=\\"lb-close-btn lb-close-light\\" onclick=\\"closeLightbox()\\">&#10005;</button>";',
+'    html += "<button class=\\"lb-close-btn lb-close-light\\" onclick=\\"closeLightbox()\\" aria-label=\\"Close\\">&#10005;</button>";',
 '    document.getElementById("lb-content").innerHTML = html;',
 '    ov.classList.add("open");',
+'    focusLbClose();',
 '    return;',
 '  }',
 '',
@@ -3797,7 +3875,7 @@ function buildJS() {
 '    html += img ? "<div class=\\"lb-img-col\\" onclick=\\"openLbFs(this)\\"><img src=\\"" + img + "\\" alt=\\"\\"/><button class=\\"lb-img-expand\\">&#8599; Expand</button></div>"',
 '               : "<div class=\\"lb-img-col\\" style=\\"background:#e9e5dc;display:flex;align-items:center;justify-content:center;color:#9a9590;font-size:32px\\">&#128444;</div>";',
 '    html += "<div class=\\"lb-text-col\\">";',
-'    html += "<button class=\\"lb-close-btn lb-close-dark\\" onclick=\\"closeLightbox()\\">&#10005;</button>";',
+'    html += "<button class=\\"lb-close-btn lb-close-dark\\" onclick=\\"closeLightbox()\\" aria-label=\\"Close\\">&#10005;</button>";',
 '    if(heading) html += "<div class=\\"lb-heading\\">" + heading + "</div>";',
 '    if(sub)     html += "<div class=\\"lb-subheading\\">" + sub + "</div>";',
 '    if(body)    html += "<div class=\\"lb-body\\">" + body + "</div>";',
@@ -3805,33 +3883,36 @@ function buildJS() {
 '    html += "</div>";',
 '    document.getElementById("lb-content").innerHTML = html;',
 '    ov.classList.add("open");',
+'    focusLbClose();',
 '    return;',
 '  }',
 '',
 '  if(layout === "iframe-text") {',
 '    var url2 = p.lightboxEmbedUrl||"";',
 '    html += "<div class=\\"lb-iframe-col\\"><div class=\\"lb-iframe-wrap\\">";',
-'    html += url2 ? "<iframe src=\\"" + url2 + "\\" allowfullscreen allow=\\"fullscreen\\" scrolling=\\"no\\"></iframe>"',
+'    html += url2 ? "<iframe src=\\"" + url2 + "\\" title=\\"" + (heading||"Embedded content") + "\\" allowfullscreen allow=\\"fullscreen\\" scrolling=\\"no\\"></iframe>"',
 '                 : "<div style=\\"display:flex;align-items:center;justify-content:center;height:100%;color:#666;font-size:13px\\">No embed URL</div>";',
 '    html += "</div></div>";',
 '    html += "<div class=\\"lb-text-col\\">";',
-'    html += "<button class=\\"lb-close-btn lb-close-dark\\" onclick=\\"closeLightbox()\\">&#10005;</button>";',
+'    html += "<button class=\\"lb-close-btn lb-close-dark\\" onclick=\\"closeLightbox()\\" aria-label=\\"Close\\">&#10005;</button>";',
 '    if(heading) html += "<div class=\\"lb-heading\\">" + heading + "</div>";',
 '    if(sub)     html += "<div class=\\"lb-subheading\\">" + sub + "</div>";',
 '    if(body)    html += "<div class=\\"lb-body\\">" + body + "</div>";',
 '    html += "</div>";',
 '    document.getElementById("lb-content").innerHTML = html;',
 '    ov.classList.add("open");',
+'    focusLbClose();',
 '    return;',
 '  }',
 '',
 '  // POPOVER',
-'  html += "<button class=\\"lb-close-btn lb-close-dark\\" style=\\"top:10px;right:10px\\" onclick=\\"closeLightbox()\\">&#10005;</button>";',
+'  html += "<button class=\\"lb-close-btn lb-close-dark\\" style=\\"top:10px;right:10px\\" onclick=\\"closeLightbox()\\" aria-label=\\"Close\\">&#10005;</button>";',
 '  if(heading) html += "<div class=\\"lb-popover-heading\\">" + heading + "</div>";',
 '  if(sub)     html += "<div class=\\"lb-popover-sub\\">" + sub + "</div>";',
 '  if(body)    html += "<div class=\\"lb-popover-body\\">" + body + "</div>";',
 '  document.getElementById("lb-content").innerHTML = html;',
 '  ov.classList.add("open");',
+'  focusLbClose();',
 '  map._lbCoords = p.coords; // store for repositioning on map move',
 '  positionPopover();',
 '}',
@@ -3839,7 +3920,7 @@ function buildJS() {
 '  var img=col.querySelector("img");if(!img||!img.src)return;',
 '  var fs=document.getElementById("lb-fs");',
 '  if(!fs){fs=document.createElement("div");fs.id="lb-fs";',
-'    fs.innerHTML="<img/><button id=\\"lb-fs-close\\" onclick=\\"closeLbFs()\\">&#10005;</button>";',
+'    fs.innerHTML="<img alt=\\"\\"/><button id=\\"lb-fs-close\\" onclick=\\"closeLbFs()\\" aria-label=\\"Close full-size image\\">&#10005;</button>";',
 '    document.body.appendChild(fs);',
 '    fs.addEventListener("click",function(e){if(e.target===fs)closeLbFs();});',
 '  }',
@@ -3896,6 +3977,8 @@ function buildJS() {
 '  if(map) map._lbCoords = null;',
 '  closeLbFs();',
 '  document.querySelectorAll(".mapboxgl-popup").forEach(function(e){e.remove();});',
+'  if(lbOpener&&lbOpener.focus)lbOpener.focus();',
+'  lbOpener=null;',
 '}',
 'function setupFbPopups(){',
 '  map.on("click","fb-c",function(e){',
@@ -3968,9 +4051,10 @@ function buildJS() {
 'function enableFB(){fbMode=true;if(map)map.getCanvas().classList.add("drop-mode");loadFBPins();}',
 'function disableFB(){fbMode=false;if(map)map.getCanvas().classList.remove("drop-mode");}',
 'function setupFbClick(){map.on("click",function(e){if(!fbMode)return;if(map.queryRenderedFeatures(e.point,{layers:["fb-c"]}).length)return;if(e.originalEvent.target.closest(".mapboxgl-popup"))return;e.originalEvent.stopPropagation();pendLL=e.lngLat;openFbForm(e.lngLat);});}',
-'function openFbForm(ll){selCat=null;document.querySelectorAll(".ff-cat").forEach(function(b){b.classList.remove("selected");});document.getElementById("ff-comment").value="";document.getElementById("ff-coords-label").textContent=ll.lat.toFixed(5)+", "+ll.lng.toFixed(5);document.getElementById("feedback-form-wrap").classList.add("open");setTimeout(function(){document.getElementById("ff-comment").focus();},300);}',
-'function closeFeedbackForm(){document.getElementById("feedback-form-wrap").classList.remove("open");pendLL=null;}',
-'function selectCat(btn){selCat=btn.dataset.cat;var col=CATEGORY_COLOURS[selCat];document.querySelectorAll(".ff-cat").forEach(function(b){b.classList.remove("selected");b.style.background="transparent";b.style.color="";});btn.classList.add("selected");btn.style.background=col;btn.style.color="#fff";}',
+'function openFbForm(ll,opener){fbFormOpener=opener||document.activeElement;selCat=null;document.querySelectorAll(".ff-cat").forEach(function(b){b.classList.remove("selected");b.setAttribute("aria-checked","false");});document.getElementById("ff-comment").value="";document.getElementById("ff-coords-label").textContent=ll.lat.toFixed(5)+", "+ll.lng.toFixed(5);document.getElementById("feedback-form-wrap").classList.add("open");setTimeout(function(){document.getElementById("ff-comment").focus();},300);}',
+'function openFbFormNoPin(){pendLL={lat:SITE_CENTRE[1],lng:SITE_CENTRE[0]};openFbForm(pendLL);var lbl=document.getElementById("ff-coords-label");if(lbl)lbl.textContent="General feedback (no specific location)";}',
+'function closeFeedbackForm(){document.getElementById("feedback-form-wrap").classList.remove("open");pendLL=null;if(fbFormOpener&&fbFormOpener.focus)fbFormOpener.focus();fbFormOpener=null;}',
+'function selectCat(btn){selCat=btn.dataset.cat;var col=CATEGORY_COLOURS[selCat];document.querySelectorAll(".ff-cat").forEach(function(b){b.classList.remove("selected");b.setAttribute("aria-checked","false");b.style.background="transparent";b.style.color="";});btn.classList.add("selected");btn.setAttribute("aria-checked","true");btn.style.background=col;btn.style.color="#fff";}',
 'async function submitFeedback(){',
 '  var cm=document.getElementById("ff-comment").value.trim();',
 '  if(!selCat){showToast("Please choose a category");return;}',
@@ -4011,15 +4095,36 @@ function buildJS() {
 '  });',
 '}',
 'var burger=document.getElementById("burger"),drawer=document.getElementById("drawer"),drOv=document.getElementById("drawer-overlay");',
-'if(burger)burger.addEventListener("click",function(){var o=drawer.classList.toggle("open");burger.classList.toggle("open",o);drOv.classList.toggle("open",o);});',
+'if(burger)burger.addEventListener("click",function(){var o=drawer.classList.toggle("open");burger.classList.toggle("open",o);burger.setAttribute("aria-expanded",o?"true":"false");drOv.classList.toggle("open",o);if(o)setTimeout(function(){drawer.focus();},50);});',
 'if(drOv)drOv.addEventListener("click",closeDr);',
-'function closeDr(){if(drawer)drawer.classList.remove("open");if(burger)burger.classList.remove("open");if(drOv)drOv.classList.remove("open");}',
+'function closeDr(){if(drawer)drawer.classList.remove("open");if(burger){burger.classList.remove("open");burger.setAttribute("aria-expanded","false");burger.focus();}if(drOv)drOv.classList.remove("open");}',
 'var _io=false;',
-'function toggleInfo(){_io=!_io;document.getElementById("info-panel").classList.toggle("open",_io);document.getElementById("info-toggle").classList.toggle("open",_io);}',
+'function toggleInfo(){_io=!_io;document.getElementById("info-panel").classList.toggle("open",_io);var it=document.getElementById("info-toggle");it.classList.toggle("open",_io);it.setAttribute("aria-expanded",_io?"true":"false");}',
 'document.addEventListener("click",function(e){var p=document.getElementById("info-panel"),t=document.getElementById("info-toggle");if(_io&&p&&t&&!p.contains(e.target)&&!t.contains(e.target)){_io=false;p.classList.remove("open");t.classList.remove("open");}});',
-'document.addEventListener("keydown",function(e){if(e.key==="Escape"){closeDr();closeLightbox();}if(e.key==="ArrowDown")scrollTo(Math.min(cS+1,SCENES.length-1));if(e.key==="ArrowUp")scrollTo(Math.max(cS-1,0));});',
 'function toggleMapMobile(){mobVisible=!mobVisible;var p=document.getElementById("map-panel"),b=document.getElementById("map-toggle-btn");p.classList.toggle("map-visible",mobVisible);b.classList.toggle("map-open",mobVisible);var it=document.getElementById("info-toggle");if(it)it.style.bottom=mobVisible?"104px":"24px";b.innerHTML=mobVisible?"<svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><line x1=\'18\' y1=\'6\' x2=\'6\' y2=\'18\'/><line x1=\'6\' y1=\'6\' x2=\'18\' y2=\'18\'/></svg> Close Map":"<svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><path d=\'M3 7l6-4 6 4 6-4v14l-6 4-6-4-6 4V7z\'/><line x1=\'9\' y1=\'3\' x2=\'9\' y2=\'17\'/><line x1=\'15\' y1=\'7\' x2=\'15\' y2=\'21\'/></svg> Show Map";if(mobVisible&&map)setTimeout(function(){map.resize();},50);}',
+'function trapFocus(e,container){',
+'  if(!container)return;',
+'  var f=container.querySelectorAll(\'a[href],button:not([disabled]),textarea,input,select,[tabindex]:not([tabindex="-1"])\');',
+'  if(!f.length)return;',
+'  var first=f[0],last=f[f.length-1];',
+'  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}',
+'  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}',
+'}',
 'document.addEventListener("keydown",function(e){',
+'  var ffWrap=document.getElementById("feedback-form-wrap"),lbOverlay=document.getElementById("lb-overlay");',
+'  var ffOpen=ffWrap&&ffWrap.classList.contains("open"),lbOpen=lbOverlay&&lbOverlay.classList.contains("open");',
+'  var drOpen=drawer&&drawer.classList.contains("open");',
+'  if(e.key==="Escape"){',
+'    if(ffOpen)closeFeedbackForm();',
+'    else if(lbOpen)closeLightbox();',
+'    else if(drOpen)closeDr();',
+'    else if(_io)toggleInfo();',
+'    return;',
+'  }',
+'  if(ffOpen||lbOpen){',
+'    if(e.key==="Tab")trapFocus(e,ffOpen?document.getElementById("feedback-form"):document.getElementById("lb-box"));',
+'    return;',
+'  }',
 '  if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA") return;',
 '  if(e.key==="ArrowRight"||e.key==="ArrowDown"){e.preventDefault();if(cS<SCENES.length-1)applyScene(cS+1,true);}',
 '  else if(e.key==="ArrowLeft"||e.key==="ArrowUp"){e.preventDefault();if(cS>0)applyScene(cS-1,true);}',
@@ -4051,11 +4156,11 @@ function buildCSS() {
 + '.scene-pip:hover .scene-pip-dot{border-color:rgba(255,255,255,.6)}'
 + '.scene-pip-line{width:1px;height:14px;background:rgba(255,255,255,.1)}'
 + '.scene-pip:last-child .scene-pip-line{display:none}'
-+ '.nav-brand{margin-top:auto;writing-mode:vertical-rl;transform:rotate(180deg);font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:#4a4845;padding-bottom:18px;user-select:none}'
++ '.nav-brand{margin-top:auto;writing-mode:vertical-rl;transform:rotate(180deg);font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--ghost);padding-bottom:18px;user-select:none}'
 + '#drawer{position:fixed;top:0;left:var(--nav-w);width:272px;height:100vh;background:#0f0e0d;z-index:99;transform:translateX(-110%);transition:transform .38s var(--ease);display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.05)}'
 + '#drawer.open{transform:translateX(0)}'
 + '.drawer-header{padding:32px 28px 20px;border-bottom:1px solid rgba(255,255,255,.06)}'
-+ '.drawer-project{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}'
++ '.drawer-project{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--ghost);margin-bottom:8px}'
 + '.drawer-title{font-family:var(--f-body);font-size:18px;font-weight:700;color:#f8f6f1;line-height:1.25}'
 + '.drawer-items{flex:1;overflow-y:auto;padding:16px 0}'
 + '.drawer-item{display:flex;align-items:center;gap:16px;padding:14px 28px;cursor:pointer;transition:background .18s;border-left:2px solid transparent}'
@@ -4108,7 +4213,7 @@ function buildCSS() {
 + '.ip-client-logo img{max-height:48px;max-width:180px;object-fit:contain;display:block}'
 + '.ip-client-about{font-size:12px;color:rgba(255,255,255,.55);line-height:1.6;margin-top:6px}'
 + '.ip-company-row{padding:20px 20px 0;display:flex;flex-direction:column;align-items:flex-start;border-top:1px solid rgba(255,255,255,.2)}'
-+ '.info-section-title,.ip-about-title{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:5px}'
++ '.info-section-title,.ip-about-title{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ghost);font-weight:700;margin-bottom:5px}'
 + '.info-section-text{font-size:11.5px;color:#9a9590;line-height:1.6}'
 + '.info-section-text a{color:#e8e4dd;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.2)}'
 + '.info-divider{height:1px;background:#fff;width:40px;margin:4px 0}'
@@ -4128,8 +4233,8 @@ function buildCSS() {
 + '.ff-cat:hover{color:#f8f6f1;border-color:rgba(255,255,255,.35)}'
 + '.ff-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ghost);margin-bottom:6px;display:block}'
 + '#ff-comment{width:100%;min-height:90px;resize:vertical;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#f8f6f1;font-size:13px;padding:10px 12px;outline:none}'
-+ '#ff-comment:focus{border-color:rgba(255,255,255,.3)}'
-+ '#ff-comment::placeholder{color:#4a4845}'
++ '#ff-comment:focus{border-color:rgba(255,255,255,.3);outline:2px solid #82c0e9;outline-offset:1px}'
++ '#ff-comment::placeholder{color:#8a847e}'
 + '.ff-actions{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}'
 + '.ff-cancel{padding:9px 18px;background:transparent;border:1px solid rgba(255,255,255,.12);color:var(--ghost);border-radius:4px;font-size:12px;cursor:pointer}'
 + '.ff-submit{padding:9px 22px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;text-transform:uppercase}'
