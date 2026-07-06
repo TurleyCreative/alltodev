@@ -415,6 +415,8 @@ function lucideSVG(name, size, color) {
   return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex-shrink:0">'+paths+'</svg>';
 }
 
+// Auto-rotated scene-tag dot colors, used unless a scene sets its own tagColor
+var SCENE_TAG_COLORS = ['#c0392b','#d4820a','#2a7c6b','#2255aa','#8b5cf6','#c0392b','#d4820a'];
 
 // ═══════════════════════════════════════════════════
 //  DEFAULT PROJECT
@@ -1605,6 +1607,12 @@ function renderRightPanel() {
   html += '</div></div>';
   html += '<div class="rs"><div class="st">Content</div>';
   html += fld('Nav label', 'sc-label', h(sc.label));
+  var scTagCol = sc.tagColor || SCENE_TAG_COLORS[AS % SCENE_TAG_COLORS.length];
+  html += '<div class="f"><label class="fl">Tag dot colour</label><div class="cr">'
+    + '<input type="color" id="sc-tag-col-p" value="'+scTagCol+'"/>'
+    + '<input type="text" id="sc-tag-col-t" value="'+scTagCol+'"/>'
+    + '<button class="btn btn-g" id="sc-tag-col-reset" style="font-size:10px;padding:6px 10px;white-space:nowrap'+(sc.tagColor?'':';display:none')+'">Reset</button>'
+    + '</div></div>';
   html += fld('Heading', 'sc-title', h(sc.title));
   html += '<div class="f"><label class="fl">Body copy <span style="font-size:9px;color:var(--ghost);font-family:var(--mono);font-weight:400;margin-left:4px">supports HTML</span></label>';
   html += '<div id="sc-body-toolbar" style="display:flex;gap:3px;margin-bottom:5px;flex-wrap:wrap">';
@@ -1657,10 +1665,27 @@ function renderRightPanel() {
     });
   });
 
-  // Bind scene editor inputs
+    // Bind scene editor inputs
   bindInput('sc-label', function(v) { P.scenes[AS].label=v; renderScenes(); });
 
+  var scTagP = el('sc-tag-col-p'), scTagT = el('sc-tag-col-t'), scTagReset = el('sc-tag-col-reset');
+  function setSceneTagColor(v) {
+    P.scenes[AS].tagColor = v;
+    if(scTagP) scTagP.value = v;
+    if(scTagT) scTagT.value = v;
+    if(scTagReset) scTagReset.style.display = '';
+    markDirty();
+  }
+  if(scTagP) scTagP.addEventListener('input', function() { setSceneTagColor(this.value); });
+  if(scTagT) scTagT.addEventListener('input', function() { setSceneTagColor(this.value); });
+  if(scTagReset) scTagReset.addEventListener('click', function() {
+    delete P.scenes[AS].tagColor;
+    markDirty();
+    renderRightPanel();
+  });
+
   bindInput('sc-title', function(v) { P.scenes[AS].title=v; });
+  
   // Rich text scene body
   var scBodyEl = el('sc-body');
   if(scBodyEl) {
@@ -3283,10 +3308,9 @@ function buildTextStyleCSS() {
   return out;
 }
 function buildChapters() {
-  var cols = ['#c0392b','#d4820a','#2a7c6b','#2255aa','#8b5cf6','#c0392b','#d4820a'];
   var out = '';
   P.scenes.forEach(function(sc, i) {
-    var col = cols[i % cols.length];
+    var col = sc.tagColor || SCENE_TAG_COLORS[i % SCENE_TAG_COLORS.length];
     var isHYS = (sc.label||'').toLowerCase().indexOf('say') >= 0 || (sc.label||'').toLowerCase().indexOf('your say') >= 0;
     if (isHYS) { out += buildHYS(i, col); return; }
     var tag = 'h1';
