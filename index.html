@@ -4,6 +4,9 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Consultation Map Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.css" rel="stylesheet"/>
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js"></script>
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css"/>
@@ -17,7 +20,7 @@
   --nt-bg:rgba(74,123,200,.1);--nt-border:rgba(74,123,200,.2);--nt-ink:#8ab0e0;
   --nt-w-bg:rgba(200,130,10,.1);--nt-w-border:rgba(200,130,10,.2);--nt-w-ink:#d4a84a;
   --badge-ink:var(--accent2);
-  --sans:"Segoe UI",system-ui,-apple-system,sans-serif;
+  --sans:"DM Sans",system-ui,-apple-system,sans-serif;
   --mono:"Consolas","Courier New",monospace;
   --ease:cubic-bezier(.4,0,.2,1);
 }
@@ -31,100 +34,100 @@
 html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--bg);color:var(--ink);transition:background .2s var(--ease),color .2s var(--ease)}
 #app{display:grid;grid-template-columns:300px 1fr 360px;grid-template-rows:52px 1fr;height:100vh;overflow:hidden}
 #topbar{grid-column:1/-1;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 16px}
-.tb-brand{font-size:13px;font-weight:800;letter-spacing:.06em;display:flex;align-items:center;gap:10px}
+.tb-brand{font-size:13px;font-weight:500;letter-spacing:.01em;display:flex;align-items:center;gap:10px}
 .tb-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
 .tb-tabs{display:flex;margin-left:24px}
-.tb-tab{padding:0 18px;height:52px;display:flex;align-items:center;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ghost);cursor:pointer;border-bottom:2px solid transparent;transition:all .18s}
+.tb-tab{padding:0 18px;height:52px;display:flex;align-items:center;font-size:12px;font-weight:500;color:var(--ghost);cursor:pointer;border-bottom:2px solid transparent;transition:all .18s}
 .tb-tab.on{color:var(--ink);border-bottom-color:var(--accent)}
 .tb-tab:hover{color:var(--ink)}
 .tb-actions{display:flex;gap:8px;align-items:center}
-.btn{padding:7px 16px;border-radius:4px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:none;transition:all .18s}
+.btn{padding:8px 16px;border-radius:8px;font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .18s}
 .btn-g{background:transparent;color:var(--ghost);border:1px solid var(--border2)}
 .btn-g:hover{color:var(--ink);border-color:var(--mid)}
 .btn-a{background:var(--accent);color:#fff}
 .btn-a:hover{background:#1a6393}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:100px;font-size:10px;font-weight:700;background:rgba(74,155,127,.15);color:var(--badge-ink)}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:500;background:rgba(74,155,127,.15);color:var(--badge-ink)}
 .bdot{width:6px;height:6px;border-radius:50%;background:var(--accent2);animation:bdp 2s infinite}
 @keyframes bdp{0%,100%{opacity:1}50%{opacity:.3}}
 #lp{background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;display:flex;flex-direction:column}
 #lp::-webkit-scrollbar{width:4px}#lp::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 .tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
-.tab{flex:1;padding:10px 8px;font-size:9px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--ghost);cursor:pointer;text-align:center;border-bottom:2px solid transparent;transition:all .18s}
+.tab{flex:1;padding:10px 8px;font-size:11px;letter-spacing:.01em;font-weight:500;color:var(--ghost);cursor:pointer;text-align:center;border-bottom:2px solid transparent;transition:all .18s}
 .tab.on{color:var(--ink);border-bottom-color:var(--accent)}
 .tc{display:none}.tc.on{display:block}
-.ps{padding:16px;border-bottom:1px solid var(--border)}
-.st{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2,rgba(255,255,255,.7));font-weight:600;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
-.ab{width:20px;height:20px;border-radius:3px;background:var(--mid);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--ink);transition:background .18s;border:none}
+.ps{padding:18px;border-bottom:1px solid var(--border)}
+.st{font-size:12px;letter-spacing:.01em;color:var(--ink2,rgba(255,255,255,.7));font-weight:500;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.ab{width:22px;height:22px;border-radius:7px;background:var(--mid);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--ink);transition:background .18s;border:none}
 .ab:hover{background:var(--accent);color:#fff}
-.f{margin-bottom:10px}.f:last-child{margin-bottom:0}
-.fl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ghost);margin-bottom:4px;display:block}
-.f input,.f textarea,.f select{width:100%;padding:7px 10px;background:var(--bg);border:1px solid var(--border2);border-radius:4px;color:var(--ink);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .18s}
+.f{margin-bottom:12px}.f:last-child{margin-bottom:0}
+.fl{font-size:11px;letter-spacing:.01em;color:var(--ghost);margin-bottom:5px;display:block;font-weight:500}
+.f input,.f textarea,.f select{width:100%;padding:8px 11px;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--ink);font-family:var(--sans);font-size:13px;outline:none;transition:border-color .18s}
 .f input:focus,.f textarea:focus{border-color:var(--accent)}
 .f textarea{resize:vertical;min-height:66px;line-height:1.5}
 .f2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .cr{display:flex;align-items:center;gap:8px}
-.cr input[type=color]{width:32px;height:32px;padding:2px;cursor:pointer;border-radius:4px;flex-shrink:0;border:1px solid var(--border2);background:var(--bg)}
-.si{padding:9px 11px;border-radius:5px;border:1px solid var(--border);cursor:pointer;background:var(--bg);display:flex;align-items:center;gap:8px;transition:all .18s;margin-bottom:5px}
+.cr input[type=color]{width:32px;height:32px;padding:2px;cursor:pointer;border-radius:7px;flex-shrink:0;border:1px solid var(--border2);background:var(--bg)}
+.si{padding:10px 12px;border-radius:9px;border:1px solid var(--border);cursor:pointer;background:var(--bg);display:flex;align-items:center;gap:8px;transition:all .18s;margin-bottom:6px}
 .si:hover{border-color:var(--border2)}.si.on{border-color:var(--accent);background:rgba(32,122,182,.06)}
-.li{padding:9px 11px;border-radius:5px;border:1px solid var(--border);cursor:pointer;background:var(--bg);display:flex;align-items:center;gap:8px;transition:all .18s;margin-bottom:5px}
+.li{padding:10px 12px;border-radius:9px;border:1px solid var(--border);cursor:pointer;background:var(--bg);display:flex;align-items:center;gap:8px;transition:all .18s;margin-bottom:6px}
 .li:hover{border-color:var(--border2)}.li.on{border-color:var(--accent2)}
-.in{font-size:10px;color:var(--ghost);font-family:var(--mono);min-width:18px}
-.nm{font-size:12px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.in{font-size:11px;color:var(--ghost);font-family:var(--mono);min-width:18px}
+.nm{font-size:13px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ia{display:flex;gap:3px;opacity:0;transition:opacity .18s}
 .si:hover .ia,.li:hover .ia{opacity:1}
-.ib{width:20px;height:20px;border-radius:3px;background:var(--mid);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ghost);transition:all .18s}
+.ib{width:22px;height:22px;border-radius:7px;background:var(--mid);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ghost);transition:all .18s}
 .ib:hover{background:var(--border2);color:var(--ink)}.ib.d:hover{background:#c0392b;color:#fff}
 .icon-preview{width:32px;height:32px;border-radius:50%;background:var(--ghost);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
 .id{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.lt{display:flex;flex-direction:column;gap:5px}
-.lr{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:4px;background:var(--bg);border:1px solid var(--border)}
-.ll{font-size:11px;font-weight:600;color:var(--ghost)}
+.lt{display:flex;flex-direction:column;gap:6px}
+.lr{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;border-radius:8px;background:var(--bg);border:1px solid var(--border)}
+.ll{font-size:12px;font-weight:500;color:var(--ghost)}
 .tg{width:30px;height:16px;border-radius:8px;background:var(--mid);cursor:pointer;position:relative;transition:background .2s;border:none;flex-shrink:0}
 .tg::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .2s}
 .tg.on{background:var(--accent)}.tg.on::after{transform:translateX(14px)}
 input[type=range]{flex:1;height:4px;border-radius:2px;background:var(--border2);-webkit-appearance:none;outline:none;cursor:pointer}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);cursor:pointer}
 .rv{font-family:var(--mono);font-size:11px;color:var(--ink);min-width:30px;text-align:right}
-.nt{padding:8px 12px;border-radius:5px;background:var(--nt-bg);border:1px solid var(--nt-border);font-size:11px;color:var(--nt-ink);font-family:var(--mono);line-height:1.5;margin-bottom:10px}
+.nt{padding:9px 13px;border-radius:9px;background:var(--nt-bg);border:1px solid var(--nt-border);font-size:12px;color:var(--nt-ink);font-family:var(--mono);line-height:1.5;margin-bottom:10px}
 .nt a{color:inherit}
 .nt.w{background:var(--nt-w-bg);border-color:var(--nt-w-border);color:var(--nt-w-ink)}
 #mp{position:relative;overflow:hidden;background:#111}
 #pm{width:100%;height:100%}
 #pnt{position:absolute;inset:0;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:40px}
-#pnt h3{font-size:16px;font-weight:700}
+#pnt h3{font-size:16px;font-weight:500}
 #pnt p{font-size:12px;color:var(--ghost);max-width:26ch;line-height:1.6;font-family:var(--mono)}
-#pl{position:absolute;bottom:12px;left:12px;background:rgba(13,12,11,.85);backdrop-filter:blur(8px);padding:7px 12px;border-radius:4px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ghost);pointer-events:none;border-top:2px solid var(--accent)}
+#pl{position:absolute;bottom:12px;left:12px;background:rgba(13,12,11,.85);backdrop-filter:blur(8px);padding:7px 12px;border-radius:7px;font-size:11px;letter-spacing:.02em;color:var(--ghost);pointer-events:none;border-top:2px solid var(--accent)}
 #rp{background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
 #rp::-webkit-scrollbar{width:4px}#rp::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-.rh{padding:16px 16px 12px;border-bottom:1px solid var(--border)}
-.re{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ghost);margin-bottom:2px}
-.rt{font-size:15px;font-weight:800}
-.rs{padding:16px;border-bottom:1px solid var(--border)}
+.rh{padding:18px 18px 14px;border-bottom:1px solid var(--border)}
+.re{font-size:11px;letter-spacing:.02em;color:var(--ghost);margin-bottom:3px}
+.rt{font-size:16px;font-weight:500}
+.rs{padding:18px;border-bottom:1px solid var(--border)}
 .rs:last-child{border-bottom:none}
 .es{padding:28px 16px;text-align:center;font-size:12px;color:var(--ghost);font-family:var(--mono);line-height:1.7}
 #em{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center}
 #em.on{display:flex}
-.mb{background:var(--surface);border:1px solid var(--border2);border-radius:10px;width:min(500px,calc(100vw - 40px));box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.mh{padding:20px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.mh h3{font-size:14px;font-weight:800}
-.mx{width:26px;height:26px;border-radius:4px;background:var(--mid);border:none;cursor:pointer;color:var(--ghost);font-size:14px;display:flex;align-items:center;justify-content:center}
+.mb{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:min(500px,calc(100vw - 40px));box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.mh{padding:22px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.mh h3{font-size:15px;font-weight:500}
+.mx{width:28px;height:28px;border-radius:8px;background:var(--mid);border:none;cursor:pointer;color:var(--ghost);font-size:14px;display:flex;align-items:center;justify-content:center}
 .mx:hover{color:var(--ink)}
-.md{padding:18px 22px;max-height:70vh;overflow-y:auto}
-.mo{padding:13px 16px;border-radius:7px;border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all .18s}
+.md{padding:20px 24px;max-height:70vh;overflow-y:auto}
+.mo{padding:14px 17px;border-radius:11px;border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all .18s}
 .mo:hover{border-color:var(--accent);background:rgba(32,122,182,.05)}
-.mo h4{font-size:13px;font-weight:700;margin-bottom:3px}
-.mo p{font-size:11px;color:var(--ghost);font-family:var(--mono);line-height:1.5}
-.a11y-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)}
+.mo h4{font-size:13px;font-weight:500;margin-bottom:3px}
+.mo p{font-size:12px;color:var(--ghost);line-height:1.5}
+.a11y-item{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)}
 .a11y-item:last-child{border-bottom:none}
-.a11y-badge{flex-shrink:0;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:3px;white-space:nowrap;font-family:var(--sans)}
+.a11y-badge{flex-shrink:0;font-size:10px;font-weight:500;letter-spacing:.02em;padding:3px 8px;border-radius:6px;white-space:nowrap;font-family:var(--sans)}
 .a11y-pass .a11y-badge{background:rgba(74,155,127,.15);color:var(--accent2)}
 .a11y-warn .a11y-badge{background:rgba(212,130,10,.15);color:#d4820a}
 .a11y-fail .a11y-badge{background:rgba(192,57,43,.15);color:#e2564a}
 .a11y-manual .a11y-badge{background:var(--mid);color:var(--ghost)}
-.a11y-item-label{font-size:12px;font-weight:600;line-height:1.4}
-.a11y-item-detail{font-size:10px;color:var(--ghost);font-family:var(--mono);line-height:1.5;margin-top:2px}
+.a11y-item-label{font-size:13px;font-weight:500;line-height:1.4}
+.a11y-item-detail{font-size:11px;color:var(--ghost);line-height:1.5;margin-top:2px}
 .sr{display:flex;gap:7px;margin-top:8px}
-.sr input{flex:1;padding:7px 10px;background:var(--bg);border:1px solid var(--border2);border-radius:4px;color:var(--ghost);font-family:var(--mono);font-size:11px;outline:none}
+.sr input{flex:1;padding:8px 11px;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--ghost);font-family:var(--sans);font-size:12px;outline:none}
 /* Consistent keyboard focus ring across custom controls */
 .btn:focus-visible,.tab:focus-visible,.tb-tab:focus-visible,.tg:focus-visible,
 .ab:focus-visible,.ib:focus-visible,.si:focus-visible,.li:focus-visible,
@@ -218,7 +221,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 </div>
 <div id="mp"><div id="pm"></div>
   <div id="draw-toolbar" style="display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:6px 8px;gap:6px;align-items:center;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,.2)">
-    <span style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ghost);font-family:var(--mono)">Draw mode</span>
+    <span style="font-size:11px;color:var(--ghost)">Draw mode</span>
     <button class="btn btn-g" id="draw-poly-btn" style="font-size:11px;padding:4px 10px">&#9655; Polygon</button>
     <button class="btn btn-g" id="draw-line-btn" style="font-size:11px;padding:4px 10px">&#9655; Line</button>
     <button class="btn btn-g" id="draw-delete-btn" style="font-size:11px;padding:4px 10px;color:var(--red)">&#10005; Delete</button>
@@ -254,10 +257,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div style="position:relative;width:min(900px,calc(100vw - 40px));height:min(680px,calc(100vh - 60px));display:flex;flex-direction:column">
     <!-- Header bar -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(15,14,13,.9);border-radius:10px 10px 0 0;border:1px solid rgba(255,255,255,.1);border-bottom:none">
-      <div style="font-size:11px;font-family:var(--mono);color:rgba(255,255,255,.6);letter-spacing:.1em;text-transform:uppercase">Lightbox Preview</div>
+      <div style="font-size:12px;font-weight:500;color:rgba(255,255,255,.75)">Lightbox Preview</div>
       <div style="display:flex;align-items:center;gap:8px">
         <div id="lb-prev-layout-label" style="font-size:10px;font-family:var(--mono);color:rgba(255,255,255,.4)"></div>
-        <button id="btn-lb-preview-close" aria-label="Close lightbox preview" style="width:26px;height:26px;border-radius:4px;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:rgba(255,255,255,.7);font-size:14px;display:flex;align-items:center;justify-content:center">&#10005;</button>
+        <button id="btn-lb-preview-close" aria-label="Close lightbox preview" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:rgba(255,255,255,.7);font-size:14px;display:flex;align-items:center;justify-content:center">&#10005;</button>
       </div>
     </div>
     <!-- Preview area — simulates map panel -->
@@ -277,14 +280,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 
 <!-- Bulk import markers modal -->
 <div id="import-modal" style="position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center">
-  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;width:min(500px,calc(100vw - 40px));box-shadow:0 20px 60px rgba(0,0,0,.5)">
-    <div style="padding:20px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <h3 style="font-size:14px;font-weight:800">Import Markers from GeoJSON</h3>
-      <button id="btn-import-close" aria-label="Close import dialog" style="width:26px;height:26px;border-radius:4px;background:var(--mid);border:none;cursor:pointer;color:var(--ghost);font-size:14px;display:flex;align-items:center;justify-content:center">&#10005;</button>
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:min(500px,calc(100vw - 40px));box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="padding:22px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <h3 style="font-size:15px;font-weight:500">Import Markers from GeoJSON</h3>
+      <button id="btn-import-close" aria-label="Close import dialog" style="width:28px;height:28px;border-radius:8px;background:var(--mid);border:none;cursor:pointer;color:var(--ghost);font-size:14px;display:flex;align-items:center;justify-content:center">&#10005;</button>
     </div>
-    <div style="padding:18px 22px">
+    <div style="padding:20px 24px">
       <div class="nt" style="margin-bottom:12px">Paste a GeoJSON <code>FeatureCollection</code> of Points from <a href="https://geojson.io" target="_blank">geojson.io</a>. Each point becomes a marker. Properties <code>name</code>, <code>description</code>, and <code>marker-color</code> are read automatically.</div>
-      <textarea id="import-geojson" style="width:100%;min-height:140px;resize:vertical;background:var(--bg);border:1px solid var(--border2);border-radius:4px;color:var(--ink);font-family:var(--mono);font-size:11px;padding:10px;outline:none" placeholder='{"type":"FeatureCollection","features":[]}'></textarea>
+      <textarea id="import-geojson" style="width:100%;min-height:140px;resize:vertical;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--ink);font-family:var(--mono);font-size:11px;padding:10px;outline:none" placeholder='{"type":"FeatureCollection","features":[]}'></textarea>
       <div id="import-status" style="font-size:11px;font-family:var(--mono);margin-top:8px;height:18px"></div>
       <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
         <button class="btn btn-g" id="btn-import-cancel">Cancel</button>
@@ -305,7 +308,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
       <div style="width:6px;height:6px;border-radius:50%;background:#f3bf57;animation:splash-pulse 1.2s ease-in-out .6s infinite"></div>
       <div style="width:6px;height:6px;border-radius:50%;background:#78bc43;animation:splash-pulse 1.2s ease-in-out .8s infinite"></div>
     </div>
-    <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,0,0,.3);font-family:system-ui,sans-serif">Consultation Builder</div>
+    <div style="font-size:11px;letter-spacing:.02em;color:rgba(0,0,0,.35);font-family:system-ui,sans-serif;font-weight:500">Consultation Builder</div>
   </div>
 </div>
 <style>
@@ -1622,16 +1625,16 @@ function renderOnboarding() {
     var bg = s.done ? 'rgba(74,155,127,.1)' : 'rgba(255,255,255,.02)';
     var border = s.done ? '1px solid rgba(74,155,127,.3)' : '1px solid var(--border)';
     var checkCol = s.done ? '#2a7c6b' : 'var(--border2)';
-    html += '<div class="ob-step" data-si="'+si+'" style="padding:10px 12px;border-radius:6px;background:'+bg+';border:'+border+';margin-bottom:7px;cursor:pointer">';
+    html += '<div class="ob-step" data-si="'+si+'" style="padding:11px 13px;border-radius:9px;background:'+bg+';border:'+border+';margin-bottom:7px;cursor:pointer">';
     html += '<div style="display:flex;align-items:center;gap:10px">';
-    html += '<div style="width:20px;height:20px;border-radius:50%;background:'+checkCol+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:#fff;font-weight:700">'+(s.done?'&#10003;':s.num)+'</div>';
-    html += '<div><div style="font-size:12px;font-weight:700;color:var(--ink)">'+(s.done?'<span style="opacity:.4;text-decoration:line-through">'+s.label+'</span>':s.label)+'</div>';
-    html += '<div style="font-size:10px;color:var(--ghost);font-family:var(--mono);margin-top:2px">'+s.hint+'</div></div>';
+    html += '<div style="width:20px;height:20px;border-radius:50%;background:'+checkCol+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:#fff;font-weight:500">'+(s.done?'&#10003;':s.num)+'</div>';
+    html += '<div><div style="font-size:13px;font-weight:500;color:var(--ink)">'+(s.done?'<span style="opacity:.4;text-decoration:line-through">'+s.label+'</span>':s.label)+'</div>';
+    html += '<div style="font-size:11px;color:var(--ghost);font-family:var(--mono);margin-top:2px">'+s.hint+'</div></div>';
     html += '</div></div>';
   });
   if(done === steps.length) {
-    html += '<div style="padding:14px;border-radius:6px;background:rgba(74,155,127,.12);border:1px solid rgba(74,155,127,.3);text-align:center">';
-    html += '<div style="font-size:14px;font-weight:800;color:#2a7c6b;margin-bottom:4px">&#127881; All set!</div>';
+    html += '<div style="padding:15px;border-radius:9px;background:rgba(74,155,127,.12);border:1px solid rgba(74,155,127,.3);text-align:center">';
+    html += '<div style="font-size:14px;font-weight:500;color:#2a7c6b;margin-bottom:4px">&#127881; All set!</div>';
     html += '<div style="font-size:11px;color:var(--ghost)">Your consultation is ready. Hit Download to export.</div></div>';
   }
   html += '</div>';
@@ -1692,14 +1695,14 @@ function renderRightPanel() {
   html += '<div id="sc-body-toolbar" style="display:flex;gap:3px;margin-bottom:5px;flex-wrap:wrap">';
   var scTbBtns = [{cmd:'bold',label:'<b>B</b>',title:'Bold'},{cmd:'italic',label:'<i>I</i>',title:'Italic'},{cmd:'insertUnorderedList',label:'&#8226; List',title:'Bullet list'}];
   scTbBtns.forEach(function(b){
-    html += '<button type="button" data-sc-cmd="'+b.cmd+'" title="'+b.title+'" style="padding:4px 8px;border-radius:3px;border:1px solid var(--border2);background:var(--bg);color:var(--ink);cursor:pointer;font-size:11px">'+b.label+'</button>';
+    html += '<button type="button" data-sc-cmd="'+b.cmd+'" title="'+b.title+'" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--ink);cursor:pointer;font-size:11px">'+b.label+'</button>';
   });
-  html += '<button type="button" id="sc-body-clear" style="padding:4px 8px;border-radius:3px;border:1px solid var(--border2);background:var(--bg);color:var(--ghost);cursor:pointer;font-size:11px">&#10227; Clear</button>';
-  html += '<button type="button" id="sc-body-html-toggle" title="Paste raw HTML" style="padding:4px 8px;border-radius:3px;border:1px solid var(--border2);background:var(--bg);color:var(--ghost);cursor:pointer;font-size:11px;margin-left:auto">&lt;/&gt; HTML</button>';
+  html += '<button type="button" id="sc-body-clear" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--ghost);cursor:pointer;font-size:11px">&#10227; Clear</button>';
+  html += '<button type="button" id="sc-body-html-toggle" title="Paste raw HTML" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--ghost);cursor:pointer;font-size:11px;margin-left:auto">&lt;/&gt; HTML</button>';
   html += '</div>';
   html += '<div id="sc-body" contenteditable="true" style="min-height:80px;padding:10px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--ink);font-size:13px;line-height:1.6;outline:none;transition:border-color .18s">'+(sc.body||'')+'</div>';
   html += '<textarea id="sc-body-raw" style="display:none;width:100%;min-height:100px;padding:10px 12px;background:var(--bg);border:1px solid var(--accent);border-radius:6px;color:var(--accent);font-family:var(--mono);font-size:11px;line-height:1.5;outline:none;resize:vertical;box-sizing:border-box" placeholder="Paste raw HTML here then click Apply"></textarea>';
-  html += '<button type="button" id="sc-body-html-apply" style="display:none;margin-top:4px;padding:5px 14px;border-radius:3px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:11px;font-weight:700">Apply HTML</button>';
+  html += '<button type="button" id="sc-body-html-apply" style="display:none;margin-top:4px;padding:6px 14px;border-radius:7px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:11px;font-weight:500">Apply HTML</button>';
   html += '</div>';
   html += '</div>';
   html += '<div class="rs"><div class="st">Question &amp; Accessibility</div>';
@@ -1912,13 +1915,13 @@ function renderMarkerEditor(i) {
   html += '<input type="text" id="mk-icon" value="'+h(curIcon)+'" placeholder="e.g. map-pin or paste emoji" style="margin-bottom:8px"/>';
 
   // Icon grid grouped by category
-  html += '<div id="mk-icon-grid" style="max-height:200px;overflow-y:auto;padding:6px;background:var(--bg);border:1px solid var(--border2);border-radius:4px;scrollbar-width:thin">';
+  html += '<div id="mk-icon-grid" style="max-height:200px;overflow-y:auto;padding:6px;background:var(--bg);border:1px solid var(--border2);border-radius:9px;scrollbar-width:thin">';
   Object.keys(ICONS).forEach(function(cat) {
-    html += '<div style="font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--ghost);padding:4px 2px 3px;font-family:var(--mono)">'+cat+'</div>';
+    html += '<div style="font-size:10px;color:var(--ghost);padding:4px 2px 3px;font-weight:500">'+cat+'</div>';
     html += '<div style="display:grid;grid-template-columns:repeat(9,1fr);gap:3px;margin-bottom:6px">';
     ICONS[cat].forEach(function(name) {
       var isSel = (curIcon === name);
-      html += '<button class="icon-btn'+(isSel?' on':'')+'" data-ico="'+name+'" title="'+name+'" aria-label="'+name+'" style="width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:'+(isSel?'var(--accent)':'var(--mid)')+';border:1px solid '+(isSel?'var(--accent)':'var(--border2)')+';border-radius:4px;cursor:pointer;padding:0">'
+      html += '<button class="icon-btn'+(isSel?' on':'')+'" data-ico="'+name+'" title="'+name+'" aria-label="'+name+'" style="width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:'+(isSel?'var(--accent)':'var(--mid)')+';border:1px solid '+(isSel?'var(--accent)':'var(--border2)')+';border-radius:6px;cursor:pointer;padding:0">'
         + lucideSVG(name,15,isSel?'#fff':'var(--ghost)')
         + '</button>';
     });
@@ -1992,7 +1995,7 @@ function renderMarkerEditor(i) {
     lbLayouts.forEach(function(l) {
       var sel = (lb.layout||'popover')===l.id;
       html += '<button data-layout="'+l.id+'" style="padding:8px 6px;border-radius:5px;border:1px solid '+(sel?'var(--accent)':'var(--border2)')+';background:'+(sel?'rgba(32,122,182,.1)':'var(--bg)')+';cursor:pointer;text-align:left">'
-        + '<div style="font-size:11px;font-weight:700;color:var(--ink);margin-bottom:2px">'+l.label+'</div>'
+        + '<div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:2px">'+l.label+'</div>'
         + '<div style="font-size:9px;color:var(--ghost);font-family:var(--mono)">'+l.desc+'</div>'
         + '</button>';
     });
@@ -2011,9 +2014,9 @@ function renderMarkerEditor(i) {
       {cmd:'insertParagraph',     label:'&para;',       title:'New paragraph'},
     ];
     tbBtns.forEach(function(b) {
-      html += '<button type="button" data-cmd="'+b.cmd+'" title="'+b.title+'" style="padding:4px 8px;border-radius:3px;border:1px solid var(--border2);background:var(--bg);color:var(--ink);cursor:pointer;font-size:11px">'+b.label+'</button>';
+      html += '<button type="button" data-cmd="'+b.cmd+'" title="'+b.title+'" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--ink);cursor:pointer;font-size:11px">'+b.label+'</button>';
     });
-    html += '<button type="button" id="mk-lb-clear" title="Clear formatting" style="padding:4px 8px;border-radius:3px;border:1px solid var(--border2);background:var(--bg);color:var(--ghost);cursor:pointer;font-size:11px">&#10227; Clear</button>';
+    html += '<button type="button" id="mk-lb-clear" title="Clear formatting" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--ghost);cursor:pointer;font-size:11px">&#10227; Clear</button>';
     html += '</div>';
     html += '<div id="mk-lb-body" contenteditable="true" style="min-height:90px;padding:10px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--ink);font-size:13px;line-height:1.6;outline:none;transition:border-color .18s" placeholder="Body text...">' + (lb.body||'<p>Add your description here.</p>') + '</div>';
     html += '</div>';
@@ -2273,7 +2276,7 @@ function renderZoneEditor(i) {
     zlbLayouts.forEach(function(l){
       var sel=(zlb.layout||'popover')===l.id;
       html += '<button data-zlayout="'+l.id+'" style="padding:6px;border-radius:5px;border:1px solid '+(sel?'var(--accent)':'var(--border2)')+';background:'+(sel?'rgba(32,122,182,.1)':'var(--bg)')+';cursor:pointer;text-align:left">'
-        + '<div style="font-size:10px;font-weight:700;color:var(--ink)">'+l.label+'</div>'
+        + '<div style="font-size:11px;font-weight:500;color:var(--ink)">'+l.label+'</div>'
         + '<div style="font-size:9px;color:var(--ghost);font-family:var(--mono)">'+l.desc+'</div>'
         + '</button>';
     });
