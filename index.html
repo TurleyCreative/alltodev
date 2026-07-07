@@ -44,6 +44,11 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
 .btn{padding:8px 16px;border-radius:8px;font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .18s}
 .btn-g{background:transparent;color:var(--ghost);border:1px solid var(--border2)}
 .btn-g:hover{color:var(--ink);border-color:var(--mid)}
+.btn-dl{background:var(--accent);color:#fff;border:1px solid var(--accent)}
+.btn-dl:hover{opacity:.88}
+.btn-ic{display:inline-flex;align-items:center;gap:6px}
+.btn-ic svg{flex-shrink:0}
+.ico-h{display:inline-flex;align-items:center;gap:6px;vertical-align:middle}
 .btn-a{background:var(--accent);color:#fff}
 .btn-a:hover{background:#1a6393}
 .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:500;background:rgba(74,155,127,.15);color:var(--badge-ink)}
@@ -115,7 +120,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 .md{padding:20px 24px;max-height:70vh;overflow-y:auto}
 .mo{padding:14px 17px;border-radius:11px;border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all .18s}
 .mo:hover{border-color:var(--accent);background:rgba(32,122,182,.05)}
-.mo h4{font-size:13px;font-weight:500;margin-bottom:3px}
+.mo h4{font-size:13px;font-weight:500;margin-bottom:3px;display:flex;align-items:center;gap:6px}
 .mo p{font-size:12px;color:var(--ghost);line-height:1.5}
 .a11y-item{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)}
 .a11y-item:last-child{border-bottom:none}
@@ -138,6 +143,20 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 .f input:focus-visible,.f textarea:focus-visible,.f select:focus-visible{outline-offset:1px}
 /* Theme toggle */
 #btn-theme-toggle{width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;font-size:15px}
+#btn-theme-toggle .tt-icon-wrap{position:relative;width:18px;height:18px}
+#btn-theme-toggle .tt-icon-wrap svg{position:absolute;inset:0;opacity:0;transition:opacity .3s ease,transform .3s ease;transform:scale(.7) rotate(-20deg)}
+:root[data-theme="light"] #btn-theme-toggle .tt-sun{opacity:1;transform:scale(1) rotate(0deg)}
+:root[data-theme="light"] #btn-theme-toggle:hover .tt-sun{opacity:0;transform:scale(.7) rotate(20deg)}
+:root[data-theme="light"] #btn-theme-toggle:hover .tt-sunset{opacity:1;transform:scale(1) rotate(0deg)}
+:root[data-theme="dark"] #btn-theme-toggle .tt-moon{opacity:1;transform:scale(1) rotate(0deg)}
+:root[data-theme="dark"] #btn-theme-toggle:hover .tt-moon{opacity:0;transform:scale(.7) rotate(20deg)}
+:root[data-theme="dark"] #btn-theme-toggle:hover .tt-sunrise{opacity:1;transform:scale(1) rotate(0deg)}
+@keyframes tt-spin{
+  0%{transform:rotate(0deg) scale(1)}
+  50%{transform:rotate(180deg) scale(.72);opacity:.55}
+  100%{transform:rotate(360deg) scale(1);opacity:1}
+}
+#btn-theme-toggle .tt-icon-wrap.spin{animation:tt-spin .5s cubic-bezier(.4,0,.2,1)}
 /* Unsaved-changes indicator (dot + text, not color-only) */
 #dirty-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:bdp 1.4s infinite;flex-shrink:0}
 .tb-status{font-size:10px;font-family:var(--mono);color:var(--ghost);display:flex;align-items:center;gap:6px}
@@ -169,22 +188,23 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
     <div class="tb-tabs">
       <div class="tb-tab on" id="tt-editor" onclick="switchMain('editor')">Editor</div>
       <div class="tb-tab" id="tt-settings" onclick="switchMain('settings')">Settings</div>
+      <div class="tb-tab" id="tt-seo" onclick="switchMain('seo')">SEO</div>
+      <div class="tb-tab" id="tt-about" onclick="openAboutModal()">About</div>
     </div>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
     <span id="save-status" class="tb-status" role="status" aria-live="polite"><span id="dirty-dot" style="display:none"></span><span id="save-status-text"></span></span>
     <div class="badge"><div class="bdot"></div>Live Preview</div>
-    <button class="btn btn-g" id="btn-theme-toggle" title="Switch to light mode" aria-label="Switch to light mode" aria-pressed="false">&#9789;</button>
-    <label class="btn btn-g" id="btn-open-proj" title="Open project file" style="cursor:pointer;display:flex;align-items:center;gap:5px">&#128194; Open<input type="file" id="open-proj-file" accept=".json" style="display:none"/></label>
-    <button class="btn btn-g" id="btn-save-proj" title="Save project file">&#128190; Save</button>
+    <button class="btn btn-g" id="btn-theme-toggle" title="Switch to light mode" aria-label="Switch to light mode" aria-pressed="false"><div class="tt-icon-wrap"><svg class="tt-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg><svg class="tt-sunset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m16 6-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg><svg class="tt-sunrise" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg><svg class="tt-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></div></button>
+    <label class="btn btn-g btn-ic" id="btn-open-proj" title="Open project file" style="cursor:pointer"><span class="ico-h" data-icon="folder-open" data-icon-size="13"></span>Open<input type="file" id="open-proj-file" accept=".json" style="display:none"/></label>
+    <button class="btn btn-g btn-ic" id="btn-save-proj" title="Save project file"><span class="ico-h" data-icon="save" data-icon-size="13"></span>Save</button>
     <div style="width:1px;height:18px;background:var(--border2);margin:0 2px"></div>
-    <button class="btn btn-g" id="btn-preview" onclick="previewInNewTab()">&#9654; Preview</button>
-    <button class="btn btn-g" id="btn-copy-link">&#128279; Share</button>
-    <button class="btn btn-g" id="btn-export">Export</button>
-    <button class="btn btn-dl" id="btn-dl">&#8595; Download</button>
+    <button class="btn btn-g btn-ic" id="btn-preview" onclick="previewInNewTab()"><span class="ico-h" data-icon="play" data-icon-size="13"></span>Preview</button>
+    <button class="btn btn-g btn-ic" id="btn-copy-link"><span class="ico-h" data-icon="link" data-icon-size="13"></span>Share</button>
+    <button class="btn btn-dl btn-ic" id="btn-export"><span class="ico-h" data-icon="download" data-icon-size="13"></span>Export</button>
   </div></div>
 <div id="lp">
-  <div class="tabs" style="display:grid;grid-template-columns:repeat(6,1fr)">
+  <div class="tabs">
     <div class="tab on" id="tab-sc">Scenes</div>
     <div class="tab" id="tab-mk">Markers</div>
     <div class="tab" id="tab-zn">Zones</div>
@@ -192,28 +212,28 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
     <div class="tab" id="tab-ov">Images</div>
   </div>
   <div class="tc on" id="tc-sc">
-    <div class="ps"><div class="st">Scenes <button class="ab" id="btn-add-sc" aria-label="Add scene">+</button></div><div id="scene-list"></div></div>
+    <div class="ps"><div class="st">Scenes <button class="ab" id="btn-add-sc" aria-label="Add scene"><span data-icon="plus" data-icon-size="13"></span></button></div><div id="scene-list"></div></div>
   </div>
   <div class="tc" id="tc-mk">
-    <div class="ps"><div class="st">Context Markers <div style="display:flex;gap:4px"><button class="ab" id="btn-import-mk" title="Import from GeoJSON" aria-label="Import markers from GeoJSON">&#8681;</button><button class="ab" id="btn-add-mk" aria-label="Add marker">+</button></div></div>
+    <div class="ps"><div class="st">Context Markers <div style="display:flex;gap:4px"><button class="ab" id="btn-import-mk" title="Import from GeoJSON" aria-label="Import markers from GeoJSON"><span data-icon="upload" data-icon-size="13"></span></button><button class="ab" id="btn-add-mk" aria-label="Add marker"><span data-icon="plus" data-icon-size="13"></span></button></div></div>
     <div class="nt">Shown on Wider Context scenes. Click map to place.</div>
     <div id="marker-list"></div></div>
   </div>
   <div class="tc" id="tc-zn">
-    <div class="ps"><div class="st">Constraint Zones <button class="ab" id="btn-add-zn" aria-label="Add zone">+</button></div>
+    <div class="ps"><div class="st">Constraint Zones <button class="ab" id="btn-add-zn" aria-label="Add zone"><span data-icon="plus" data-icon-size="13"></span></button></div>
     <div class="nt">Draw on <a href="https://geojson.io" target="_blank">geojson.io</a> then paste coordinates.</div>
     <div id="zone-list"></div></div>
   </div>
   <div class="tc" id="tc-ln">
     <div class="ps">
-      <div class="st">Lines <button class="ab" id="btn-add-ln" aria-label="Add line">+</button></div>
+      <div class="st">Lines <button class="ab" id="btn-add-ln" aria-label="Add line"><span data-icon="plus" data-icon-size="13"></span></button></div>
       <div class="nt">Draw lines on <a href="https://geojson.io" target="_blank">geojson.io</a> then paste GeoJSON. Accepts LineString or MultiLineString.</div>
       <div id="line-list"></div>
     </div>
   </div>
     <div class="tc" id="tc-ov">
     <div class="ps">
-      <div class="st">Map Image Overlays <button class="ab" id="btn-add-ov" aria-label="Add image overlay">+</button></div>
+      <div class="st">Map Image Overlays <button class="ab" id="btn-add-ov" aria-label="Add image overlay"><span data-icon="plus" data-icon-size="13"></span></button></div>
       <div class="nt">Geo-referenced images draped over the map. Site plans, renders, masterplans. PNG with transparency recommended.</div>
       <div id="overlay-list"></div>
     </div>
@@ -222,31 +242,31 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 <div id="mp"><div id="pm"></div>
   <div id="draw-toolbar" style="display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:6px 8px;gap:6px;align-items:center;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,.2)">
     <span style="font-size:11px;color:var(--ghost)">Draw mode</span>
-    <button class="btn btn-g" id="draw-poly-btn" style="font-size:11px;padding:4px 10px">&#9655; Polygon</button>
-    <button class="btn btn-g" id="draw-line-btn" style="font-size:11px;padding:4px 10px">&#9655; Line</button>
-    <button class="btn btn-g" id="draw-delete-btn" style="font-size:11px;padding:4px 10px;color:var(--red)">&#10005; Delete</button>
-    <button class="btn btn-g" id="draw-apply-btn" style="font-size:11px;padding:4px 10px;background:var(--accent);color:#fff;border-color:var(--accent)">&#10003; Apply</button>
+    <button class="btn btn-g btn-ic" id="draw-poly-btn" style="font-size:11px;padding:4px 10px"><span class="ico-h" data-icon="pentagon" data-icon-size="12"></span>Polygon</button>
+    <button class="btn btn-g btn-ic" id="draw-line-btn" style="font-size:11px;padding:4px 10px"><span class="ico-h" data-icon="minus" data-icon-size="12"></span>Line</button>
+    <button class="btn btn-g btn-ic" id="draw-delete-btn" style="font-size:11px;padding:4px 10px;color:var(--red)"><span class="ico-h" data-icon="trash-2" data-icon-size="12"></span>Delete</button>
+    <button class="btn btn-g btn-ic" id="draw-apply-btn" style="font-size:11px;padding:4px 10px;background:var(--accent);color:#fff;border-color:var(--accent)"><span class="ico-h" data-icon="check" data-icon-size="12"></span>Apply</button>
     <button class="btn btn-g" id="draw-cancel-btn" style="font-size:11px;padding:4px 10px">Cancel</button>
   </div><div id="pl">Preview</div>
   <div id="pnt"><h3>Map Preview</h3><p>Add your Mapbox token in Settings to activate</p><button class="btn btn-g" onclick="switchMain('settings')" style="margin-top:8px">Go to Settings</button></div></div>
 <div id="rp"><div id="rpc"></div></div>
 <div id="em">
   <div class="mb">
-    <div class="mh"><h3>Export Your Consultation</h3><button class="mx" id="btn-em-close" aria-label="Close export dialog">&#10005;</button></div>
+    <div class="mh"><h3>Export Your Consultation</h3><button class="mx" id="btn-em-close" aria-label="Close export dialog"><span data-icon="x" data-icon-size="13"></span></button></div>
     <div class="md">
-      <div class="mo"><h4>&#9878; Accessibility Checklist</h4><p>A quick check before you publish. This never blocks export — it's just a heads-up.</p>
+      <div class="mo"><h4><span class="ico-h" data-icon="accessibility" data-icon-size="15"></span>Accessibility Checklist</h4><p>A quick check before you publish. This never blocks export — it's just a heads-up.</p>
         <div id="a11y-checklist-list" style="margin-top:10px"></div>
       </div>
-      <div class="mo" id="mo-dl"><h4>&#8595; Download HTML File</h4><p>A single self-contained file. Upload to GitHub Pages to publish.</p></div>
-      <div class="mo"><h4>&#128190; Project Data (JSON)</h4><p>Save your project settings as a JSON file to back up, version control, or hand off to a colleague.</p>
+      <div class="mo" id="mo-dl"><h4><span class="ico-h" data-icon="download" data-icon-size="15"></span>Download HTML File</h4><p>A single self-contained file. Upload to GitHub Pages to publish.</p></div>
+      <div class="mo"><h4><span class="ico-h" data-icon="save" data-icon-size="15"></span>Project Data (JSON)</h4><p>Save your project settings as a JSON file to back up, version control, or hand off to a colleague.</p>
         <div style="display:flex;gap:8px;margin-top:10px">
-          <button class="btn btn-g" id="btn-export-json" style="flex:1">&#8595; Export JSON</button>
-          <label class="btn btn-g" style="flex:1;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
-            &#8593; Import JSON<input type="file" id="import-json-file" accept=".json" style="display:none"/>
+          <button class="btn btn-g btn-ic" id="btn-export-json" style="flex:1;justify-content:center"><span class="ico-h" data-icon="download" data-icon-size="13"></span>Export JSON</button>
+          <label class="btn btn-g btn-ic" style="flex:1;cursor:pointer;justify-content:center">
+            <span class="ico-h" data-icon="upload" data-icon-size="13"></span>Import JSON<input type="file" id="import-json-file" accept=".json" style="display:none"/>
           </label>
         </div>
       </div>
-      <div class="mo"><h4>&#128279; Shareable Editor Link</h4><p>Share this link so a colleague can open the editor with your project pre-loaded.</p>
+      <div class="mo"><h4><span class="ico-h" data-icon="link" data-icon-size="15"></span>Shareable Editor Link</h4><p>Share this link so a colleague can open the editor with your project pre-loaded.</p>
         <div class="sr"><input type="text" id="share-inp" readonly placeholder="Click Generate..."/><button class="btn btn-g" id="btn-gen">Generate</button><button class="btn btn-g" id="btn-copy">Copy</button></div>
       </div>
     </div>
@@ -260,7 +280,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
       <div style="font-size:12px;font-weight:500;color:rgba(255,255,255,.75)">Lightbox Preview</div>
       <div style="display:flex;align-items:center;gap:8px">
         <div id="lb-prev-layout-label" style="font-size:10px;font-family:var(--mono);color:rgba(255,255,255,.4)"></div>
-        <button id="btn-lb-preview-close" aria-label="Close lightbox preview" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:rgba(255,255,255,.7);font-size:14px;display:flex;align-items:center;justify-content:center">&#10005;</button>
+        <button id="btn-lb-preview-close" aria-label="Close lightbox preview" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center"><span data-icon="x" data-icon-size="13"></span></button>
       </div>
     </div>
     <!-- Preview area — simulates map panel -->
@@ -270,9 +290,23 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
       <!-- The actual lightbox overlay — reuses real CSS classes -->
       <div id="lb-prev-overlay" style="position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);backdrop-filter:blur(3px)">
         <div id="lb-prev-box" style="position:relative">
-          <button id="lb-prev-close-btn" onclick="closeLbPreview()" style="position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:rgba(15,14,13,.12);border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;z-index:10;color:#0f0e0d">&#10005;</button>
+          <button id="lb-prev-close-btn" onclick="closeLbPreview()" style="position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:rgba(15,14,13,.12);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;color:#0f0e0d"><span data-icon="x" data-icon-size="14"></span></button>
           <div id="lb-prev-content"></div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- About modal -->
+<div id="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-modal-title" style="position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center">
+  <div class="mb">
+    <div class="mh"><h3 id="about-modal-title">About allto</h3><button class="mx" id="btn-about-close" aria-label="Close about dialog"><span data-icon="x" data-icon-size="13"></span></button></div>
+    <div class="md">
+      <p style="font-size:13px;line-height:1.6;color:var(--ink2,var(--ink))">Consultation Map Builder is a tool for planning consultants to build interactive, map-based public consultation websites — no code required.</p>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);font-size:12px;color:var(--ghost);line-height:1.8">
+        <div>Version <span id="about-version" style="font-family:var(--mono);color:var(--ink)"></span></div>
+        <div>Developed by Chris Hemsley &mdash; <a href="mailto:chris.hemsley@turley.co.uk">chris.hemsley@turley.co.uk</a></div>
       </div>
     </div>
   </div>
@@ -283,7 +317,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:min(500px,calc(100vw - 40px));box-shadow:0 20px 60px rgba(0,0,0,.5)">
     <div style="padding:22px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
       <h3 style="font-size:15px;font-weight:500">Import Markers from GeoJSON</h3>
-      <button id="btn-import-close" aria-label="Close import dialog" style="width:28px;height:28px;border-radius:8px;background:var(--mid);border:none;cursor:pointer;color:var(--ghost);font-size:14px;display:flex;align-items:center;justify-content:center">&#10005;</button>
+      <button id="btn-import-close" aria-label="Close import dialog" style="width:28px;height:28px;border-radius:8px;background:var(--mid);border:none;cursor:pointer;color:var(--ghost);display:flex;align-items:center;justify-content:center"><span data-icon="x" data-icon-size="13"></span></button>
     </div>
     <div style="padding:20px 24px">
       <div class="nt" style="margin-bottom:12px">Paste a GeoJSON <code>FeatureCollection</code> of Points from <a href="https://geojson.io" target="_blank">geojson.io</a>. Each point becomes a marker. Properties <code>name</code>, <code>description</code>, and <code>marker-color</code> are read automatically.</div>
@@ -420,7 +454,35 @@ var LUCIDE_PATHS = {
   'satellite': '<path d="M13 7 9 3 5 7l4 4"/><path d="m17 11 4 4-4 4-4-4"/><path d="m8 12 4 4 6-6-4-4Z"/><path d="m16 8 3-3"/><path d="M9 21a6 6 0 0 0-6-6"/>',
   'tag': '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>',
   'check-circle': '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',
-  'x-circle': '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>'
+  'x-circle': '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
+  'folder-open': '<path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/>',
+  'save': '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>',
+  'play': '<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>',
+  'link': '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  'download': '<path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>',
+  'upload': '<path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>',
+  'pentagon': '<path d="M10.83 2.38a2 2 0 0 1 2.34 0l8 5.74a2 2 0 0 1 .73 2.25l-3.04 9.26a2 2 0 0 1-1.9 1.37H7.04a2 2 0 0 1-1.9-1.37L2.1 10.37a2 2 0 0 1 .73-2.25z"/>',
+  'minus': '<path d="M5 12h14"/>',
+  'trash-2': '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  'x': '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  'check': '<path d="M20 6 9 17l-5-5"/>',
+  'arrow-up': '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
+  'arrow-down': '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+  'copy': '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  'pencil': '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+  'corner-up-left': '<path d="M20 20v-7a4 4 0 0 0-4-4H4"/><path d="M9 14 4 9l5-5"/>',
+  'corner-up-right': '<path d="m15 14 5-5-5-5"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/>',
+  'corner-down-left': '<path d="M20 4v7a4 4 0 0 1-4 4H4"/><path d="m9 10-5 5 5 5"/>',
+  'corner-down-right': '<path d="m15 10 5 5-5 5"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/>',
+  'maximize': '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>',
+  'square': '<rect width="18" height="18" x="3" y="3" rx="2"/>',
+  'list': '<path d="M3 5h.01"/><path d="M3 12h.01"/><path d="M3 19h.01"/><path d="M8 5h13"/><path d="M8 12h13"/><path d="M8 19h13"/>',
+  'eraser': '<path d="M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21"/><path d="m5.082 11.09 8.828 8.828"/>',
+  'eye': '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+  'type': '<path d="M12 4v16"/><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6"/>',
+  'text': '<path d="M21 5H3"/><path d="M15 12H3"/><path d="M17 19H3"/>',
+  'rotate-ccw': '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  'plus': '<path d="M5 12h14"/><path d="M12 5v14"/>'
 };
 
 function lucideSVG(name, size, color) {
@@ -428,6 +490,12 @@ function lucideSVG(name, size, color) {
   color = color || 'currentColor';
   var paths = LUCIDE_PATHS[name] || '<circle cx="12" cy="12" r="3"/>';
   return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex-shrink:0">'+paths+'</svg>';
+}
+function renderStaticIcons(root) {
+  (root||document).querySelectorAll('[data-icon]').forEach(function(el) {
+    el.innerHTML = lucideSVG(el.dataset.icon, parseInt(el.dataset.iconSize)||14, 'currentColor');
+    el.removeAttribute('data-icon');
+  });
 }
 
 
@@ -444,6 +512,7 @@ var DEF = {
   companyInitials:'YC', companyLogoUrl:'',
   clientName:'', clientLogoUrl:'', clientAbout:'',
   appLogoUrl:'', appAbout:'', appPrivacy:'', accessibilityStatement:'',
+  seoTitle:'', seoDescription:'', seoImage:'', favicon:'',
   buildings:[],
   siteCentre:[-2.2345,53.4824], sitePinLabel:'The Site',
   redLine:{coordinates:[[-2.2350831,53.4822622],[-2.2343975,53.4827263],[-2.2339446,53.4825055],[-2.2345925,53.4820189],[-2.2350831,53.4822622]]},
@@ -497,6 +566,8 @@ var isDirty = false;       // unsaved changes
 var lastSaved = null;      // timestamp of last save
 var autoSaveKey = 'consultation_builder_project';
 var mainTab = 'editor';
+var APP_VERSION = '0.0.1';
+var APP_STAGE = 'BETA';
 
 // Load from URL ?p= param
 var urlP = new URLSearchParams(location.search).get('p');
@@ -547,7 +618,6 @@ function applyTheme(theme) {
   var btn = el('btn-theme-toggle');
   if(btn) {
     var isLight = theme === 'light';
-    btn.innerHTML = isLight ? '&#9728;' : '&#9789;';
     var label = isLight ? 'Switch to dark mode' : 'Switch to light mode';
     btn.title = label;
     btn.setAttribute('aria-label', label);
@@ -563,6 +633,12 @@ function toggleTheme() {
   var next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
   applyTheme(next);
   try { localStorage.setItem('editorTheme', next); } catch(e) {}
+  var icon = document.querySelector('#btn-theme-toggle .tt-icon-wrap');
+  if(icon) {
+    icon.classList.remove('spin');
+    void icon.offsetWidth; // restart animation
+    icon.classList.add('spin');
+  }
 }
 function initTheme() {
   var saved = 'dark';
@@ -691,10 +767,10 @@ function renderLines() {
       '<div style="width:20px;height:4px;border-radius:2px;flex-shrink:0;background:'+h(ln.color||'#ffffff')+';margin-right:8px;margin-top:2px"></div>'+
       '<span class="nm">' + h(ln.name||'Untitled') + '</span>' +
       '<div class="ia">' +
-        (i>0 ? '<button class="ib" data-i="'+i+'" data-a="up" title="Move up">&#8593;</button>' : '') +
-        (i<P.zones.length-1 ? '<button class="ib" data-i="'+i+'" data-a="dn" title="Move down">&#8595;</button>' : '') +
-        '<button class="ib" data-i="'+i+'" data-a="dup" title="Duplicate">&#10064;</button>' +
-        '<button class="ib d" data-i="'+i+'" data-a="del" title="Delete">&#10005;</button>' +
+        (i>0 ? '<button class="ib" data-i="'+i+'" data-a="up" title="Move up">'+lucideSVG('arrow-up',12,'currentColor')+'</button>' : '') +
+        (i<P.zones.length-1 ? '<button class="ib" data-i="'+i+'" data-a="dn" title="Move down">'+lucideSVG('arrow-down',12,'currentColor')+'</button>' : '') +
+        '<button class="ib" data-i="'+i+'" data-a="dup" title="Duplicate">'+lucideSVG('copy',12,'currentColor')+'</button>' +
+        '<button class="ib d" data-i="'+i+'" data-a="del" title="Delete">'+lucideSVG('trash-2',12,'currentColor')+'</button>' +
       '</div>';
     div.addEventListener('click', function(e) {
       var btn = e.target.closest('[data-a]');
@@ -772,7 +848,7 @@ function renderLineEditor(i) {
 
   // GeoJSON
   html += '<div class="rs"><div class="st">GeoJSON Coordinates</div>';
-  html += '<button class="btn btn-g" id="ln-draw-btn" style="width:100%;margin-bottom:8px">&#9998; Draw on map</button>';
+  html += '<button class="btn btn-g btn-ic" id="ln-draw-btn" style="width:100%;margin-bottom:8px;justify-content:center">'+lucideSVG('pencil',13,'currentColor')+'Draw on map</button>';
   html += '<div class="nt">Paste a GeoJSON Feature or FeatureCollection with LineString / MultiLineString geometry.</div>';
   html += '<textarea id="ln-geojson" style="min-height:120px;font-family:var(--mono);font-size:10px">'+h(ln.geojson||'')+'</textarea>';
   html += '<button class="btn btn-g" id="ln-geojson-apply" style="margin-top:6px;width:100%">Apply GeoJSON</button>';
@@ -838,7 +914,7 @@ function renderBuildings() {
     html += '<div class="li'+(i===ABLD?' on':'')+'" data-bld-i="'+i+'" style="cursor:pointer">';
     html += '<div style="width:20px;height:20px;border-radius:3px;flex-shrink:0;background:'+h(b.color||'#888')+';margin-right:8px;display:inline-block;vertical-align:middle"></div>';
     html += '<span class="nm">'+h(b.name||'Untitled')+'</span>';
-    html += '<div class="ia"><button class="ib d" data-del="'+i+'" title="Delete">&#10005;</button></div>';
+    html += '<div class="ia"><button class="ib d" data-del="'+i+'" title="Delete">'+lucideSVG('trash-2',12,'currentColor')+'</button></div>';
     html += '</div>';
   });
   ul.innerHTML = html;
@@ -860,12 +936,12 @@ function renderBuildings() {
 
 function renderBuildingsPanel() {
   var html = '<div class="rh"><div class="re">Buildings</div><div class="rt">Custom 3D Buildings</div></div>';
-  html += '<div class="rs"><div class="st">Buildings <button class="ab" id="rp-add-bld" style="margin-left:8px">+</button></div>';
+  html += '<div class="rs"><div class="st">Buildings <button class="ab" id="rp-add-bld" style="margin-left:8px">'+lucideSVG('plus',13,'currentColor')+'</button></div>';
   (P.buildings||[]).forEach(function(b,i){
     html += '<div class="li'+(i===ABLD?' on':'')+'" data-rpbld="'+i+'" style="cursor:pointer;margin-bottom:4px">';
     html += '<div style="width:16px;height:16px;border-radius:2px;background:'+h(b.color||'#888')+';display:inline-block;vertical-align:middle;margin-right:8px"></div>';
     html += '<span class="nm">'+h(b.name||'Untitled')+'</span>';
-    html += '<div class="ia"><button class="ib d" data-rpdel="'+i+'">&#10005;</button></div></div>';
+    html += '<div class="ia"><button class="ib d" data-rpdel="'+i+'">'+lucideSVG('trash-2',12,'currentColor')+'</button></div></div>';
   });
   html += '</div>';
   if(ABLD>=0 && P.buildings && P.buildings[ABLD]) {
@@ -880,7 +956,7 @@ function renderBuildingsPanel() {
       var on=(b.scenes||[]).indexOf(sc.id)>=0;
       html += '<div class="lr"><span class="ll">'+h(sc.label||'Scene '+(si+1))+'</span><button class="tg'+(on?' on':'')+'" data-rpbldsc="'+sc.id+'"></button></div>';
     });
-    html += '<div class="f" style="margin-top:8px"><button class="btn btn-g" id="rpbld-draw" style="width:100%;margin-bottom:6px">&#9998; Draw on map</button>';
+    html += '<div class="f" style="margin-top:8px"><button class="btn btn-g btn-ic" id="rpbld-draw" style="width:100%;margin-bottom:6px;justify-content:center">'+lucideSVG('pencil',13,'currentColor')+'Draw on map</button>';
     html += '<label class="fl">GeoJSON Footprint</label><textarea id="rpbld-gj" style="min-height:80px;font-family:var(--mono);font-size:10px">'+h(b.geojson||'')+'</textarea>';
     html += '<button class="btn btn-g" id="rpbld-gj-apply" style="margin-top:6px;width:100%">Apply GeoJSON</button></div>';
     html += '</div>';
@@ -969,7 +1045,7 @@ function renderBuildingEditor(i) {
   html += '</div>';
 
   html += '<div class="rs"><div class="st">GeoJSON Footprint</div>';
-  html += '<button class="btn btn-g" id="bld-draw-btn" style="width:100%;margin-bottom:8px">&#9998; Draw on map</button>';
+  html += '<button class="btn btn-g btn-ic" id="bld-draw-btn" style="width:100%;margin-bottom:8px;justify-content:center">'+lucideSVG('pencil',13,'currentColor')+'Draw on map</button>';
   html += '<div class="nt">Paste a GeoJSON Feature/FeatureCollection with Polygon/MultiPolygon geometry.</div>';
   html += '<textarea id="bld-geojson" style="min-height:100px;font-family:var(--mono);font-size:10px">'+h(b.geojson||'')+'</textarea>';
   html += '<button class="btn btn-g" id="bld-geojson-apply" style="margin-top:6px;width:100%">Apply GeoJSON</button>';
@@ -1045,7 +1121,7 @@ function renderOverlays() {
     html += '<div class="li'+(active?' on':'')+'" data-oi="'+i+'">'
       + '<span class="in">'+(i+1)+'</span>'
       + '<span class="nm">'+h(ov.name||'Overlay')+'</span>'
-      + '<div class="ia"><button class="ib d" data-oi="'+i+'" data-oa="del">&#10005;</button></div>'
+      + '<div class="ia"><button class="ib d" data-oi="'+i+'" data-oa="del">'+lucideSVG('trash-2',12,'currentColor')+'</button></div>'
       + '</div>';
   });
   if(!P.overlays.length) html = '<div class="es" style="font-size:11px;padding:20px 16px">No image overlays yet. Click + to add one.</div>';
@@ -1083,20 +1159,20 @@ function renderOverlayEditor(i) {
   }
   html += '</div>';
   html += '<div class="rs"><div class="st">Corner Coordinates</div>';
-  html += '<div class="nt" style="margin-bottom:10px">Click <b style="color:var(--ink)">&#9655; Place on map</b> next to a corner, then click the map to drop it. Or use <b style="color:var(--ink)">Fit to red line</b> to auto-fill from your boundary.</div>';
+  html += '<div class="nt" style="margin-bottom:10px">Click <b style="color:var(--ink)">Place</b> next to a corner, then click the map to drop it. Or use <b style="color:var(--ink)">Fit to red line</b> to auto-fill from your boundary.</div>';
   var corners = ['NW (top-left)','NE (top-right)','SE (bottom-right)','SW (bottom-left)'];
-  var cornerIcons = ['&#8598;','&#8599;','&#8600;','&#8601;'];
+  var cornerIcons = ['corner-up-left','corner-up-right','corner-down-right','corner-down-left'];
   corners.forEach(function(lbl, ci) {
     var co = (ov.coords && ov.coords[ci]) || [0,0];
-    html += '<div class="f"><label class="fl">'+cornerIcons[ci]+' '+lbl+'</label>';
+    html += '<div class="f"><label class="fl ico-h">'+lucideSVG(cornerIcons[ci],12,'currentColor')+lbl+'</label>';
     html += '<div style="display:flex;gap:6px;align-items:center">';
     html += '<input type="number" id="ov-c'+ci+'x" step="0.00001" value="'+co[0]+'" placeholder="lng" style="flex:1"/>';
     html += '<input type="number" id="ov-c'+ci+'y" step="0.00001" value="'+co[1]+'" placeholder="lat" style="flex:1"/>';
-    html += '<button class="btn btn-g" data-corner="'+ci+'" id="ov-place-'+ci+'" style="white-space:nowrap;font-size:10px;padding:6px 8px" title="Click map to place this corner">&#9655; Place</button>';
+    html += '<button class="btn btn-g btn-ic" data-corner="'+ci+'" id="ov-place-'+ci+'" style="white-space:nowrap;font-size:10px;padding:6px 8px" title="Click map to place this corner">'+lucideSVG('crosshair',11,'currentColor')+'Place</button>';
     html += '</div></div>';
   });
   html += '<div id="ov-place-status" style="font-size:11px;font-family:var(--mono);color:var(--accent);margin-top:6px;min-height:16px"></div>';
-  html += '<button class="btn btn-g" id="ov-fit-btn" style="width:100%;margin-top:8px">&#9633; Fit to red line boundary</button>';
+  html += '<button class="btn btn-g btn-ic" id="ov-fit-btn" style="width:100%;margin-top:8px;justify-content:center">'+lucideSVG('maximize',13,'currentColor')+'Fit to red line boundary</button>';
   html += '</div>';
   setHTML('rpc', html);
   // Bindings
@@ -1146,7 +1222,7 @@ function renderOverlayEditor(i) {
     var st = el('ov-place-status'); if(st) st.textContent = '';
     for(var ci=0;ci<4;ci++) {
       var btn = el('ov-place-'+ci);
-      if(btn) { btn.textContent = '▵ Place'; btn.style.background=''; btn.style.color=''; }
+      if(btn) { btn.innerHTML = lucideSVG('crosshair',11,'currentColor')+'Place'; btn.style.background=''; btn.style.color=''; }
     }
   }
   for(var ci=0; ci<4; ci++) {
@@ -1161,7 +1237,7 @@ function renderOverlayEditor(i) {
         var st = el('ov-place-status');
         if(st) st.textContent = 'Click the map to place the ' + names[ci2] + ' corner...';
         if(pMap) pMap.getCanvas().style.cursor = 'crosshair';
-        this.innerHTML = '&#9632; Cancel';
+        this.innerHTML = lucideSVG('square',11,'currentColor')+'Cancel';
         this.style.background = 'var(--accent)';
         this.style.color = '#fff';
         // Listen for one map click
@@ -1229,6 +1305,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   try {
     initTheme();
+    renderStaticIcons();
     initA11yObserver();
     bindTopbar();
     bindLeftPanel();
@@ -1282,16 +1359,22 @@ document.addEventListener('keydown', function(e) {
 function bindTopbar() {
   el('tt-editor').addEventListener('click', function() { switchMain('editor'); });
   el('tt-settings').addEventListener('click', function() { switchMain('settings'); });
+  el('tt-seo').addEventListener('click', function() { switchMain('seo'); });
+  el('tt-about').addEventListener('click', openAboutModal);
   el('btn-theme-toggle').addEventListener('click', toggleTheme);
   el('btn-export').addEventListener('click', function() { el('em').classList.add('on'); renderA11yChecklist(); });
-  el('btn-dl').addEventListener('click', downloadHTML);
+  el('btn-about-close').addEventListener('click', closeAboutModal);
+  el('about-modal').addEventListener('click', function(e) { if(e.target.id === 'about-modal') closeAboutModal(); });
+  document.addEventListener('keydown', function(e) {
+    if(e.key === 'Escape' && el('about-modal').style.display === 'flex') closeAboutModal();
+  });
   el('btn-preview').addEventListener('click', previewInNewTab);
   el('btn-copy-link').addEventListener('click', function() {
     var url = location.origin + location.pathname + '?p=' + btoa(JSON.stringify(P));
     navigator.clipboard.writeText(url).then(function() {
       var btn = el('btn-copy-link');
-      btn.textContent = '✓ Copied!';
-      setTimeout(function() { btn.innerHTML = '&#128279; Share'; }, 2000);
+      btn.innerHTML = lucideSVG('check',13,'currentColor')+'Copied!';
+      setTimeout(function() { btn.innerHTML = lucideSVG('link',13,'currentColor')+'Share'; }, 2000);
     });
   });
 }
@@ -1300,8 +1383,25 @@ function switchMain(tab) {
   mainTab = tab;
   el('tt-editor').classList.toggle('on', tab==='editor');
   el('tt-settings').classList.toggle('on', tab==='settings');
+  el('tt-seo').classList.toggle('on', tab==='seo');
   if (tab === 'settings') renderSettings();
+  else if (tab === 'seo') renderSEO();
   else renderRightPanel();
+}
+
+var aboutOpener = null;
+function openAboutModal() {
+  aboutOpener = document.activeElement;
+  var vEl = el('about-version');
+  if(vEl) vEl.textContent = APP_VERSION + ' · ' + APP_STAGE;
+  el('about-modal').style.display = 'flex';
+  var closeBtn = el('btn-about-close');
+  if(closeBtn) closeBtn.focus();
+}
+function closeAboutModal() {
+  el('about-modal').style.display = 'none';
+  if(aboutOpener && aboutOpener.focus) aboutOpener.focus();
+  aboutOpener = null;
 }
 
 // ═══════════════════════════════════════════════════
@@ -1488,10 +1588,10 @@ function renderScenes() {
       '<span class="in">' + String(i+1).padStart(2,'0') + '</span>' +
       '<span class="nm">' + h(sc.label||'Untitled') + '</span>' +
       '<div class="ia">' +
-        '<button class="ib" data-i="'+i+'" data-a="up" title="Move up">&#8593;</button>' +
-        '<button class="ib" data-i="'+i+'" data-a="dn" title="Move down">&#8595;</button>' +
-        '<button class="ib" data-i="'+i+'" data-a="dup" title="Duplicate">&#10064;</button>' +
-        '<button class="ib d" data-i="'+i+'" data-a="del" title="Delete">&#10005;</button>' +
+        '<button class="ib" data-i="'+i+'" data-a="up" title="Move up">'+lucideSVG('arrow-up',12,'currentColor')+'</button>' +
+        '<button class="ib" data-i="'+i+'" data-a="dn" title="Move down">'+lucideSVG('arrow-down',12,'currentColor')+'</button>' +
+        '<button class="ib" data-i="'+i+'" data-a="dup" title="Duplicate">'+lucideSVG('copy',12,'currentColor')+'</button>' +
+        '<button class="ib d" data-i="'+i+'" data-a="del" title="Delete">'+lucideSVG('trash-2',12,'currentColor')+'</button>' +
       '</div>';
     div.addEventListener('click', function(e) {
       var btn = e.target.closest('[data-a]');
@@ -1551,7 +1651,7 @@ function renderMarkers() {
     div.innerHTML =
       '<div class="id" style="background:'+h(m.color)+'"></div>' +
       '<span class="nm">'+h(m.name||'Unnamed')+'</span>' +
-      '<div class="ia"><button class="ib d" data-i="'+i+'">&#10005;</button></div>';
+      '<div class="ia"><button class="ib d" data-i="'+i+'">'+lucideSVG('trash-2',12,'currentColor')+'</button></div>';
     div.addEventListener('click', function(e) {
       var btn = e.target.closest('[data-i]');
       if (btn && e.target.closest('.ia')) { e.stopPropagation(); delMarker(parseInt(btn.dataset.i)); return; }
@@ -1581,9 +1681,9 @@ function renderZones() {
       '<div class="id" style="background:'+h(z.color)+';border-radius:2px"></div>' +
       '<span class="nm">'+h(z.name||'Unnamed')+'</span>' +
       '<div class="ia">'+
-        (i>0?'<button class="ib" data-a="up" data-i="'+i+'">&#8593;</button>':'')+
-        (i<P.zones.length-1?'<button class="ib" data-a="dn" data-i="'+i+'">&#8595;</button>':'')+
-        '<button class="ib d" data-a="del" data-i="'+i+'">&#10005;</button>'+
+        (i>0?'<button class="ib" data-a="up" data-i="'+i+'">'+lucideSVG('arrow-up',12,'currentColor')+'</button>':'')+
+        (i<P.zones.length-1?'<button class="ib" data-a="dn" data-i="'+i+'">'+lucideSVG('arrow-down',12,'currentColor')+'</button>':'')+
+        '<button class="ib d" data-a="del" data-i="'+i+'">'+lucideSVG('trash-2',12,'currentColor')+'</button>'+
       '</div>';
     div.addEventListener('click', function(e) {
       var btn = e.target.closest('[data-a]');
@@ -1638,14 +1738,14 @@ function renderOnboarding() {
     var checkCol = s.done ? '#2a7c6b' : 'var(--border2)';
     html += '<div class="ob-step" data-si="'+si+'" style="padding:11px 13px;border-radius:9px;background:'+bg+';border:'+border+';margin-bottom:7px;cursor:pointer">';
     html += '<div style="display:flex;align-items:center;gap:10px">';
-    html += '<div style="width:20px;height:20px;border-radius:50%;background:'+checkCol+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:#fff;font-weight:500">'+(s.done?'&#10003;':s.num)+'</div>';
+    html += '<div style="width:20px;height:20px;border-radius:50%;background:'+checkCol+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:#fff;font-weight:500">'+(s.done?lucideSVG('check',12,'#fff'):s.num)+'</div>';
     html += '<div><div style="font-size:13px;font-weight:500;color:var(--ink)">'+(s.done?'<span style="opacity:.4;text-decoration:line-through">'+s.label+'</span>':s.label)+'</div>';
     html += '<div style="font-size:11px;color:var(--ghost);font-family:var(--mono);margin-top:2px">'+s.hint+'</div></div>';
     html += '</div></div>';
   });
   if(done === steps.length) {
     html += '<div style="padding:15px;border-radius:9px;background:rgba(74,155,127,.12);border:1px solid rgba(74,155,127,.3);text-align:center">';
-    html += '<div style="font-size:14px;font-weight:500;color:#2a7c6b;margin-bottom:4px">&#127881; All set!</div>';
+    html += '<div style="font-size:14px;font-weight:500;color:#2a7c6b;margin-bottom:4px" class="ico-h">'+lucideSVG('check-circle',14,'#2a7c6b')+'All set!</div>';
     html += '<div style="font-size:11px;color:var(--ghost)">Your consultation is ready. Hit Download to export.</div></div>';
   }
   html += '</div>';
@@ -1670,6 +1770,7 @@ function renderOnboarding() {
 
 function renderRightPanel() {
   if (mainTab === 'settings') { renderSettings(); return; }
+  if (mainTab === 'seo') { renderSEO(); return; }
   // Show onboarding if no token set yet
   if(!P.mapboxToken) {
     renderOnboarding(); return;
@@ -1704,11 +1805,17 @@ function renderRightPanel() {
   html += fld('Heading', 'sc-title', h(sc.title));
   html += '<div class="f"><label class="fl">Body copy <span style="font-size:9px;color:var(--ghost);font-family:var(--mono);font-weight:400;margin-left:4px">supports HTML</span></label>';
   html += '<div id="sc-body-toolbar" style="display:flex;gap:3px;margin-bottom:5px;flex-wrap:wrap">';
-  var scTbBtns = [{cmd:'bold',label:'<b>B</b>',title:'Bold'},{cmd:'italic',label:'<i>I</i>',title:'Italic'},{cmd:'insertUnorderedList',label:'&#8226; List',title:'Bullet list'}];
+  var scTbBtns = [
+    {cmd:'formatBlock:h2',label:'H2',title:'Heading'},
+    {cmd:'formatBlock:p',label:'&para;',title:'Paragraph'},
+    {cmd:'bold',label:'<b>B</b>',title:'Bold'},
+    {cmd:'italic',label:'<i>I</i>',title:'Italic'},
+    {cmd:'insertUnorderedList',label:lucideSVG('list',13,'currentColor'),title:'Bullet list'}
+  ];
   scTbBtns.forEach(function(b){
     html += '<button type="button" data-sc-cmd="'+b.cmd+'" title="'+b.title+'" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--ink);cursor:pointer;font-size:11px">'+b.label+'</button>';
   });
-  html += '<button type="button" id="sc-body-clear" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--ghost);cursor:pointer;font-size:11px">&#10227; Clear</button>';
+  html += '<button type="button" id="sc-body-clear" class="btn-ic" title="Clear formatting" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--ghost);cursor:pointer;font-size:11px">'+lucideSVG('eraser',13,'currentColor')+'Clear</button>';
   html += '<button type="button" id="sc-body-html-toggle" title="Paste raw HTML" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--ghost);cursor:pointer;font-size:11px;margin-left:auto">&lt;/&gt; HTML</button>';
   html += '</div>';
   html += '<div id="sc-body" contenteditable="true" style="min-height:80px;padding:10px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--ink);font-size:13px;line-height:1.6;outline:none;transition:border-color .18s">'+(sc.body||'')+'</div>';
@@ -1722,7 +1829,7 @@ function renderRightPanel() {
     html += '<div style="padding:12px;border:1px solid var(--border2);border-radius:8px;margin-bottom:10px">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
       + '<div style="font-size:11px;color:var(--ghost);font-weight:500">Question '+(qi+1)+'</div>'
-      + '<button type="button" class="ib d sc-q-del" data-qi="'+qi+'" aria-label="Remove question '+(qi+1)+'">&#10005;</button>'
+      + '<button type="button" class="ib d sc-q-del" data-qi="'+qi+'" aria-label="Remove question '+(qi+1)+'">'+lucideSVG('x',12,'currentColor')+'</button>'
       + '</div>';
     html += '<div class="f"><label class="fl">Question type</label><select class="sc-q-type" data-qi="'+qi+'">'
       + '<option value="likert"'+(sq.type==='likert'?' selected':'')+'>Likert scale (agree / disagree)</option>'
@@ -1836,16 +1943,27 @@ function renderRightPanel() {
   var scBodyEl = el('sc-body');
   if(scBodyEl) {
     scBodyEl.addEventListener('input', function() { P.scenes[AS].body = this.innerHTML; markDirty(); });
-    scBodyEl.addEventListener('focus', function() { this.style.borderColor='var(--accent)'; });
+    scBodyEl.addEventListener('focus', function() { this.style.borderColor='var(--accent)'; try{document.execCommand('defaultParagraphSeparator', false, 'p');}catch(e){} });
     scBodyEl.addEventListener('blur',  function() { this.style.borderColor='var(--border2)'; });
   }
   var scToolbar = el('sc-body-toolbar');
-  if(scToolbar) scToolbar.addEventListener('click', function(e) {
-    var btn = e.target.closest('[data-sc-cmd]');
-    if(!btn) return;
-    document.execCommand(btn.dataset.scCmd, false, null);
-    if(scBodyEl) { P.scenes[AS].body = scBodyEl.innerHTML; markDirty(); }
-  });
+  if(scToolbar) {
+    scToolbar.addEventListener('mousedown', function(e) {
+      if(e.target.closest('[data-sc-cmd]')) e.preventDefault();
+    });
+    scToolbar.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-sc-cmd]');
+      if(!btn) return;
+      if(scBodyEl) scBodyEl.focus();
+      var cmd = btn.dataset.scCmd;
+      if(cmd.indexOf('formatBlock:') === 0) {
+        document.execCommand('formatBlock', false, cmd.split(':')[1]);
+      } else {
+        document.execCommand(cmd, false, null);
+      }
+      if(scBodyEl) { P.scenes[AS].body = scBodyEl.innerHTML; markDirty(); }
+    });
+  }
   var scClear = el('sc-body-clear');
   if(scClear) scClear.addEventListener('click', function() {
     if(scBodyEl) { scBodyEl.innerHTML = ''; P.scenes[AS].body = ''; markDirty(); scBodyEl.focus(); }
@@ -1937,15 +2055,19 @@ function renderMarkerEditor(i) {
   var curIcon = m.icon || '';
 
   // Icon preview box
-  var previewContent = isLucide(curIcon)
-    ? lucideSVG(curIcon,20,'rgba(255,255,255,.9)')
-    : (curIcon || '&nbsp;');
+  var previewContent = (curIcon && curIcon.indexOf('data:') === 0)
+    ? '<img src="'+h(curIcon)+'" width="20" height="20" style="display:block"/>'
+    : (isLucide(curIcon) ? lucideSVG(curIcon,20,'rgba(255,255,255,.9)') : (curIcon || '&nbsp;'));
   html += '<div class="f"><label class="fl">Icon</label>';
   html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
   html += '<div class="icon-preview" id="mk-icon-preview">'+previewContent+'</div>';
-  html += '<span style="font-size:11px;font-family:var(--mono);color:var(--ghost)">Select below or type/paste any emoji</span>';
+  html += '<span style="font-size:11px;font-family:var(--mono);color:var(--ghost)">Select below, type/paste any emoji, or upload your own</span>';
   html += '</div>';
-  html += '<input type="text" id="mk-icon" value="'+h(curIcon)+'" placeholder="e.g. map-pin or paste emoji" style="margin-bottom:8px"/>';
+  html += '<input type="text" id="mk-icon" value="'+h((curIcon&&curIcon.indexOf('data:')===0)?'':curIcon)+'" placeholder="e.g. map-pin or paste emoji" style="margin-bottom:8px"/>';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+    + '<label class="btn btn-g btn-ic" style="cursor:pointer;font-size:11px;padding:6px 12px">'+lucideSVG('upload',12,'currentColor')+'Upload SVG icon<input type="file" id="mk-icon-upload" accept=".svg,image/svg+xml" style="display:none"/></label>'
+    + '<span id="mk-icon-upload-status" style="font-size:10px;color:var(--ghost)"></span>'
+    + '</div>';
 
   // Icon grid grouped by category
   html += '<div id="mk-icon-grid" style="max-height:200px;overflow-y:auto;padding:6px;background:var(--bg);border:1px solid var(--border2);border-radius:9px;scrollbar-width:thin">';
@@ -1962,10 +2084,11 @@ function renderMarkerEditor(i) {
   });
   html += '</div>';
   html += '</div>'; // close .f
+  html += '</div>'; // close .rs (Details)
 
   // Position section
   html += '<div class="rs"><div class="st">Position</div>';
-  html += '<button class="btn btn-g" id="mk-place-btn" style="width:100%;margin-bottom:8px">&#10010; Click map to place</button>';
+  html += '<button class="btn btn-g btn-ic" id="mk-place-btn" style="width:100%;margin-bottom:8px;justify-content:center">'+lucideSVG('crosshair',13,'currentColor')+'Click map to place</button>';
   html += '<div class="nt">Or enter coordinates manually:</div>';
   html += '<div class="f2"><div class="f">'+fldInner('Longitude','mk-lng',m.coords[0])+'</div>';
   html += '<div class="f">'+fldInner('Latitude','mk-lat',m.coords[1])+'</div></div>';
@@ -2010,8 +2133,8 @@ function renderMarkerEditor(i) {
     html += fld('Pitch','mk-cam-pitch',m.camPitch||45);
     html += fld('Bearing','mk-cam-bearing',m.camBearing||0);
     html += '<div style="display:flex;gap:6px;margin-top:4px">';
-    html += '<button class="btn btn-g" id="mk-cam-use-view" style="flex:1">&#9678; Use current view</button>';
-    html += '<button class="btn btn-g" id="mk-cam-preview" style="flex:1">&#9654; Preview</button>';
+    html += '<button class="btn btn-g btn-ic" id="mk-cam-use-view" style="flex:1;justify-content:center">'+lucideSVG('camera',13,'currentColor')+'Use current view</button>';
+    html += '<button class="btn btn-g btn-ic" id="mk-cam-preview" style="flex:1;justify-content:center">'+lucideSVG('play',13,'currentColor')+'Preview</button>';
     html += '</div>';
   }
   html += '</div>';
@@ -2043,13 +2166,13 @@ function renderMarkerEditor(i) {
     var tbBtns = [
       {cmd:'bold',      label:'<b>B</b>',       title:'Bold'},
       {cmd:'italic',    label:'<i>I</i>',        title:'Italic'},
-      {cmd:'insertUnorderedList', label:'&#8226; List', title:'Bullet list'},
+      {cmd:'insertUnorderedList', label:lucideSVG('list',13,'currentColor'), title:'Bullet list'},
       {cmd:'insertParagraph',     label:'&para;',       title:'New paragraph'},
     ];
     tbBtns.forEach(function(b) {
       html += '<button type="button" data-cmd="'+b.cmd+'" title="'+b.title+'" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--ink);cursor:pointer;font-size:11px">'+b.label+'</button>';
     });
-    html += '<button type="button" id="mk-lb-clear" title="Clear formatting" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--ghost);cursor:pointer;font-size:11px">&#10227; Clear</button>';
+    html += '<button type="button" id="mk-lb-clear" class="btn-ic" title="Clear formatting" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--ghost);cursor:pointer;font-size:11px">'+lucideSVG('eraser',13,'currentColor')+'Clear</button>';
     html += '</div>';
     html += '<div id="mk-lb-body" contenteditable="true" style="min-height:90px;padding:10px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--ink);font-size:13px;line-height:1.6;outline:none;transition:border-color .18s" placeholder="Body text...">' + (lb.body||'<p>Add your description here.</p>') + '</div>';
     html += '</div>';
@@ -2068,7 +2191,7 @@ function renderMarkerEditor(i) {
     }
     html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">';
     html += '<div class="nt" style="margin:0">Clicking the marker opens this lightbox over the map area.</div>';
-    html += '<button class="btn btn-g" id="mk-lb-preview" style="white-space:nowrap;flex-shrink:0;margin-left:10px">&#128065; Preview</button>';
+    html += '<button class="btn btn-g btn-ic" id="mk-lb-preview" style="white-space:nowrap;flex-shrink:0;margin-left:10px">'+lucideSVG('eye',13,'currentColor')+'Preview</button>';
     html += '</div>';
   } else {
     html += '<div class="nt" style="opacity:.6">Enable to add an image and rich text shown when the marker is clicked. Choose from 3 layouts.</div>';
@@ -2085,7 +2208,9 @@ function renderMarkerEditor(i) {
     P.markers[i].icon = v;
     var prev = el('mk-icon-preview');
     if(prev) {
-      if(isLucide(v)) {
+      if(v && v.indexOf('data:') === 0) {
+        prev.innerHTML = '<img src="'+v+'" width="20" height="20" style="display:block"/>';
+      } else if(isLucide(v)) {
         prev.innerHTML = lucideSVG(v,20,'rgba(255,255,255,.9)');
       } else { prev.textContent = v||' '; }
     }
@@ -2099,6 +2224,41 @@ function renderMarkerEditor(i) {
         b.innerHTML = lucideSVG(b.dataset.ico, 15, isSel ? '#fff' : 'var(--ghost)');
       }
     });
+  });
+  // Icon upload (custom SVG)
+  var mkIconUpload = el('mk-icon-upload');
+  if(mkIconUpload) mkIconUpload.addEventListener('change', function() {
+    var file = this.files[0];
+    var status = el('mk-icon-upload-status');
+    if(!file) return;
+    if(!/\.svg$/i.test(file.name) && file.type !== 'image/svg+xml') {
+      if(status) status.textContent = 'Please choose an SVG file.';
+      return;
+    }
+    if(file.size > 100*1024) {
+      if(status) status.textContent = 'SVG is too large (max 100KB).';
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var text = ev.target.result;
+      if(text.indexOf('<svg') === -1) {
+        if(status) status.textContent = 'That file doesn\'t look like a valid SVG.';
+        return;
+      }
+      var dataUri = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(text)));
+      P.markers[i].icon = dataUri;
+      var inp = el('mk-icon'); if(inp) inp.value = '';
+      var prev = el('mk-icon-preview');
+      if(prev) prev.innerHTML = '<img src="'+dataUri+'" width="20" height="20" style="display:block"/>';
+      var iconGrid = el('mk-icon-grid');
+      if(iconGrid) iconGrid.querySelectorAll('.icon-btn').forEach(function(b){
+        b.classList.remove('on'); b.style.background='var(--mid)'; b.style.borderColor='var(--border2)';
+      });
+      if(status) status.textContent = 'Custom icon uploaded';
+      markDirty(); renderMarkers(); refreshMK();
+    };
+    reader.readAsText(file);
   });
   // Icon grid click
   var grid = el('mk-icon-grid');
@@ -2236,12 +2396,12 @@ function renderMarkerEditor(i) {
   var placeBtn = el('mk-place-btn');
   if(placeBtn) placeBtn.addEventListener('click', function() {
     if(!pMap || !pReady) return;
-    placeBtn.textContent = '\u2715 Click map to place...';
+    placeBtn.innerHTML = lucideSVG('crosshair',13,'currentColor')+'Click map to place...';
     placeBtn.style.background = 'var(--accent)';
     pMap.getCanvas().style.cursor = 'crosshair';
     pMap.once('click', function(e) {
       pMap.getCanvas().style.cursor = '';
-      placeBtn.textContent = '\u271a Click map to place';
+      placeBtn.innerHTML = lucideSVG('crosshair',13,'currentColor')+'Click map to place';
       placeBtn.style.background = '';
       P.markers[i].coords = [parseFloat(e.lngLat.lng.toFixed(6)), parseFloat(e.lngLat.lat.toFixed(6))];
       var lngEl = el('mk-lng'), latEl = el('mk-lat');
@@ -2263,6 +2423,12 @@ function renderZoneEditor(i) {
   html += '<div class="rs"><div class="st">Details</div>';
   html += fld('Name','zn-name',h(z.name));
   html += fldTA('Popup description','zn-popup',h(z.popup));
+  html += '<div class="f"><label class="fl">Colour</label><div class="cr"><input type="color" id="zn-col-p" value="'+h(z.color)+'"/><input type="text" id="zn-col-t" value="'+h(z.color)+'"/></div></div>';
+  html += '<div class="f"><label class="fl">Fill opacity <span id="zn-op-v" style="font-family:var(--mono);color:var(--ink)">'+z.opacity+'</span></label>';
+  html += '<input type="range" id="zn-op" min="0.05" max="0.5" step="0.05" value="'+z.opacity+'"/></div>';
+  html += '<div class="f"><label class="fl">Corner rounding <span id="zn-sm-v" style="font-family:var(--mono);color:var(--ink)">'+(z.smoothRadius||0)+'</span></label>';
+  html += '<input type="range" id="zn-sm" min="0" max="1" step="0.05" value="'+(z.smoothRadius||0)+'"/></div>';
+  html += '</div>';
   html += '<div class="rs"><div class="st">3D Building</div>';
   html += '<div class="lr"><span class="ll">Render as 3D building</span>'
     + '<button class="tg'+(z.render3d?' on':'')+' " id="zn-3d-tog"></button></div>';
@@ -2275,13 +2441,6 @@ function renderZoneEditor(i) {
   html += '<div class="lr"><span class="ll">Hide map content in zone area</span>'
     + '<button class="tg'+(z.clipMap?' on':'')+' " id="zn-clip-tog"></button></div>';
   html += '<div class="nt" style="margin-top:4px;font-size:11px;color:var(--ghost)">Hides Mapbox buildings &amp; labels inside this zone. Use with \'Render as 3D building\' to show only your custom content.</div>';
-  html += '</div>';
-  html += '<div class="f"><label class="fl">Colour</label><div class="cr"><input type="color" id="zn-col-p" value="'+h(z.color)+'"/><input type="text" id="zn-col-t" value="'+h(z.color)+'"/></div></div>';
-  html += '<div class="f"><label class="fl">Fill opacity <span id="zn-op-v" style="font-family:var(--mono);color:var(--ink)">'+z.opacity+'</span></label>';
-  html += '<input type="range" id="zn-op" min="0.05" max="0.5" step="0.05" value="'+z.opacity+'"/></div>';
-  html += '<div class="f"><label class="fl">Corner rounding <span id="zn-sm-v" style="font-family:var(--mono);color:var(--ink)">'+(z.smoothRadius||0)+'</span></label>';
-  html += '<input type="range" id="zn-sm" min="0" max="1" step="0.05" value="'+(z.smoothRadius||0)+'"/></div>';
-
   html += '</div>';
   // Scene visibility checklist
   html += '<div class="rs"><div class="st">Visible on scenes</div>';
@@ -2330,7 +2489,7 @@ function renderZoneEditor(i) {
   }
   html += '</div>';
   html += '<div class="rs"><div class="st">Polygon Coordinates</div>';
-  html += '<button class="btn btn-g" id="zn-draw-btn" style="width:100%;margin-bottom:8px">&#9998; Draw on map</button>';
+  html += '<button class="btn btn-g btn-ic" id="zn-draw-btn" style="width:100%;margin-bottom:8px;justify-content:center">'+lucideSVG('pencil',13,'currentColor')+'Draw on map</button>';
   html += '<div class="nt w">Draw on <a href="https://geojson.io" target="_blank">geojson.io</a> &rarr; copy coordinates array &rarr; paste below.</div>';
   html += '<div class="f"><label class="fl">Coordinates JSON</label><textarea id="zn-coords" style="min-height:110px;font-size:10px">'+h(JSON.stringify(z.coordinates,null,1))+'</textarea></div>';
   html += '</div>';
@@ -2352,9 +2511,9 @@ function renderZoneEditor(i) {
   var tog3d = el('zn-3d-tog');
   if(tog3d) tog3d.addEventListener('click', function(){
     P.zones[i].render3d = !P.zones[i].render3d;
-    markDirty(); renderZoneEditor(i); refreshZone();
+    markDirty(); renderZoneEditor(i); refreshZN();
   });
-  bindInput('zn-3d-h', function(v){ P.zones[i].height3d=parseInt(v)||20; markDirty(); refreshZone(); });
+  bindInput('zn-3d-h', function(v){ P.zones[i].height3d=parseInt(v)||20; markDirty(); refreshZN(); });
   var cp = el('zn-col-p'), ct = el('zn-col-t');
   if (cp) cp.addEventListener('input', function() { P.zones[i].color=this.value; if(ct)ct.value=this.value; renderZones(); refreshZN(); });
   if (ct) ct.addEventListener('input', function() { P.zones[i].color=this.value; if(cp)cp.value=this.value; renderZones(); refreshZN(); });
@@ -2431,7 +2590,7 @@ function renderSettings() {
   html += '<div class="f"><label class="fl">Data &amp; Privacy</label><textarea id="cfg-app-privacy" style="min-height:50px">'+h(P.appPrivacy||'')+'</textarea></div>';
   html += '<div class="f"><label class="fl">Accessibility Statement</label><textarea id="cfg-app-a11y" style="min-height:50px">'+h(P.accessibilityStatement||'')+'</textarea></div>';
   html += '</div>';
-  html += '<div class="rs"><div class="st">Map &#128506;</div>';
+  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('map',14,'currentColor')+'Map</span></div>';
   html += fld('Mapbox Token','cfg-tok',h(P.mapboxToken),'pk.eyJ1...');
   html += '<div class="f"><label class="fl">Map Style</label>'
     + '<select id="cfg-sty-preset" style="margin-bottom:6px">'
@@ -2450,9 +2609,9 @@ function renderSettings() {
     + '<div style="display:flex;gap:6px">'
     + '<input type="number" id="cfg-lng" step="0.0001" value="'+P.siteCentre[0]+'" style="flex:1"/>'
     + '<input type="number" id="cfg-lat" step="0.0001" value="'+P.siteCentre[1]+'" style="flex:1"/>'
-    + '<button class="btn btn-g" id="btn-use-centre" style="white-space:nowrap;flex-shrink:0;font-size:10px" title="Use current map view centre">&#8982; Map</button>'
+    + '<button class="btn btn-g btn-ic" id="btn-use-centre" style="white-space:nowrap;flex-shrink:0;font-size:10px" title="Use current map view centre">'+lucideSVG('crosshair',11,'currentColor')+'Map</button>'
     + '</div>'
-    + '<div style="font-size:10px;color:var(--ghost);margin-top:4px;font-family:var(--mono)">lng, lat &nbsp;&mdash;&nbsp; or click &#8982; Map to use current preview camera</div>'
+    + '<div style="font-size:10px;color:var(--ghost);margin-top:4px;font-family:var(--mono)">lng, lat &nbsp;&mdash;&nbsp; or click Map to use current preview camera</div>'
     + '</div>';
   html += fld('Site pin label','cfg-pin',h(P.sitePinLabel));
   html += '</div>';
@@ -2460,7 +2619,7 @@ function renderSettings() {
   html += '<div class="nt">Draw on <a href="https://geojson.io" target="_blank">geojson.io</a> &rarr; paste coordinates array.</div>';
   html += '<div class="f"><label class="fl">Coordinates JSON</label><textarea id="cfg-rl" style="min-height:110px;font-size:10px">'+h(JSON.stringify(P.redLine.coordinates,null,1))+'</textarea></div>';
   html += '</div>';
-  html += '<div class="rs"><div class="st">Have Your Say &#128204;</div>';
+  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('map-pin',14,'currentColor')+'Have Your Say</span></div>';
   html += '<div class="nt" style="margin-bottom:12px"><b style="color:var(--ink)">Setup guide:</b><br>'
     + '1. Create a Google Sheet with columns: <code>id | lat | lng | category | comment | timestamp</code><br>'
     + '2. Go to <a href="https://sheetdb.io" target="_blank">sheetdb.io</a> &rarr; connect your sheet &rarr; copy the API URL<br>'
@@ -2476,7 +2635,7 @@ function renderSettings() {
     + '<div class="lr"><span class="ll">Leave blank to disable feedback entirely</span></div>'
     + '</div>';
   html += '</div>';
-  html += '<div class="rs"><div class="st">Scene Questions &#128172;</div>';
+  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('message-circle',14,'currentColor')+'Scene Questions</span></div>';
   html += '<div class="nt" style="margin-bottom:12px">Add an optional question to any scene (Scene editor &gt; Content &gt; Question). Answers post here — use a <b>separate</b> sheet from Have Your Say, since the columns are different.<br><br>'
     + '<b style="color:var(--ink)">Setup guide:</b><br>'
     + '1. Create a Google Sheet with columns: <code>id | visitorId | sceneLabel | questionText | questionType | answer | timestamp</code><br>'
@@ -2491,7 +2650,7 @@ function renderSettings() {
     + '</div>';
   html += '<div class="nt">Every visitor gets a random ID stored in their browser (localStorage), included with every question answer <i>and</i> every Have Your Say pin — so you can filter both sheets by <code>visitorId</code> to see everything one person submitted across the whole site.</div>';
   html += '</div>';
-  html += '<div class="rs"><div class="st">Colours &#10024;</div>';
+  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('palette',14,'currentColor')+'Colours</span></div>';
   // Mini output preview
   html += '<div id="colour-preview" style="border-radius:8px;border:2px solid #c0392b;background:#f8f6f1;padding:14px 16px;margin-bottom:14px;font-family:system-ui,sans-serif">';
   html += '<div class="cp-txt" style="font-size:12px;color:#3a3733;margin-bottom:8px;font-weight:500">Output preview</div>';
@@ -2505,12 +2664,12 @@ function renderSettings() {
   html += '<div class="f"><label class="fl">Paper colour (prose background)</label><div class="cr"><input type="color" id="cfg-paper-p" value="'+(P.paperColor||'#f8f6f1')+'"/><input type="text" id="cfg-paper-t" value="'+(P.paperColor||'#f8f6f1')+'"/></div></div>';
   html += '<div class="f"><label class="fl">Progress bar end colour</label><div class="cr"><input type="color" id="cfg-prog-p" value="'+(P.progressColor||'#2a7c6b')+'"/><input type="text" id="cfg-prog-t" value="'+(P.progressColor||'#2a7c6b')+'"/></div></div>';
   html += '</div>';
-  html += '<div class="rs"><div class="st">Typography &#128295;</div>';
+  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('type',14,'currentColor')+'Typography</span></div>';
   html += '<div class="f"><label class="fl">Adobe Typekit kit ID (for custom fonts)</label><input type="text" id="cfg-kit" value="'+h(P.typekitId||'dfg2dug')+'" placeholder="dfg2dug"/></div>';
   html += '<div class="f"><label class="fl">Body font family</label><input type="text" id="cfg-font" value="'+h(P.fontFamily||'tt-commons-pro')+'" placeholder="tt-commons-pro"/></div>';
   html += '<div class="nt">The Typekit kit ID is the code in your <code>use.typekit.net/XXXX.css</code> embed URL. Change font family to match the font name in your kit.</div>';
   html += '</div>';
-  html += '<div class="rs"><div class="st">Text Styles &#128221;</div>';
+  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('text',14,'currentColor')+'Text Styles</span></div>';
   html += '<div class="nt" style="margin-bottom:10px">Controls how scene titles and body text look in the exported/preview output.</div>';
   function styleGroup(label, key, defSize, defWeight, defColor) {
     var size = P[key+'Size'] || defSize;
@@ -2533,7 +2692,7 @@ function renderSettings() {
   html += styleGroup('Paragraph (body text)','p',15,400,'#3a3733');
   html += '</div>';
   html += '<div class="rs"><div class="st">Project</div>';
-  html += '<button class="btn btn-g" id="btn-reset-project" style="width:100%;margin-bottom:8px">&#9851; Reset to blank project</button>';
+  html += '<button class="btn btn-g btn-ic" id="btn-reset-project" style="width:100%;margin-bottom:8px;justify-content:center">'+lucideSVG('rotate-ccw',13,'currentColor')+'Reset to blank project</button>';
   html += '<div style="font-size:10px;color:var(--ghost);font-family:var(--mono)">Clears all scenes, markers, zones and settings. Auto-saved project will be cleared.</div>';
   html += '</div>';
 
@@ -2656,13 +2815,13 @@ function renderSettings() {
       fetch(url + '?limit=1')
         .then(function(r) {
           if(r.ok) {
-            if(status) status.innerHTML = '<span style="color:#2a7c6b">&#10003; Connected — SheetDB is working</span>';
+            if(status) status.innerHTML = '<span style="color:#2a7c6b" class="ico-h">'+lucideSVG('check',12,'#2a7c6b')+'Connected — SheetDB is working</span>';
           } else {
-            if(status) status.innerHTML = '<span style="color:#c0392b">&#10007; Server returned ' + r.status + '</span>';
+            if(status) status.innerHTML = '<span style="color:#c0392b" class="ico-h">'+lucideSVG('x',12,'#c0392b')+'Server returned ' + r.status + '</span>';
           }
         })
         .catch(function() {
-          if(status) status.innerHTML = '<span style="color:#c0392b">&#10007; Could not reach URL — check it is correct</span>';
+          if(status) status.innerHTML = '<span style="color:#c0392b" class="ico-h">'+lucideSVG('x',12,'#c0392b')+'Could not reach URL — check it is correct</span>';
         });
     });
   }
@@ -2678,6 +2837,26 @@ function renderSettings() {
       markDirty();
     }
   });
+}
+
+function renderSEO() {
+  var html = '<div class="rh"><div class="rt">SEO &amp; Sharing</div></div>';
+  html += '<div class="rs"><div class="st">Search &amp; Social</div>';
+  html += '<div class="nt">Controls what shows up in search results and when this link is shared on social media (Slack, X, LinkedIn, etc). Leave blank to fall back to the project name.</div>';
+  html += fld('Page title','cfg-seo-title',h(P.seoTitle||''), P.name);
+  html += '<div class="f"><label class="fl">Meta description</label><textarea id="cfg-seo-desc" style="min-height:60px" placeholder="A short summary shown in search results and link previews.">'+h(P.seoDescription||'')+'</textarea></div>';
+  html += '<div class="f"><label class="fl">Social share image URL <span style="font-size:9px;color:var(--ghost);font-family:var(--mono);font-weight:400;margin-left:4px">1200&times;630px recommended</span></label>'
+    + '<input type="text" id="cfg-seo-image" value="'+h(P.seoImage||'')+'" placeholder="https://example.com/share-image.png"/></div>';
+  html += '</div>';
+  html += '<div class="rs"><div class="st">Favicon</div>';
+  html += '<div class="f"><label class="fl">Favicon URL <span style="font-size:9px;color:var(--ghost);font-family:var(--mono);font-weight:400;margin-left:4px">PNG or SVG, square</span></label>'
+    + '<input type="text" id="cfg-favicon" value="'+h(P.favicon||'')+'" placeholder="https://example.com/favicon.png"/></div>';
+  html += '</div>';
+  setHTML('rpc', html);
+  bindInput('cfg-seo-title', function(v){ P.seoTitle=v; });
+  bindTA('cfg-seo-desc', function(v){ P.seoDescription=v; });
+  bindInput('cfg-seo-image', function(v){ P.seoImage=v; });
+  bindInput('cfg-favicon', function(v){ P.favicon=v; });
 }
 
 function tryInitPreview() {
@@ -2944,7 +3123,12 @@ function makeCtxMarkerEl(color, icon) {
   var dot = document.createElement('div');
   dot.className = 'ctx-marker';
   dot.style.background = color || '#2255aa';
-  if(icon && /^[a-z][a-z0-9-]+$/.test(icon)) {
+  if(icon && icon.indexOf('data:') === 0) {
+    var customImg = document.createElement('img');
+    customImg.src = icon; customImg.alt = '';
+    customImg.style.cssText = 'width:18px;height:18px;display:block';
+    dot.appendChild(customImg);
+  } else if(icon && /^[a-z][a-z0-9-]+$/.test(icon)) {
     dot.innerHTML = lucideSVG(icon,16,'rgba(255,255,255,.95)');
   } else if(icon) {
     dot.innerHTML = '<span class="ctx-emoji">'+icon+'</span>';
@@ -3185,13 +3369,13 @@ function buildLbPreviewHtml(mk) {
       html = '<iframe class="lb-embed-frame" src="'+url+'" allowfullscreen allow="fullscreen" style="width:100%;height:100%;border:none;flex:1;display:block"></iframe>';
     } else {
       html = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:#888">'
-           + '<div style="font-size:32px">&#128279;</div>'
+           + lucideSVG('link',28,'#888')
            + '<div style="font-size:13px;font-family:monospace">Add an embed URL to preview</div></div>';
     }
   } else if(layout === 'popup-card') {
     html += '<div class="lb-pc-img-col">';
     if(allImgs.length) html += '<img src="'+allImgs[0].src+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block;flex:1"/>';
-    else               html += '<div class="lb-pc-img-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:#9a9590"><div style="font-size:28px">&#128444;</div><div style="font-size:11px">No image</div></div>';
+    else               html += '<div class="lb-pc-img-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:#9a9590">'+lucideSVG('image',24,'#9a9590')+'<div style="font-size:11px">No image</div></div>';
     html += '</div>';
     html += '<div class="lb-pc-text-col">';
     html += '<div class="lb-pc-name-tag"><div class="lb-pc-dot" style="background:'+color+'"></div><span class="lb-pc-name">'+h(name)+'</span></div>';
@@ -3202,7 +3386,7 @@ function buildLbPreviewHtml(mk) {
     html += '</div>';
   } else if(layout === 'card') {
     if(allImgs.length) html += '<img src="'+allImgs[0].src+'" class="lb-card-img" alt=""/>';
-    else html += '<div style="height:160px;background:#e9e5dc;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:center;color:#9a9590;font-size:28px">&#128444;</div>';
+    else html += '<div style="height:160px;background:#e9e5dc;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:center;color:#9a9590">'+lucideSVG('image',24,'#9a9590')+'</div>';
     html += '<div class="lb-card-body">';
     html += '<div class="lb-name-tag"><div class="lb-dot" style="background:'+color+'"></div><span class="lb-name">'+h(name)+'</span></div>';
     if(heading)    html += '<div class="lb-heading">'    + heading    + '</div>';
@@ -3212,7 +3396,7 @@ function buildLbPreviewHtml(mk) {
   } else if(layout === 'panel') {
     html += '<div class="lb-panel-img-col">';
     if(allImgs.length) html += '<img src="'+allImgs[0].src+'" style="width:100%;height:100%;object-fit:cover;display:block" alt=""/>';
-    else html += '<div style="width:100%;height:100%;background:#e9e5dc;display:flex;align-items:center;justify-content:center;color:#9a9590;font-size:36px">&#128444;</div>';
+    else html += '<div style="width:100%;height:100%;background:#e9e5dc;display:flex;align-items:center;justify-content:center;color:#9a9590">'+lucideSVG('image',28,'#9a9590')+'</div>';
     html += '</div><div class="lb-panel-text-col">';
     html += '<div class="lb-name-tag"><div class="lb-dot" style="background:'+color+'"></div><span class="lb-name">'+h(name)+'</span></div>';
     if(heading)    html += '<div class="lb-heading">'    + heading    + '</div>';
@@ -3227,7 +3411,7 @@ function buildLbPreviewHtml(mk) {
       if(allImgs.length > 1) html += '<div style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.4);color:#fff;font-size:10px;font-family:monospace;padding:3px 8px;border-radius:10px">1 / '+allImgs.length+'</div>';
       html += '</div>';
     } else {
-      html += '<div style="width:100%;height:100%;background:#222;display:flex;align-items:center;justify-content:center;color:#666;font-size:36px">&#128444;</div>';
+      html += '<div style="width:100%;height:100%;background:#222;display:flex;align-items:center;justify-content:center;color:#666">'+lucideSVG('image',28,'#666')+'</div>';
     }
     html += '</div><div class="lb-car-text-col">';
     html += '<div class="lb-name-tag"><div class="lb-dot" style="background:'+color+'"></div><span class="lb-name">'+h(name)+'</span></div>';
@@ -3340,10 +3524,18 @@ function buildOutputHTML() {
   var chaps = buildChapters();
   var js    = buildJS();
 
+  var seoTitle = P.seoTitle || (P.name + ' \u00b7 Consultation');
+  var seoDesc  = P.seoDescription || '';
+
   return '<!DOCTYPE html>\n<html lang="en">\n<head>\n'
     + '<meta charset="UTF-8"/>\n'
     + '<meta name="viewport" content="width=device-width, initial-scale=1.0"/>\n'
-    + '<title>' + h(P.name) + ' \u00b7 Consultation</title>\n'
+    + '<title>' + h(seoTitle) + '</title>\n'
+    + (seoDesc ? '<meta name="description" content="'+h(seoDesc)+'"/>\n' : '')
+    + '<meta property="og:title" content="'+h(seoTitle)+'"/>\n'
+    + (seoDesc ? '<meta property="og:description" content="'+h(seoDesc)+'"/>\n' : '')
+    + (P.seoImage ? '<meta property="og:image" content="'+h(P.seoImage)+'"/>\n<meta name="twitter:card" content="summary_large_image"/>\n' : '')
+    + (P.favicon ? '<link rel="icon" href="'+h(P.favicon)+'"/>\n' : '')
     + '<link href="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.css" rel="stylesheet"/>\n'
     + '<script src="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js"><' + '/script>\n'
     + '<link rel="stylesheet" href="https://use.typekit.net/' + (P.typekitId||'dfg2dug') + '.css"/>\n'
@@ -3496,10 +3688,15 @@ function buildExplainerBtn(sc) {
     + 'Explain what is being shown on the map</button>\n';
 }
 function buildQuestionBlock(sc, i) {
-  var qs = sc.questions || [];
-  return qs.map(function(q, qi) { return buildOneQuestion(sc, i, q, qi); }).join('');
+  var items = (sc.questions||[]).map(function(q, qi) { return buildQuestionItem(sc, i, q, qi); }).filter(Boolean);
+  if(!items.length) return '';
+  return '    <div class="scene-question-group" data-scene-idx="'+i+'" data-scene-label="'+h(sc.label||'')+'">\n'
+    + items.join('')
+    + '      <div class="sq-actions"><button type="button" class="sq-submit" onclick="submitSceneQuestion(this)">Submit answer'+(items.length>1?'s':'')+'</button></div>\n'
+    + '      <div class="sq-status" role="status" aria-live="polite"></div>\n'
+    + '    </div>\n';
 }
-function buildOneQuestion(sc, i, q, qi) {
+function buildQuestionItem(sc, i, q, qi) {
   if(!q || !q.type || q.type==='none' || !(q.text||'').trim()) return '';
   var name = 'sq-'+i+'-'+qi;
   var input = '';
@@ -3524,12 +3721,10 @@ function buildOneQuestion(sc, i, q, qi) {
   } else {
     return '';
   }
-  return '    <div class="scene-question" data-scene-idx="'+i+'" data-scene-label="'+h(sc.label||'')+'" data-question-text="'+h(q.text)+'" data-question-type="'+h(q.type)+'">\n'
-    + '      <div class="sq-label">'+h(q.text)+'</div>\n'
-    + '      '+input+'\n'
-    + '      <div class="sq-actions"><button type="button" class="sq-submit" onclick="submitSceneQuestion(this)">Submit answer</button></div>\n'
-    + '      <div class="sq-status" role="status" aria-live="polite"></div>\n'
-    + '    </div>\n';
+  return '      <div class="sq-item" data-question-text="'+h(q.text)+'" data-question-type="'+h(q.type)+'">\n'
+    + '        <div class="sq-label">'+h(q.text)+'</div>\n'
+    + '        '+input+'\n'
+    + '      </div>\n';
 }
 function buildChapters() {
   var out = '';
@@ -3543,7 +3738,6 @@ function buildChapters() {
       + '    <'+tag+'>'+h(sc.title)+'</'+tag+'>\n'
       + '    <div class="lead">'+sanitizeBody(sc.body)+'</div>\n'
       + buildExplainerBtn(sc)
-      + '    <div class="map-instruction"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>Scroll to continue</div>\n'
       + buildQuestionBlock(sc, i)
       + '  </section>\n';
   });
@@ -3779,7 +3973,13 @@ function buildJS() {
 '  dot.style.background=color||"#2255aa";',
 '  dot.addEventListener("mouseenter",function(){dot.style.transform="scale(1.15)";});',
 '  dot.addEventListener("mouseleave",function(){dot.style.transform="";});',
-'  if(icon&&/^[a-z][a-z0-9-]+$/.test(icon)){',
+'  if(icon&&icon.indexOf("data:")===0){',
+'    var img=document.createElement("img");',
+'    img.src=icon;',
+'    img.alt="";',
+'    img.style.cssText="width:18px;height:18px;pointer-events:none;display:block";',
+'    dot.appendChild(img);',
+'  } else if(icon&&/^[a-z][a-z0-9-]+$/.test(icon)){',
 '    var img=document.createElement("img");',
 '    img.src="https://unpkg.com/lucide-static@latest/icons/"+icon+".svg";',
 '    img.alt="";',
@@ -4237,24 +4437,32 @@ function buildJS() {
 '  }catch(e){ return "v-"+Date.now().toString(36); }',
 '}',
 'async function submitSceneQuestion(btn){',
-'  var wrap=btn.closest(".scene-question");if(!wrap)return;',
+'  var wrap=btn.closest(".scene-question-group");if(!wrap)return;',
 '  var status=wrap.querySelector(".sq-status");',
-'  var type=wrap.dataset.questionType;',
-'  var answer="";',
-'  if(type==="likert"||type==="radio"){',
-'    var checked=wrap.querySelector("input[type=radio]:checked");',
-'    if(!checked){ if(status)status.textContent="Please choose an option before submitting."; return; }',
-'    answer=checked.value;',
-'  } else {',
-'    var inp=wrap.querySelector(".sq-input");',
-'    answer=inp?inp.value.trim():"";',
-'    if(!answer){ if(status)status.textContent="Please answer before submitting."; return; }',
+'  var items=wrap.querySelectorAll(".sq-item");',
+'  var ts=new Date().toISOString();',
+'  var subId=Date.now().toString();',
+'  var rows=[];',
+'  for(var idx=0;idx<items.length;idx++){',
+'    var item=items[idx];',
+'    var type=item.dataset.questionType;',
+'    var answer="";',
+'    if(type==="likert"||type==="radio"){',
+'      var checked=item.querySelector("input[type=radio]:checked");',
+'      if(!checked){ if(status)status.textContent="Please answer all questions before submitting."; return; }',
+'      answer=checked.value;',
+'    } else {',
+'      var inp=item.querySelector(".sq-input");',
+'      answer=inp?inp.value.trim():"";',
+'      if(!answer){ if(status)status.textContent="Please answer all questions before submitting."; return; }',
+'    }',
+'    rows.push({id:subId+"-"+idx,visitorId:getVisitorId(),sceneLabel:wrap.dataset.sceneLabel,questionText:item.dataset.questionText,questionType:type,answer:answer,timestamp:ts});',
 '  }',
+'  if(!rows.length)return;',
 '  if(!QUESTIONS_SHEETDB_URL){ if(status)status.textContent="This site isn\'t connected to a response sheet yet."; return; }',
 '  btn.disabled=true;var origText=btn.textContent;btn.textContent="Saving…";',
-'  var row={id:Date.now().toString(),visitorId:getVisitorId(),sceneLabel:wrap.dataset.sceneLabel,questionText:wrap.dataset.questionText,questionType:type,answer:answer,timestamp:new Date().toISOString()};',
-'  try{var res=await fetch(QUESTIONS_SHEETDB_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:[row]})});if(!res.ok)throw new Error();}catch(e){}',
-'  if(status)status.textContent="Thanks — your answer has been saved.";',
+'  try{var res=await fetch(QUESTIONS_SHEETDB_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:rows})});if(!res.ok)throw new Error();}catch(e){}',
+'  if(status)status.textContent=rows.length>1?"Thanks — your answers have been saved.":"Thanks — your answer has been saved.";',
 '  btn.disabled=false;btn.textContent=origText;',
 '}',
 'var mapExplainerOpener=null;',
@@ -4502,7 +4710,9 @@ function buildCSS() {
 + '.map-explain-btn{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:9px 16px;border-radius:4px;background:transparent;border:1px solid var(--mid);color:var(--ink);font-size:11.5px;font-weight:600;font-family:var(--f-body);cursor:pointer;transition:all .18s}'
 + '.map-explain-btn:hover{border-color:var(--accent);color:var(--accent)}'
 + '.map-explain-btn svg{flex-shrink:0;opacity:.7}'
-+ '.scene-question{margin-top:28px;padding:20px;border-radius:8px;background:rgba(15,14,13,.03);border:1px solid var(--mid)}'
++ '.scene-question-group{margin-top:28px;padding:20px;border-radius:8px;background:rgba(15,14,13,.03);border:1px solid var(--mid)}'
++ '.sq-item{margin-bottom:20px}'
++ '.sq-item:last-of-type{margin-bottom:0}'
 + '.sq-label{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:16px;line-height:1.5}'
 + '.sq-likert{display:flex;justify-content:space-between;gap:8px;margin-bottom:6px;text-align:center}'
 + '.sq-likert-opt{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:11px;color:var(--ghost);cursor:pointer;line-height:1.3}'
