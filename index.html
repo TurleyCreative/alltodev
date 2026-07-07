@@ -487,6 +487,8 @@ if(P) {
     if(sc.layers.orbit === undefined) sc.layers.orbit = false;
     if(sc.layers.buildings === undefined) sc.layers.buildings = true;
     if(!sc.camera) sc.camera = {zoom:14,pitch:0,bearing:0,duration:2000};
+    if(!sc.questions) sc.questions = (sc.question && sc.question.type && sc.question.type!=='none') ? [sc.question] : [];
+    delete sc.question;
   });
 }
 var AS = 0, AM = null, AZ = null, ALN = -1;
@@ -1418,6 +1420,8 @@ function bindExportModal() {
         data.scenes.forEach(function(sc) {
           if(!sc.layers) sc.layers = {};
           if(sc.layers.orbit === undefined) sc.layers.orbit = false;
+          if(!sc.questions) sc.questions = (sc.question && sc.question.type && sc.question.type!=='none') ? [sc.question] : [];
+          delete sc.question;
         });
         if(!data.lines) data.lines = [];
         P = data;
@@ -1712,23 +1716,29 @@ function renderRightPanel() {
   html += '<button type="button" id="sc-body-html-apply" style="display:none;margin-top:4px;padding:6px 14px;border-radius:7px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:11px;font-weight:500">Apply HTML</button>';
   html += '</div>';
   html += '</div>';
-  html += '<div class="rs"><div class="st">Question &amp; Accessibility</div>';
-  var sq = sc.question || {type:'none', text:'', options:[]};
-  html += '<div class="f"><label class="fl">Question type</label><select id="sc-q-type">'
-    + '<option value="none"'+((!sq.type||sq.type==='none')?' selected':'')+'>No question on this scene</option>'
-    + '<option value="likert"'+(sq.type==='likert'?' selected':'')+'>Likert scale (agree / disagree)</option>'
-    + '<option value="radio"'+(sq.type==='radio'?' selected':'')+'>Multiple choice (custom options)</option>'
-    + '<option value="short"'+(sq.type==='short'?' selected':'')+'>Short text answer</option>'
-    + '<option value="long"'+(sq.type==='long'?' selected':'')+'>Long text answer</option>'
-    + '</select></div>';
-  if(sq.type && sq.type!=='none') {
-    html += fld('Question text', 'sc-q-text', h(sq.text||''), 'e.g. Do you agree new homes should be delivered here?');
+  html += '<div class="rs"><div class="st">Questions &amp; Accessibility</div>';
+  var sqs = sc.questions || [];
+  sqs.forEach(function(sq, qi) {
+    html += '<div style="padding:12px;border:1px solid var(--border2);border-radius:8px;margin-bottom:10px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      + '<div style="font-size:11px;color:var(--ghost);font-weight:500">Question '+(qi+1)+'</div>'
+      + '<button type="button" class="ib d sc-q-del" data-qi="'+qi+'" aria-label="Remove question '+(qi+1)+'">&#10005;</button>'
+      + '</div>';
+    html += '<div class="f"><label class="fl">Question type</label><select class="sc-q-type" data-qi="'+qi+'">'
+      + '<option value="likert"'+(sq.type==='likert'?' selected':'')+'>Likert scale (agree / disagree)</option>'
+      + '<option value="radio"'+(sq.type==='radio'?' selected':'')+'>Multiple choice (custom options)</option>'
+      + '<option value="short"'+(sq.type==='short'?' selected':'')+'>Short text answer</option>'
+      + '<option value="long"'+(sq.type==='long'?' selected':'')+'>Long text answer</option>'
+      + '</select></div>';
+    html += '<div class="f"><label class="fl">Question text</label><input type="text" class="sc-q-text" data-qi="'+qi+'" value="'+h(sq.text||'')+'" placeholder="e.g. Do you agree new homes should be delivered here?"/></div>';
     if(sq.type==='radio') {
       html += '<div class="f"><label class="fl">Options <span style="font-size:9px;color:var(--ghost);font-family:var(--mono);font-weight:400;margin-left:4px">one per line</span></label>'
-        + '<textarea id="sc-q-options" style="min-height:80px">'+h((sq.options||[]).join('\n'))+'</textarea></div>';
+        + '<textarea class="sc-q-options" data-qi="'+qi+'" style="min-height:80px">'+h((sq.options||[]).join('\n'))+'</textarea></div>';
     }
-    html += '<div class="nt">Answers post to the Scene Questions SheetDB URL (Settings), tagged with this scene\'s label and a per-visitor ID so you can match up everything one person answered.</div>';
-  }
+    html += '</div>';
+  });
+  html += '<button type="button" class="btn btn-g" id="sc-q-add" style="width:100%;margin-bottom:6px">+ Add question</button>';
+  if(sqs.length) html += '<div class="nt">Answers post to the Scene Questions SheetDB URL (Settings), tagged with this scene\'s label and a per-visitor ID so you can match up everything one person answered.</div>';
   html += '<div class="f"><label class="fl">Map explanation <span style="font-size:9px;color:var(--ghost);font-family:var(--mono);font-weight:400;margin-left:4px">for the "Explain what is being shown" button</span></label>'
     + '<textarea id="sc-map-explainer" placeholder="Describe in plain language what this view of the map is showing and why it matters — this is read aloud by screen readers.">'+h(sc.mapExplainer||'')+'</textarea></div>';
   html += '<div class="nt">Leave blank to hide the "Explain what is being shown on the map" button on this scene.</div>';
@@ -1791,19 +1801,35 @@ function renderRightPanel() {
 
   bindInput('sc-title', function(v) { P.scenes[AS].title=v; });
 
-  var scQType = el('sc-q-type');
-  if(scQType) scQType.addEventListener('change', function() {
-    if(!P.scenes[AS].question) P.scenes[AS].question = {type:'none', text:'', options:[]};
-    P.scenes[AS].question.type = this.value;
+  document.querySelectorAll('.sc-q-type').forEach(function(sel) {
+    sel.addEventListener('change', function() {
+      P.scenes[AS].questions[parseInt(this.dataset.qi)].type = this.value;
+      markDirty(); renderRightPanel();
+    });
+  });
+  document.querySelectorAll('.sc-q-text').forEach(function(inp) {
+    inp.addEventListener('input', function() {
+      P.scenes[AS].questions[parseInt(this.dataset.qi)].text = this.value;
+      markDirty();
+    });
+  });
+  document.querySelectorAll('.sc-q-options').forEach(function(ta) {
+    ta.addEventListener('input', function() {
+      P.scenes[AS].questions[parseInt(this.dataset.qi)].options = this.value.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+      markDirty();
+    });
+  });
+  document.querySelectorAll('.sc-q-del').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      P.scenes[AS].questions.splice(parseInt(this.dataset.qi), 1);
+      markDirty(); renderRightPanel();
+    });
+  });
+  var scQAdd = el('sc-q-add');
+  if(scQAdd) scQAdd.addEventListener('click', function() {
+    if(!P.scenes[AS].questions) P.scenes[AS].questions = [];
+    P.scenes[AS].questions.push({type:'likert', text:'', options:[]});
     markDirty(); renderRightPanel();
-  });
-  bindInput('sc-q-text', function(v) {
-    if(!P.scenes[AS].question) P.scenes[AS].question = {type:'none', text:'', options:[]};
-    P.scenes[AS].question.text = v;
-  });
-  bindTA('sc-q-options', function(v) {
-    if(!P.scenes[AS].question) P.scenes[AS].question = {type:'none', text:'', options:[]};
-    P.scenes[AS].question.options = v.split('\n').map(function(s){return s.trim();}).filter(Boolean);
   });
   bindTA('sc-map-explainer', function(v) { P.scenes[AS].mapExplainer = v; });
   // Rich text scene body
@@ -3470,9 +3496,12 @@ function buildExplainerBtn(sc) {
     + 'Explain what is being shown on the map</button>\n';
 }
 function buildQuestionBlock(sc, i) {
-  var q = sc.question;
+  var qs = sc.questions || [];
+  return qs.map(function(q, qi) { return buildOneQuestion(sc, i, q, qi); }).join('');
+}
+function buildOneQuestion(sc, i, q, qi) {
   if(!q || !q.type || q.type==='none' || !(q.text||'').trim()) return '';
-  var name = 'sq-'+i;
+  var name = 'sq-'+i+'-'+qi;
   var input = '';
   if(q.type==='likert') {
     var likertOpts = ['Strongly agree','Agree','Neither agree nor disagree','Disagree','Strongly disagree'];
@@ -4402,8 +4431,8 @@ function buildCSS() {
 + '#drawer-overlay.open{display:block}'
 + '#prose{width:var(--prose-w);height:100vh;overflow-y:scroll;background:var(--paper);scroll-behavior:smooth;scroll-snap-type:y mandatory;border-right:1px solid var(--mid);scrollbar-width:none;z-index:10}'
 + '#prose::-webkit-scrollbar{display:none}'
-+ '.chapter{min-height:100vh;padding:68px 52px 88px 44px;scroll-snap-align:start;display:flex;flex-direction:column;justify-content:center;position:relative}'
-+ '.chapter+.chapter::before{content:"";position:absolute;top:0;left:44px;right:52px;height:1px;background:linear-gradient(90deg,var(--mid),transparent)}'
++ '.chapter{min-height:100vh;padding:68px 112px 88px 104px;scroll-snap-align:start;display:flex;flex-direction:column;justify-content:center;position:relative}'
++ '.chapter+.chapter::before{content:"";position:absolute;top:0;left:104px;right:112px;height:1px;background:linear-gradient(90deg,var(--mid),transparent)}'
 + '.scene-tag{display:inline-flex;align-items:center;gap:10px;font-size:9px;letter-spacing:.24em;text-transform:uppercase;margin-bottom:20px}'
 + '.scene-tag-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}'
 + '.scene-tag span{opacity:.7}'
