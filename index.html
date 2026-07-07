@@ -498,6 +498,74 @@ function renderStaticIcons(root) {
   });
 }
 
+// ── IMAGE UPLOAD (compress + embed as data URI) ──────
+function imageUploadRowHTML(fieldId) {
+  return '<div style="display:flex;align-items:center;gap:8px;margin-top:6px">'
+    + '<label class="btn btn-g btn-ic" style="cursor:pointer;font-size:11px;padding:6px 12px">'+lucideSVG('upload',12,'currentColor')+'Upload image<input type="file" id="'+fieldId+'-upload" accept="image/*" style="display:none"/></label>'
+    + '<span id="'+fieldId+'-upload-status" style="font-size:10px;color:var(--ghost)"></span>'
+    + '</div>';
+}
+function compressImageFile(file, maxDim, cb) {
+  if(!file.type || file.type.indexOf('image/') !== 0) { cb(new Error('not an image')); return; }
+  if(file.size > 20*1024*1024) { cb(new Error('too large')); return; }
+  var keepPng = file.type === 'image/png';
+  var url = URL.createObjectURL(file);
+  var img = new Image();
+  img.onload = function() {
+    var w = img.naturalWidth, h = img.naturalHeight;
+    var scale = Math.min(1, maxDim / Math.max(w, h));
+    var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+    var canvas = document.createElement('canvas');
+    canvas.width = cw; canvas.height = ch;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, cw, ch);
+    URL.revokeObjectURL(url);
+    try {
+      var dataUri = keepPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.92);
+      cb(null, dataUri);
+    } catch(e) { cb(e); }
+  };
+  img.onerror = function() { URL.revokeObjectURL(url); cb(new Error('could not read image')); };
+  img.src = url;
+}
+function bindImageUpload(fieldId, maxDim, setter) {
+  var input = el(fieldId+'-upload');
+  if(!input) return;
+  input.addEventListener('change', function() {
+    var file = this.files[0];
+    var status = el(fieldId+'-upload-status');
+    if(!file) return;
+    if(file.type.indexOf('image/') !== 0) {
+      if(status) status.textContent = 'Please choose an image file.';
+      return;
+    }
+    function finish(dataUri) {
+      var urlInput = el(fieldId);
+      if(urlInput) urlInput.value = '';
+      setter(dataUri);
+      var kb = Math.max(1, Math.round(dataUri.length * 0.75 / 1024));
+      if(status) status.textContent = 'Image uploaded (' + kb + ' KB)';
+      markDirty();
+    }
+    // SVG is vector — preserve as-is rather than rasterizing through canvas
+    if(file.type === 'image/svg+xml') {
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var text = ev.target.result;
+        if(text.indexOf('<svg') === -1) { if(status) status.textContent = 'That file doesn\'t look like a valid SVG.'; return; }
+        finish('data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(text))));
+      };
+      reader.readAsText(file);
+      return;
+    }
+    if(status) status.textContent = 'Compressing…';
+    compressImageFile(file, maxDim, function(err, dataUri) {
+      if(err) { if(status) status.textContent = 'Could not read that image.'; return; }
+      finish(dataUri);
+    });
+  });
+}
+
 
 // Auto-rotated scene-tag dot colors, used unless a scene sets its own tagColor
 var SCENE_TAG_COLORS = ['#c0392b','#d4820a','#2a7c6b','#2255aa','#8b5cf6','#c0392b','#d4820a'];
@@ -1143,7 +1211,7 @@ function renderOverlayEditor(i) {
   html += '<div class="rs"><div class="st">Image</div>';
   html += fld('Name','ov-name',h(ov.name||''));
   html += '<div class="f"><label class="fl">Image URL <span style="font-size:9px;color:var(--ghost);font-family:var(--mono)">PNG with transparency recommended</span></label>';
-  html += '<input type="text" id="ov-url" value="'+h(ov.url||'')+'" placeholder="https://... (.png, .jpg, .webp)"/></div>';
+  html += '<input type="text" id="ov-url" value="'+h(ov.url||'')+'" placeholder="https://... (.png, .jpg, .webp)"/>' + imageUploadRowHTML('ov-url') + '</div>';
   html += '<div class="f"><label class="fl">Opacity</label>'+rng('ov-op','Opacity',0,1,0.05,ov.opacity||0.85,'')+'</div>';
   html += '</div>';
   html += '<div class="rs"><div class="st">Visible on scenes</div>';
@@ -1178,6 +1246,7 @@ function renderOverlayEditor(i) {
   // Bindings
   bindInput('ov-name', function(v){ P.overlays[i].name=v; renderOverlays(); markDirty(); });
   bindInput('ov-url',  function(v){ P.overlays[i].url=v;  refreshOV(); markDirty(); });
+  bindImageUpload('ov-url', 2400, function(dataUri){ P.overlays[i].url=dataUri; refreshOV(); });
   var opEl = el('ov-op'), opvEl = el('ov-op-v');
   if(opEl) opEl.addEventListener('input', function() {
     P.overlays[i].opacity = parseFloat(this.value);
@@ -2184,7 +2253,7 @@ function renderMarkerEditor(i) {
     }
     if(lbLy === 'image-text') {
       html += '<div class="f"><label class="fl">Image URL</label>';
-      html += '<input type="text" id="mk-lb-img" value="'+h(lb.img||'')+'" placeholder="https://..."/></div>';
+      html += '<input type="text" id="mk-lb-img" value="'+h(lb.img||'')+'" placeholder="https://..."/>' + imageUploadRowHTML('mk-lb-img') + '</div>';
       html += '<div class="f"><label class="fl">Image caption (optional)</label>';
       html += '<input type="text" id="mk-lb-imgcap" value="'+h(lb.imgCaption||'')+'" placeholder="Caption"/></div>';
       html += '<div class="nt">Image is clickable to expand fullscreen.</div>';
@@ -2380,6 +2449,7 @@ function renderMarkerEditor(i) {
       if(bodyEl) { bodyEl.innerHTML = '<p></p>'; P.markers[i].lightbox.body='<p></p>'; markDirty(); bodyEl.focus(); }
     });
     bindInput('mk-lb-img',    function(v) { P.markers[i].lightbox.img=v;      lbChanged(); });
+    bindImageUpload('mk-lb-img', 1600, function(dataUri){ P.markers[i].lightbox.img=dataUri; lbChanged(); });
     bindInput('mk-lb-embed',  function(v) { P.markers[i].lightbox.embedUrl=v; lbChanged(); });
     bindInput('mk-lb-embed',  function(v) { P.markers[i].lightbox.embedUrl=v; lbChanged(); });
     bindInput('mk-lb-imgcap', function(v) { P.markers[i].lightbox.imgCaption=v; markDirty(); });
@@ -2484,6 +2554,7 @@ function renderZoneEditor(i) {
     }
     if(zlbLy === 'image-text') {
       html += fld('Image URL','zn-lb-img',h(zlb.img||''));
+      html += imageUploadRowHTML('zn-lb-img');
       html += fld('Image caption','zn-lb-imgcap',h(zlb.imgCaption||''));
     }
   }
@@ -2541,6 +2612,7 @@ function renderZoneEditor(i) {
   bindTA('zn-lb-body',     function(v){ if(P.zones[i].lightbox) P.zones[i].lightbox.body=v; });
   bindInput('zn-lb-embed', function(v){ if(P.zones[i].lightbox) P.zones[i].lightbox.embedUrl=v; });
   bindInput('zn-lb-img',   function(v){ if(P.zones[i].lightbox) P.zones[i].lightbox.img=v; });
+  bindImageUpload('zn-lb-img', 1600, function(dataUri){ if(P.zones[i].lightbox) P.zones[i].lightbox.img=dataUri; });
   bindInput('zn-lb-imgcap',function(v){ if(P.zones[i].lightbox) P.zones[i].lightbox.imgCaption=v; });
   var znDrawBtn = el('zn-draw-btn');
   if(znDrawBtn) znDrawBtn.addEventListener('click', function(){ openDraw('zone', i); });
@@ -2580,12 +2652,12 @@ function renderSettings() {
   html += '<div class="rs"><div class="st">Client Info</div>';
   html += fld('Client / site name','cfg-client-name',h(P.clientName||''));
   html += '<div class="f"><label class="fl">Client logo URL <span style="font-size:9px;color:var(--ghost);font-family:var(--mono)">(PNG/SVG, transparent bg)</span></label>'
-    + '<input type="text" id="cfg-client-logo" value="'+h(P.clientLogoUrl||'')+'" placeholder="https://example.com/client-logo.png"/></div>';
+    + '<input type="text" id="cfg-client-logo" value="'+h(P.clientLogoUrl||'')+'" placeholder="https://example.com/client-logo.png"/>' + imageUploadRowHTML('cfg-client-logo') + '</div>';
   html += '<div class="f"><label class="fl">About</label><textarea id="cfg-client-about" style="min-height:60px">'+h(P.clientAbout||'')+'</textarea></div>';
   html += '</div>';
   html += '<div class="rs"><div class="st">App Info</div>';
   html += '<div class="f"><label class="fl">App logo URL <span style="font-size:9px;color:var(--ghost);font-family:var(--mono)">(PNG/SVG, transparent bg)</span></label>'
-    + '<input type="text" id="cfg-app-logo" value="'+h(P.appLogoUrl||'')+'" placeholder="https://example.com/app-logo.png"/></div>';
+    + '<input type="text" id="cfg-app-logo" value="'+h(P.appLogoUrl||'')+'" placeholder="https://example.com/app-logo.png"/>' + imageUploadRowHTML('cfg-app-logo') + '</div>';
   html += '<div class="f"><label class="fl">About this tool</label><textarea id="cfg-app-about" style="min-height:60px">'+h(P.appAbout||'')+'</textarea></div>';
   html += '<div class="f"><label class="fl">Data &amp; Privacy</label><textarea id="cfg-app-privacy" style="min-height:50px">'+h(P.appPrivacy||'')+'</textarea></div>';
   html += '<div class="f"><label class="fl">Accessibility Statement</label><textarea id="cfg-app-a11y" style="min-height:50px">'+h(P.accessibilityStatement||'')+'</textarea></div>';
@@ -2703,8 +2775,10 @@ function renderSettings() {
   bindInput('cfg-sub', function(v){P.siteSubtitle=v;});
   bindInput('cfg-client-name',  function(v){ P.clientName=v; });
   bindInput('cfg-client-logo',  function(v){ P.clientLogoUrl=v; });
+  bindImageUpload('cfg-client-logo', 800, function(dataUri){ P.clientLogoUrl=dataUri; });
   bindTA('cfg-client-about',    function(v){ P.clientAbout=v; });
   bindInput('cfg-app-logo',     function(v){ P.appLogoUrl=v; });
+  bindImageUpload('cfg-app-logo', 800, function(dataUri){ P.appLogoUrl=dataUri; });
   bindTA('cfg-app-about',       function(v){ P.appAbout=v; });
   bindTA('cfg-app-privacy',     function(v){ P.appPrivacy=v; });
   bindTA('cfg-app-a11y',        function(v){ P.accessibilityStatement=v; });
@@ -2846,17 +2920,19 @@ function renderSEO() {
   html += fld('Page title','cfg-seo-title',h(P.seoTitle||''), P.name);
   html += '<div class="f"><label class="fl">Meta description</label><textarea id="cfg-seo-desc" style="min-height:60px" placeholder="A short summary shown in search results and link previews.">'+h(P.seoDescription||'')+'</textarea></div>';
   html += '<div class="f"><label class="fl">Social share image URL <span style="font-size:9px;color:var(--ghost);font-family:var(--mono);font-weight:400;margin-left:4px">1200&times;630px recommended</span></label>'
-    + '<input type="text" id="cfg-seo-image" value="'+h(P.seoImage||'')+'" placeholder="https://example.com/share-image.png"/></div>';
+    + '<input type="text" id="cfg-seo-image" value="'+h(P.seoImage||'')+'" placeholder="https://example.com/share-image.png"/>' + imageUploadRowHTML('cfg-seo-image') + '</div>';
   html += '</div>';
   html += '<div class="rs"><div class="st">Favicon</div>';
   html += '<div class="f"><label class="fl">Favicon URL <span style="font-size:9px;color:var(--ghost);font-family:var(--mono);font-weight:400;margin-left:4px">PNG or SVG, square</span></label>'
-    + '<input type="text" id="cfg-favicon" value="'+h(P.favicon||'')+'" placeholder="https://example.com/favicon.png"/></div>';
+    + '<input type="text" id="cfg-favicon" value="'+h(P.favicon||'')+'" placeholder="https://example.com/favicon.png"/>' + imageUploadRowHTML('cfg-favicon') + '</div>';
   html += '</div>';
   setHTML('rpc', html);
   bindInput('cfg-seo-title', function(v){ P.seoTitle=v; });
   bindTA('cfg-seo-desc', function(v){ P.seoDescription=v; });
   bindInput('cfg-seo-image', function(v){ P.seoImage=v; });
+  bindImageUpload('cfg-seo-image', 1600, function(dataUri){ P.seoImage=dataUri; });
   bindInput('cfg-favicon', function(v){ P.favicon=v; });
+  bindImageUpload('cfg-favicon', 256, function(dataUri){ P.favicon=dataUri; });
 }
 
 function tryInitPreview() {
