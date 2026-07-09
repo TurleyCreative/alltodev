@@ -314,7 +314,13 @@ input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:2
   <div class="mb">
     <div class="mh"><h3 id="about-modal-title">About allto</h3><button class="mx" id="btn-about-close" aria-label="Close about dialog"><span data-icon="x" data-icon-size="13"></span></button></div>
     <div class="md">
-      <p style="font-size:13px;line-height:1.6;color:var(--ink2,var(--ink))">Consultation Map Builder is a tool for planning consultants to build interactive, map-based public consultation websites — no code required.</p>
+      <p style="font-size:13px;line-height:1.6;color:var(--ink2,var(--ink))">Allto is a digital consultation platform for running structured, narrative-led community engagement. Rather than presenting proposals as a static document or standalone feedback form, Allto structures content as a scrollable narrative sequence, with discrete question modules embedded at defined points throughout, rather than appended as a single form at the end.</p>
+
+<p>The platform is intended for planning consultants, local planning authorities, developers, and strategic communications teams managing statutory or non-statutory consultation on planning applications, masterplans, or infrastructure schemes. Users can respond to questions inline and submit geolocated feedback via an interactive site plan; responses are displayed publicly, allowing participants to view aggregated input as the consultation progresses.</p>
+
+<p>Data collection is cookie-based rather than account-based, allowing responses to be matched to a single user session without requiring registration or personal data capture. Interactive components are modular and can be deployed as standalone pages or embedded within an existing site via iframe or component integration, depending on technical requirements.</p>
+
+<p>Allto is designed to sit alongside traditional consultation methods (exhibitions, drop-in sessions, printed materials) rather than replace them, forming part of a wider blended engagement strategy.</p></p>
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);font-size:12px;color:var(--ghost);line-height:1.8">
         <div>Version <span id="about-version" style="font-family:var(--mono);color:var(--ink)"></span></div>
         <div>Developed by Chris Hemsley &mdash; <a href="mailto:chris.hemsley@turley.co.uk">chris.hemsley@turley.co.uk</a></div>
@@ -660,8 +666,8 @@ var isDirty = false;       // unsaved changes
 var lastSaved = null;      // timestamp of last save
 var autoSaveKey = 'consultation_builder_project';
 var mainTab = 'editor';
-var APP_VERSION = '0.0.1';
-var APP_STAGE = 'BETA';
+var APP_VERSION = '1.0.0';
+var APP_STAGE = 'Preview';
 
 // Load from URL ?p= param
 var urlP = new URLSearchParams(location.search).get('p');
