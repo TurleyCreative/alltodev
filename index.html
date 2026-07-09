@@ -112,6 +112,7 @@
 #lb-overlay.layout-popover #lb-box,.lb-text-col,.lb-panel-text-col,.lb-car-text-col,#lb-overlay.layout-card #lb-content,#lb-overlay.layout-popup-card #lb-content{scrollbar-width:none}
 #lb-overlay.layout-popover #lb-box::-webkit-scrollbar,.lb-text-col::-webkit-scrollbar,.lb-panel-text-col::-webkit-scrollbar,.lb-car-text-col::-webkit-scrollbar,#lb-overlay.layout-card #lb-content::-webkit-scrollbar,#lb-overlay.layout-popup-card #lb-content::-webkit-scrollbar{display:none}
 .lb-cs-track{position:fixed;width:4px;border-radius:999px;background:rgba(0,0,0,.1);z-index:50;pointer-events:none}
+.lb-cs-track.fs-hidden{display:none!important}
 .lb-cs-thumb{position:absolute;left:0;width:4px;border-radius:999px;background:#a5a5a5;cursor:grab;pointer-events:all}
 .lb-cs-thumb:active{cursor:grabbing}
 #lb-fs{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.92);align-items:center;justify-content:center;cursor:zoom-out}
@@ -834,7 +835,6 @@ function unmountCustomScrollbars(){
 }
 function mountCustomScrollbar(scrollEl){
   if(!scrollEl) return;
-  if(scrollEl.scrollHeight <= scrollEl.clientHeight + 1) return;
   var track = document.createElement("div");
   track.className = "lb-cs-track";
   var thumb = document.createElement("div");
@@ -843,6 +843,9 @@ function mountCustomScrollbar(scrollEl){
   document.body.appendChild(track);
   var INSET = 8;
   function update(){
+    var overflows = scrollEl.scrollHeight > scrollEl.clientHeight + 1;
+    track.style.display = overflows ? "" : "none";
+    if(!overflows) return;
     var rect = scrollEl.getBoundingClientRect();
     var trackH = Math.max(0, rect.height - INSET*2);
     track.style.top = (rect.top + INSET) + "px";
@@ -856,10 +859,11 @@ function mountCustomScrollbar(scrollEl){
     thumb.style.top = (scrollRatio * (trackH - thumbH)) + "px";
   }
   update();
-  setTimeout(update, 150);
-  setTimeout(update, 500);
+  [50,100,200,350,500,750,1000].forEach(function(ms){ setTimeout(update, ms); });
   scrollEl.addEventListener("scroll", update);
   window.addEventListener("resize", update);
+  var ro = null;
+  try{ ro = new ResizeObserver(update); ro.observe(scrollEl); }catch(err){}
   var dragging = false, startY = 0, startScroll = 0;
   thumb.addEventListener("pointerdown", function(e){
     dragging = true; startY = e.clientY; startScroll = scrollEl.scrollTop;
@@ -882,6 +886,7 @@ function mountCustomScrollbar(scrollEl){
   track._csCleanup = function(){
     scrollEl.removeEventListener("scroll", update);
     window.removeEventListener("resize", update);
+    if(ro) try{ ro.disconnect(); }catch(err){}
   };
 }
 function openLB(p){
@@ -1048,12 +1053,12 @@ function openLbFs(col){
   if(!fs._lbFsBound){ fs.addEventListener("click",function(){closeLbFs();}); fs._lbFsBound=true; }
   fs.querySelector("img").src=img.src;
   fs.classList.add("open");
-  document.querySelectorAll(".lb-cs-track").forEach(function(t){t.style.display="none";});
+  document.querySelectorAll(".lb-cs-track").forEach(function(t){t.classList.add("fs-hidden");});
 }
 function closeLbFs(){
   var fs=document.getElementById("lb-fs");
   if(fs)fs.classList.remove("open");
-  document.querySelectorAll(".lb-cs-track").forEach(function(t){t.style.display="";});
+  document.querySelectorAll(".lb-cs-track").forEach(function(t){t.classList.remove("fs-hidden");});
 }
 function lbSlide(dir){
   window._lbSlide = ((window._lbSlide||0) + dir + window._lbTotal) % window._lbTotal;
