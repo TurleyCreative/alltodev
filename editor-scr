@@ -5440,7 +5440,7 @@ function buildJS() {
 '  filterZones(idx);',
 '  Object.keys(_cdMarkers).forEach(function(zid){',
 '    var mkEl=_cdMarkers[zid].getElement();',
-'    mkEl.style.display=zoneVisibleOnScene(zid,idx)?"":"none";',
+'    mkEl.style.display=zoneVisibleOnScene(zid,idx)?"flex":"none";',
 '  });',
 '  // con-clip-ex controlled by filterZones source data',
 '  sv("con-3d",L.constraints);sv("con-ex",L.constraints);sv("con-f",L.constraints);sv("con-s",L.constraints);',
