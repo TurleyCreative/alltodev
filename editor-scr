@@ -2074,6 +2074,7 @@ function renderMarkers() {
       '<div class="ia">'+
         (i>0?'<button class="ib" data-a="up" data-i="'+i+'" title="Move up">'+lucideSVG('arrow-up',12,'currentColor')+'</button>':'')+
         (i<P.markers.length-1?'<button class="ib" data-a="dn" data-i="'+i+'" title="Move down">'+lucideSVG('arrow-down',12,'currentColor')+'</button>':'')+
+        '<button class="ib" data-a="dup" data-i="'+i+'" title="Duplicate">'+lucideSVG('copy',12,'currentColor')+'</button>'+
         '<button class="ib d" data-a="del" data-i="'+i+'">'+lucideSVG('trash-2',12,'currentColor')+'</button>'+
       '</div>';
     div.addEventListener('click', function(e) {
@@ -2084,6 +2085,10 @@ function renderMarkers() {
         if(act==='del') { delMarker(ii); }
         else if(act==='up') { moveItemInScope('markers', ii, -1, refreshMK, selRef); }
         else if(act==='dn') { moveItemInScope('markers', ii, 1, refreshMK, selRef); }
+        else if(act==='dup'){
+          var c=JSON.parse(JSON.stringify(P.markers[ii])); c.id='mk'+Date.now(); c.name=(c.name||'Unnamed')+' (copy)';
+          P.markers.splice(ii+1,0,c); markDirty(); renderMarkers(); refreshMK();
+        }
         return;
       }
       selMarker(i);
@@ -2126,6 +2131,7 @@ function renderZones() {
       '<div class="ia">'+
         (i>0?'<button class="ib" data-a="up" data-i="'+i+'">'+lucideSVG('arrow-up',12,'currentColor')+'</button>':'')+
         (i<P.zones.length-1?'<button class="ib" data-a="dn" data-i="'+i+'">'+lucideSVG('arrow-down',12,'currentColor')+'</button>':'')+
+        '<button class="ib" data-a="dup" data-i="'+i+'" title="Duplicate">'+lucideSVG('copy',12,'currentColor')+'</button>'+
         '<button class="ib d" data-a="del" data-i="'+i+'">'+lucideSVG('trash-2',12,'currentColor')+'</button>'+
       '</div>';
     div.addEventListener('click', function(e) {
@@ -2136,6 +2142,10 @@ function renderZones() {
         if(btn.dataset.a==='del'){ delZone(ii); }
         else if(btn.dataset.a==='up'){ moveItemInScope('zones', ii, -1, afterMove, selRef); }
         else if(btn.dataset.a==='dn'){ moveItemInScope('zones', ii, 1, afterMove, selRef); }
+        else if(btn.dataset.a==='dup'){
+          var c=JSON.parse(JSON.stringify(P.zones[ii])); c.id='z'+Date.now(); c.name=(c.name||'Unnamed')+' (copy)';
+          P.zones.splice(ii+1,0,c); markDirty(); renderZones(); refreshZN();
+        }
         return;
       }
       selZone(i);
