@@ -85,6 +85,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
 .ib{width:22px;height:22px;border-radius:7px;background:var(--mid);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ghost);transition:all .18s}
 .ib:hover{background:var(--border2);color:var(--ink)}.ib.d:hover{background:#c0392b;color:#fff}
 .icon-preview{width:32px;height:32px;border-radius:50%;background:var(--ghost);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.cd-icon-popout{display:none;position:fixed;z-index:500;width:250px;max-height:320px;overflow-y:auto;background:var(--bg);border:1px solid var(--border2);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.35);padding:10px;scrollbar-width:thin}
+.cd-icon-popout.open{display:block}
 .id{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .grp-hdr{padding:8px 10px 8px 6px;border-radius:9px;display:flex;align-items:center;gap:6px;cursor:pointer;margin-bottom:4px;margin-top:10px;transition:background .15s}
 .grp-hdr:first-child{margin-top:0}
@@ -484,7 +486,8 @@ var LUCIDE_PATHS = {
   'plus': '<path d="M5 12h14"/><path d="M12 5v14"/>',
   'chevron-down': '<path d="m6 9 6 6 6-6"/>',
   'id-card': '<path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/>',
-  'briefcase': '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>'
+  'briefcase': '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+  'book-open': '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>'
 };
 
 function lucideSVG(name, size, color) {
@@ -571,6 +574,16 @@ function bindImageUpload(fieldId, maxDim, setter) {
 
 // Auto-rotated scene-tag dot colors, used unless a scene sets its own tagColor
 var SCENE_TAG_COLORS = ['#c0392b','#d4820a','#2a7c6b','#2255aa','#8b5cf6','#c0392b','#d4820a'];
+
+// Shared curated icon list — used by the marker icon picker and the co-design options icon picker
+var ICON_CATEGORIES = {
+  'Places':  ['map-pin','map','navigation','home','building','building-2','landmark','castle','warehouse','store','hotel','school','hospital','church','library','book-open','stadium','tent','tree-pine'],
+  'Transport':['train','bus','car','bike','plane','ship','truck','tram-front','cable-car','anchor','traffic-cone','route'],
+  'Nature':  ['tree','trees','leaf','flower','flower-2','mountain','mountain-snow','sun','cloud','cloud-rain','waves','wind','flame','snowflake','droplets'],
+  'Activity':['users','user','person-standing','baby','graduation-cap','hard-hat','stethoscope','shopping-bag','briefcase','utensils','coffee','football','dumbbell','palette','music','film','theater'],
+  'Infrastructure':['construction','wrench','hammer','zap','wifi','phone','mail','camera','cctv','factory','pipe','satellite'],
+  'Markers': ['flag','star','heart','bookmark','tag','info','alert-triangle','check-circle','x-circle','circle-dot','crosshair','target','plus-circle','minus-circle','ban']
+};
 
 // ═══════════════════════════════════════════════════
 //  DEFAULT PROJECT
@@ -2502,14 +2515,7 @@ function renderMarkerEditor(i) {
   html += '<div class="f"><label class="fl">Group</label><select id="mk-group">'+groupSelectOptions('markerGroups', m.groupId)+'</select></div>';
   html += fldTA('Description (popup)','mk-desc',h(m.desc));
   // Icon library — Lucide SVG icons via unpkg CDN
-  var ICONS = {
-    'Places':  ['map-pin','map','navigation','home','building','building-2','landmark','castle','warehouse','store','hotel','school','hospital','church','library','stadium','tent','tree-pine'],
-    'Transport':['train','bus','car','bike','plane','ship','truck','tram-front','cable-car','anchor','traffic-cone','route'],
-    'Nature':  ['tree','trees','leaf','flower','flower-2','mountain','mountain-snow','sun','cloud','cloud-rain','waves','wind','flame','snowflake','droplets'],
-    'Activity':['users','user','person-standing','baby','graduation-cap','hard-hat','stethoscope','shopping-bag','utensils','coffee','football','dumbbell','palette','music','film','theater'],
-    'Infrastructure':['construction','wrench','hammer','zap','wifi','phone','mail','camera','cctv','factory','pipe','satellite'],
-    'Markers': ['flag','star','heart','bookmark','tag','info','alert-triangle','check-circle','x-circle','circle-dot','crosshair','target','plus-circle','minus-circle','ban']
-  };
+  var ICONS = ICON_CATEGORIES;
   var curIcon = m.icon || '';
 
   // Icon preview box
@@ -3157,13 +3163,15 @@ function renderSettings() {
       + '<div id="cd-sdb-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
       + '</div>';
     html += '<div class="f"><label class="fl">Use options</label>';
-    html += '<div class="nt" style="margin-bottom:8px">Icon is a <a href="https://lucide.dev/icons" target="_blank">lucide.dev</a> icon name (e.g. <code>book-open</code>) — shown as a badge on the plot once picked, in the picker, and in the results legend.</div>';
+    html += '<div class="nt" style="margin-bottom:8px">Click the circle to pick an icon — shown as a badge on the plot once picked, in the picker, and in the results legend.</div>';
     html += '<div id="cd-opts-list">';
     (P.codesignOptions||[]).forEach(function(opt, oi){
       html += '<div class="cr" style="margin-bottom:6px">'
         + '<input type="color" class="cd-opt-color" value="'+h(opt.color)+'" data-oi="'+oi+'"/>'
         + '<input type="text" class="cd-opt-label" value="'+h(opt.label)+'" data-oi="'+oi+'" style="flex:1" placeholder="Label"/>'
-        + '<input type="text" class="cd-opt-icon" value="'+h(opt.icon||'')+'" data-oi="'+oi+'" style="width:110px" placeholder="icon name"/>'
+        + '<button type="button" class="cd-opt-icon-btn" data-oi="'+oi+'" title="Choose icon" aria-label="Choose icon" style="width:30px;height:30px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--border2);background:'+h(opt.color)+';display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">'
+          + (opt.icon && isLucide(opt.icon) ? lucideSVG(opt.icon,15,'#fff') : '')
+          + '</button>'
         + '<button class="ib cd-opt-del" data-oi="'+oi+'" aria-label="Remove option">'+lucideSVG('trash-2',12,'currentColor')+'</button>'
         + '</div>';
     });
@@ -3407,10 +3415,9 @@ function renderSettings() {
       markDirty();
     });
   });
-  document.querySelectorAll('.cd-opt-icon').forEach(function(inp){
-    inp.addEventListener('input', function(){
-      P.codesignOptions[parseInt(this.dataset.oi)].icon = this.value.trim();
-      markDirty();
+  document.querySelectorAll('.cd-opt-icon-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      openCdIconPicker(parseInt(this.dataset.oi), this);
     });
   });
   document.querySelectorAll('.cd-opt-del').forEach(function(btn){
@@ -3434,6 +3441,63 @@ function renderSettings() {
       markDirty();
     }
   });
+}
+
+var _cdIconPopoutOi = null;
+function openCdIconPicker(oi, anchorEl) {
+  var pop = el('cd-icon-popout');
+  if(!pop) {
+    pop = document.createElement('div');
+    pop.id = 'cd-icon-popout';
+    pop.className = 'cd-icon-popout';
+    document.body.appendChild(pop);
+    document.addEventListener('click', function(e){
+      var p = el('cd-icon-popout');
+      if(!p || !p.classList.contains('open')) return;
+      if(e.target.closest('#cd-icon-popout') || e.target.closest('.cd-opt-icon-btn')) return;
+      closeCdIconPicker();
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape') closeCdIconPicker();
+    });
+  }
+  _cdIconPopoutOi = oi;
+  var cur = (P.codesignOptions[oi] && P.codesignOptions[oi].icon) || '';
+  var html = '<div class="f" style="margin-bottom:8px"><input type="text" id="cd-icon-popout-input" value="'+h(cur)+'" placeholder="type name or paste emoji" style="font-size:11px"/></div>';
+  Object.keys(ICON_CATEGORIES).forEach(function(cat){
+    html += '<div style="font-size:10px;color:var(--ghost);padding:4px 2px 3px;font-weight:500">'+cat+'</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px">';
+    ICON_CATEGORIES[cat].forEach(function(name){
+      var isSel = cur === name;
+      html += '<button type="button" class="icon-btn'+(isSel?' on':'')+'" data-ico="'+name+'" title="'+name+'" aria-label="'+name+'" style="width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:'+(isSel?'var(--accent)':'var(--mid)')+';border:1px solid '+(isSel?'var(--accent)':'var(--border2)')+';border-radius:6px;cursor:pointer;padding:0">'
+        + lucideSVG(name,14,isSel?'#fff':'var(--ghost)')
+        + '</button>';
+    });
+    html += '</div>';
+  });
+  pop.innerHTML = html;
+
+  var r = anchorEl.getBoundingClientRect();
+  pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 266)) + 'px';
+  pop.style.top = Math.min(r.bottom + 6, window.innerHeight - 340) + 'px';
+  pop.classList.add('open');
+
+  bindInput('cd-icon-popout-input', function(v){
+    P.codesignOptions[oi].icon = v.trim();
+    markDirty();
+  });
+  pop.querySelectorAll('.icon-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      P.codesignOptions[oi].icon = this.dataset.ico;
+      markDirty();
+      closeCdIconPicker();
+      renderSettings();
+    });
+  });
+}
+function closeCdIconPicker(){
+  var pop = el('cd-icon-popout');
+  if(pop) pop.classList.remove('open');
 }
 
 function renderSEO() {
