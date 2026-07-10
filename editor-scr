@@ -610,6 +610,17 @@ var DEF = {
   ]
 };
 
+// Backfills co-design fields onto a project loaded from an older save (boot autosave,
+// "Open project file", or "Import JSON" all skip fresh-project defaults otherwise).
+function ensureCodesignDefaults(d) {
+  if(!d) return;
+  if(d.codesignEnabled===undefined) d.codesignEnabled=false;
+  if(d.codesignSheetdbUrl===undefined) d.codesignSheetdbUrl='';
+  if(!d.codesignOptions) d.codesignOptions=JSON.parse(JSON.stringify(DEF.codesignOptions));
+  if(!d.zones) d.zones=[];
+  d.zones.forEach(function(z){ if(z.codesign===undefined) z.codesign=false; });
+}
+
 // ═══════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════
@@ -633,10 +644,7 @@ if(P) {
   (P.markers||[]).forEach(function(m){if(m.groupId===undefined)m.groupId=null;});
   (P.zones||[]).forEach(function(z){if(z.groupId===undefined)z.groupId=null;});
   (P.lines||[]).forEach(function(ln){if(ln.groupId===undefined)ln.groupId=null;});
-  if(P.codesignEnabled===undefined) P.codesignEnabled=false;
-  if(P.codesignSheetdbUrl===undefined) P.codesignSheetdbUrl='';
-  if(!P.codesignOptions) P.codesignOptions=JSON.parse(JSON.stringify(DEF.codesignOptions));
-  (P.zones||[]).forEach(function(z){if(z.codesign===undefined)z.codesign=false;});
+  ensureCodesignDefaults(P);
   if(P.companyLogoUrl === undefined) P.companyLogoUrl = '';
   if(P.clientName === undefined) P.clientName = '';
   if(P.clientLogoUrl === undefined) P.clientLogoUrl = '';
@@ -664,7 +672,7 @@ var APP_STAGE = 'Preview version';
 
 // Load from URL ?p= param
 var urlP = new URLSearchParams(location.search).get('p');
-if (urlP) { try { P = JSON.parse(atob(urlP)); } catch(e) {} }
+if (urlP) { try { P = JSON.parse(atob(urlP)); ensureCodesignDefaults(P); } catch(e) {} }
 
 // ═══════════════════════════════════════════════════
 //  HELPERS
@@ -1730,6 +1738,7 @@ function bindExportModal() {
           delete sc.question;
         });
         if(!data.lines) data.lines = [];
+        ensureCodesignDefaults(data);
         P = data;
         AS = 0; AM = -1; AZ = -1; AOV = -1;
         try { localStorage.setItem(autoSaveKey, JSON.stringify(P)); } catch(e) {}
@@ -1769,6 +1778,7 @@ function bindExportModal() {
       try {
         var data = JSON.parse(ev.target.result);
         if(!data.scenes || !Array.isArray(data.scenes)) { alert('Invalid project JSON.'); return; }
+        ensureCodesignDefaults(data);
         P = data;
         AS = 0; AM = -1; AZ = -1; AOV = -1;
         markDirty(); renderAll();
