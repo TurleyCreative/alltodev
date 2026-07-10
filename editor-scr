@@ -623,49 +623,36 @@ var DEF = {
   ]
 };
 
-// Backfills co-design fields onto a project loaded from an older save (boot autosave,
-// "Open project file", or "Import JSON" all skip fresh-project defaults otherwise).
-function ensureCodesignDefaults(d) {
-  if(!d) return;
-  if(d.codesignEnabled===undefined) d.codesignEnabled=false;
-  if(d.codesignSheetdbUrl===undefined) d.codesignSheetdbUrl='';
-  if(!d.codesignOptions) d.codesignOptions=JSON.parse(JSON.stringify(DEF.codesignOptions));
-  if(!d.zones) d.zones=[];
-  d.zones.forEach(function(z){ if(z.codesign===undefined) z.codesign=false; });
-}
-
-// ═══════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════
-var P = JSON.parse(JSON.stringify(DEF));
-// Load from localStorage if available (auto-save)
-try {
-  var saved = localStorage.getItem(autoSaveKey);
-  if(saved) { P = JSON.parse(saved); }
-} catch(e) {}
-// Migrate old projects - add any missing properties
-if(P) {
-  if(!P.lines) P.lines = [];
-  if(!P.buildings) P.buildings = [];
-  (P.markers||[]).forEach(function(m){if(m.flyCamera===undefined)m.flyCamera=false;});
-  if(!P.overlays) P.overlays = [];
-  if(!P.zones) P.zones = [];
-  if(!P.markers) P.markers = [];
-  if(!P.markerGroups) P.markerGroups = [];
-  if(!P.zoneGroups) P.zoneGroups = [];
-  if(!P.lineGroups) P.lineGroups = [];
-  (P.markers||[]).forEach(function(m){if(m.groupId===undefined)m.groupId=null;});
-  (P.zones||[]).forEach(function(z){if(z.groupId===undefined)z.groupId=null;});
-  (P.lines||[]).forEach(function(ln){if(ln.groupId===undefined)ln.groupId=null;});
-  ensureCodesignDefaults(P);
-  if(P.companyLogoUrl === undefined) P.companyLogoUrl = '';
-  if(P.clientName === undefined) P.clientName = '';
-  if(P.clientLogoUrl === undefined) P.clientLogoUrl = '';
-  if(P.clientAbout === undefined) P.clientAbout = '';
-  if(P.appLogoUrl === undefined) P.appLogoUrl = P.companyLogoUrl||'';
-  if(P.appAbout === undefined) P.appAbout = P.infoAbout||'';
-  if(P.appPrivacy === undefined) P.appPrivacy = P.infoPrivacy||'';
-  if(P.scenes) P.scenes.forEach(function(sc) {
+// Backfills every field that might be missing on a project saved by an older version
+// of this tool. Called by every load path (boot autosave, "Open project file",
+// "Import JSON", shareable editor link) so a new field only needs adding here once,
+// instead of each load path drifting out of sync with its own partial migration.
+function migrateProject(data) {
+  if(!data) return data;
+  if(!data.lines) data.lines = [];
+  if(!data.buildings) data.buildings = [];
+  (data.markers||[]).forEach(function(m){ if(m.flyCamera===undefined) m.flyCamera=false; });
+  if(!data.overlays) data.overlays = [];
+  if(!data.zones) data.zones = [];
+  if(!data.markers) data.markers = [];
+  if(!data.markerGroups) data.markerGroups = [];
+  if(!data.zoneGroups) data.zoneGroups = [];
+  if(!data.lineGroups) data.lineGroups = [];
+  (data.markers||[]).forEach(function(m){ if(m.groupId===undefined) m.groupId=null; });
+  (data.zones||[]).forEach(function(z){ if(z.groupId===undefined) z.groupId=null; });
+  (data.lines||[]).forEach(function(ln){ if(ln.groupId===undefined) ln.groupId=null; });
+  if(data.codesignEnabled===undefined) data.codesignEnabled=false;
+  if(data.codesignSheetdbUrl===undefined) data.codesignSheetdbUrl='';
+  if(!data.codesignOptions) data.codesignOptions=JSON.parse(JSON.stringify(DEF.codesignOptions));
+  data.zones.forEach(function(z){ if(z.codesign===undefined) z.codesign=false; });
+  if(data.companyLogoUrl === undefined) data.companyLogoUrl = '';
+  if(data.clientName === undefined) data.clientName = '';
+  if(data.clientLogoUrl === undefined) data.clientLogoUrl = '';
+  if(data.clientAbout === undefined) data.clientAbout = '';
+  if(data.appLogoUrl === undefined) data.appLogoUrl = data.companyLogoUrl||'';
+  if(data.appAbout === undefined) data.appAbout = data.infoAbout||'';
+  if(data.appPrivacy === undefined) data.appPrivacy = data.infoPrivacy||'';
+  if(data.scenes) data.scenes.forEach(function(sc) {
     if(!sc.layers) sc.layers = {};
     if(sc.layers.orbit === undefined) sc.layers.orbit = false;
     if(sc.layers.codesign === undefined) sc.layers.codesign = false;
@@ -674,19 +661,32 @@ if(P) {
     if(!sc.questions) sc.questions = (sc.question && sc.question.type && sc.question.type!=='none') ? [sc.question] : [];
     delete sc.question;
   });
+  return data;
 }
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+var autoSaveKey = 'consultation_builder_project';
+var P = JSON.parse(JSON.stringify(DEF));
+// Load from localStorage if available (auto-save)
+try {
+  var saved = localStorage.getItem(autoSaveKey);
+  if(saved) { P = JSON.parse(saved); }
+} catch(e) {}
+// Migrate old projects - add any missing properties
+P = migrateProject(P);
 var AS = 0, AM = null, AZ = null, ALN = -1;
 var pMap = null, pReady = false, pCtxMarkers = [];
 var isDirty = false;       // unsaved changes
 var lastSaved = null;      // timestamp of last save
-var autoSaveKey = 'consultation_builder_project';
 var mainTab = 'editor';
 var APP_VERSION = '1.0.0';
 var APP_STAGE = 'Preview version';
 
 // Load from URL ?p= param
 var urlP = new URLSearchParams(location.search).get('p');
-if (urlP) { try { P = JSON.parse(atob(urlP)); ensureCodesignDefaults(P); } catch(e) {} }
+if (urlP) { try { P = migrateProject(JSON.parse(atob(urlP))); } catch(e) {} }
 
 // ═══════════════════════════════════════════════════
 //  HELPERS
@@ -1744,17 +1744,7 @@ function bindExportModal() {
       try {
         var data = JSON.parse(ev.target.result);
         if(!data.scenes || !Array.isArray(data.scenes)) { alert('Invalid project file.'); return; }
-        // Migrate missing layer properties
-        data.scenes.forEach(function(sc) {
-          if(!sc.layers) sc.layers = {};
-          if(sc.layers.orbit === undefined) sc.layers.orbit = false;
-          if(sc.layers.codesign === undefined) sc.layers.codesign = false;
-          if(!sc.questions) sc.questions = (sc.question && sc.question.type && sc.question.type!=='none') ? [sc.question] : [];
-          delete sc.question;
-        });
-        if(!data.lines) data.lines = [];
-        ensureCodesignDefaults(data);
-        P = data;
+        P = migrateProject(data);
         AS = 0; AM = -1; AZ = -1; AOV = -1;
         try { localStorage.setItem(autoSaveKey, JSON.stringify(P)); } catch(e) {}
         markDirty(); renderAll();
@@ -1793,8 +1783,7 @@ function bindExportModal() {
       try {
         var data = JSON.parse(ev.target.result);
         if(!data.scenes || !Array.isArray(data.scenes)) { alert('Invalid project JSON.'); return; }
-        ensureCodesignDefaults(data);
-        P = data;
+        P = migrateProject(data);
         AS = 0; AM = -1; AZ = -1; AOV = -1;
         markDirty(); renderAll();
         if(pMap && pReady) { try{pMap.remove();}catch(e){} pMap=null; pReady=false; pCtxMarkers=[]; }
