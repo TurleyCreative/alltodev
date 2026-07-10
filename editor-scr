@@ -3132,11 +3132,11 @@ function renderSettings() {
   html += '<div class="nt">Every visitor gets a random ID stored in their browser (localStorage), included with every question answer <i>and</i> every Have Your Say pin — so you can filter both sheets by <code>visitorId</code> to see everything one person submitted across the whole site.</div>';
   html += '</div>';
   html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('users',14,'currentColor')+'Co-Design &amp; Participatory Budgeting</span></div>';
-  html += '<div class="nt" style="margin-bottom:12px">Let visitors click plots you\'ve marked as co-design zones and pick a use for them (library, café, workspace, etc). The plot recolours to match their pick and their choice is saved to a sheet, plus a "See how people would use this space" chart of everyone\'s picks.</div>';
+  html += '<div class="nt" style="margin-bottom:12px">Let visitors click plots you\'ve marked as co-design zones and pick a use for them (library, café, workspace, etc). Plots recolour live as they experiment. Nothing is saved until they hit "Submit your picks" — that sends everything they\'ve chosen to your sheet in one go and resets the map, so the next person can have a go too.</div>';
   html += '<div class="lr" style="margin-bottom:12px"><span class="ll">Enable co-design</span><button class="tg'+(P.codesignEnabled?' on':'')+'" id="cfg-cd-tog"></button></div>';
   if(P.codesignEnabled) {
     html += '<div class="nt" style="margin-bottom:12px"><b style="color:var(--ink)">Setup guide:</b><br>'
-      + '1. Create a Google Sheet with columns: <code>id | visitorId | zoneId | zoneName | choice | timestamp</code><br>'
+      + '1. Create a Google Sheet with columns: <code>id | submissionId | visitorId | zoneId | zoneName | choice | timestamp</code><br>'
       + '2. Go to <a href="https://sheetdb.io" target="_blank">sheetdb.io</a> &rarr; connect your sheet &rarr; copy the API URL<br>'
       + '3. Paste the URL below and click Test</div>';
     html += '<div class="f"><label class="fl">SheetDB API URL</label>'
@@ -3158,7 +3158,7 @@ function renderSettings() {
     html += '</div>';
     html += '<button class="btn btn-g btn-ic" id="btn-cd-add-opt" style="width:100%;justify-content:center;margin-top:4px">'+lucideSVG('plus',13,'currentColor')+'Add option</button>';
     html += '</div>';
-    html += '<div class="nt" style="margin-top:12px">Then, on each plot you want voteable, open it under Constraint Zones and turn on "Include in co-design voting". Visitors can change their pick any time — each new pick adds a fresh row to the sheet, so filter to each visitor\'s latest by <code>visitorId</code> + <code>zoneId</code> when analysing.</div>';
+    html += '<div class="nt" style="margin-top:12px">Then, on each plot you want voteable, open it under Constraint Zones and turn on "Include in co-design voting". Each submission writes one row per plot the visitor picked, all sharing the same <code>submissionId</code>, so you can group everything one person submitted in one go — and since the map resets after each submit, several people can use the same device in turn.</div>';
   }
   html += '</div>';
   html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('play',14,'currentColor')+'Entrance Animations</span></div>';
@@ -4267,6 +4267,7 @@ function buildMapPanel() {
     + '  <div id="map-label">Scene 01</div>\n'
     + '  <div id="map-controls">\n'
     + '    <button class="map-btn" id="orbit-btn" onclick="toggleOrbit()" style="display:none">&#9208; Pause Orbit</button>\n'
+    + (P.codesignEnabled ? '    <button class="map-btn" onclick="submitCodesignChoices()">Submit your picks</button>\n' : '')
     + (P.codesignEnabled ? '    <button class="map-btn" onclick="openCodesignResults()">See how people would use this space</button>\n' : '')
     + '    <button class="map-btn" onclick="resetToScene()">Reset Scene</button>\n'
     + '  </div>\n'
@@ -4637,7 +4638,7 @@ function buildJS() {
 '  map.on("load",function(){',
 '    document.getElementById("map-loading").classList.add("hidden");',
 '    _esMapReady=true; _esMaybeHide();',
-'    addSrc();addLayers();applyStoredCodesignChoices();addPin();setupFbClick();buildNav();map.on("move",positionPopover);',
+'    addSrc();addLayers();addPin();setupFbClick();buildNav();map.on("move",positionPopover);',
 '    hideStyleExtrusions();',
 '    // Re-hide on styledata in case tiles load after initial style parse',
 '    map.on("styledata",function(){ hideStyleExtrusions(); });',
@@ -5408,28 +5409,10 @@ function buildJS() {
 '    return id;',
 '  }catch(e){ return "v-"+Date.now().toString(36); }',
 '}',
-'var _cdPopup=null, _cdChart=null;',
-'function getCodesignChoices(){',
-'  try{ return JSON.parse(localStorage.getItem("allto_codesign_choices")||"{}"); }catch(e){ return {}; }',
-'}',
-'function setCodesignChoiceLocal(zoneId,optId){',
-'  var c=getCodesignChoices(); c[zoneId]=optId;',
-'  try{ localStorage.setItem("allto_codesign_choices",JSON.stringify(c)); }catch(e){}',
-'}',
-'function applyStoredCodesignChoices(){',
-'  if(!CODESIGN_ENABLED) return;',
-'  var choices=getCodesignChoices();',
-'  CONSTRAINTS.features.forEach(function(f){',
-'    var optId=choices[f.properties.id];',
-'    if(!optId) return;',
-'    var opt=CODESIGN_OPTIONS.filter(function(o){return o.id===optId;})[0];',
-'    if(opt) f.properties.color=opt.color;',
-'  });',
-'}',
+'var _cdPopup=null, _cdChart=null, _cdChoices={};',
 'function openCodesignPicker(p,lngLat){',
 '  if(_cdPopup) _cdPopup.remove();',
-'  var choices=getCodesignChoices();',
-'  var current=choices[p.id];',
+'  var current=_cdChoices[p.id] ? _cdChoices[p.id].optId : null;',
 '  var wrap=document.createElement("div");',
 '  wrap.className="cd-popup-body";',
 '  var title=document.createElement("div");',
@@ -5453,15 +5436,32 @@ function buildJS() {
 'function chooseCodesignUse(zoneId,zoneName,optId){',
 '  var opt=CODESIGN_OPTIONS.filter(function(o){return o.id===optId;})[0];',
 '  if(!opt) return;',
-'  setCodesignChoiceLocal(zoneId,optId);',
+'  _cdChoices[zoneId]={optId:optId,label:opt.label};',
 '  CONSTRAINTS.features.forEach(function(f){ if(f.properties.id===zoneId) f.properties.color=opt.color; });',
 '  try{ filterZones(cS); }catch(e){}',
 '  if(_cdPopup){ _cdPopup.remove(); _cdPopup=null; }',
-'  showToast("Saved — you picked "+opt.label+" for "+zoneName);',
+'  showToast("Picked "+opt.label+" for "+zoneName+" — submit your picks when you\'re ready");',
+'}',
+'function resetCodesignRound(){',
+'  _cdChoices={};',
+'  CONSTRAINTS.features.forEach(function(f){ if(f.properties.baseColor) f.properties.color=f.properties.baseColor; });',
+'  try{ filterZones(cS); }catch(e){}',
+'  if(_cdPopup){ _cdPopup.remove(); _cdPopup=null; }',
+'}',
+'async function submitCodesignChoices(){',
+'  var zoneIds=Object.keys(_cdChoices);',
+'  if(!zoneIds.length){ showToast("Pick a use for at least one plot first"); return; }',
+'  var subId=Date.now().toString(), ts=new Date().toISOString(), vid=getVisitorId();',
+'  var rows=zoneIds.map(function(zid){',
+'    var c=_cdChoices[zid];',
+'    var f=CONSTRAINTS.features.filter(function(x){return x.properties.id===zid;})[0];',
+'    return {id:subId+"-"+zid,submissionId:subId,visitorId:vid,zoneId:zid,zoneName:f?f.properties.name:zid,choice:c.label,timestamp:ts};',
+'  });',
 '  if(CODESIGN_SHEETDB_URL){',
-'    var row={id:Date.now().toString(),visitorId:getVisitorId(),zoneId:zoneId,zoneName:zoneName,choice:opt.label,timestamp:new Date().toISOString()};',
-'    fetch(CODESIGN_SHEETDB_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:[row]})}).catch(function(){});',
+'    try{ await fetch(CODESIGN_SHEETDB_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:rows})}); }catch(e){}',
 '  }',
+'  resetCodesignRound();',
+'  showToast("Thanks — your picks have been saved. Map\'s reset if someone else wants a go!");',
 '}',
 'async function openCodesignResults(){',
 '  var overlay=document.getElementById("cd-results-overlay");',
@@ -5477,19 +5477,13 @@ function buildJS() {
 '    if(!res.ok) throw new Error();',
 '    var rows=await res.json();',
 '    if(!Array.isArray(rows)) throw new Error();',
-'    var latest={};',
-'    rows.forEach(function(r){',
-'      var key=r.visitorId+"|"+r.zoneId;',
-'      if(!latest[key] || new Date(r.timestamp) > new Date(latest[key].timestamp)) latest[key]=r;',
-'    });',
 '    var zoneNames=[], counts={};',
-'    Object.keys(latest).forEach(function(k){',
-'      var r=latest[k];',
+'    rows.forEach(function(r){',
 '      if(zoneNames.indexOf(r.zoneName)===-1) zoneNames.push(r.zoneName);',
 '      counts[r.zoneName]=counts[r.zoneName]||{};',
 '      counts[r.zoneName][r.choice]=(counts[r.zoneName][r.choice]||0)+1;',
 '    });',
-'    if(!zoneNames.length){ if(status) status.textContent="No responses yet — be the first to vote!"; return; }',
+'    if(!zoneNames.length){ if(status) status.textContent="No responses yet — be the first to submit!"; return; }',
 '    if(status) status.style.display="none";',
 '    if(canvas) canvas.style.display="";',
 '    var datasets=CODESIGN_OPTIONS.map(function(opt){',
