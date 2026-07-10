@@ -602,11 +602,11 @@ var DEF = {
   lineGroups:[],
   codesignEnabled:false, codesignSheetdbUrl:'',
   codesignOptions:[
-    {id:'lib',label:'Library',color:'#2255aa'},
-    {id:'caf',label:'Café',color:'#c0392b'},
-    {id:'work',label:'Workspace',color:'#d4820a'},
-    {id:'gal',label:'Gallery',color:'#8b5cf6'},
-    {id:'res',label:'Restaurant',color:'#2a7c6b'}
+    {id:'lib',label:'Library',color:'#2255aa',icon:'book-open'},
+    {id:'caf',label:'Café',color:'#c0392b',icon:'coffee'},
+    {id:'work',label:'Workspace',color:'#d4820a',icon:'briefcase'},
+    {id:'gal',label:'Gallery',color:'#8b5cf6',icon:'palette'},
+    {id:'res',label:'Restaurant',color:'#2a7c6b',icon:'utensils'}
   ]
 };
 
@@ -3157,11 +3157,13 @@ function renderSettings() {
       + '<div id="cd-sdb-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
       + '</div>';
     html += '<div class="f"><label class="fl">Use options</label>';
+    html += '<div class="nt" style="margin-bottom:8px">Icon is a <a href="https://lucide.dev/icons" target="_blank">lucide.dev</a> icon name (e.g. <code>book-open</code>) — shown as a badge on the plot once picked, in the picker, and in the results legend.</div>';
     html += '<div id="cd-opts-list">';
     (P.codesignOptions||[]).forEach(function(opt, oi){
       html += '<div class="cr" style="margin-bottom:6px">'
         + '<input type="color" class="cd-opt-color" value="'+h(opt.color)+'" data-oi="'+oi+'"/>'
-        + '<input type="text" class="cd-opt-label" value="'+h(opt.label)+'" data-oi="'+oi+'" style="flex:1"/>'
+        + '<input type="text" class="cd-opt-label" value="'+h(opt.label)+'" data-oi="'+oi+'" style="flex:1" placeholder="Label"/>'
+        + '<input type="text" class="cd-opt-icon" value="'+h(opt.icon||'')+'" data-oi="'+oi+'" style="width:110px" placeholder="icon name"/>'
         + '<button class="ib cd-opt-del" data-oi="'+oi+'" aria-label="Remove option">'+lucideSVG('trash-2',12,'currentColor')+'</button>'
         + '</div>';
     });
@@ -3405,6 +3407,12 @@ function renderSettings() {
       markDirty();
     });
   });
+  document.querySelectorAll('.cd-opt-icon').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      P.codesignOptions[parseInt(this.dataset.oi)].icon = this.value.trim();
+      markDirty();
+    });
+  });
   document.querySelectorAll('.cd-opt-del').forEach(function(btn){
     btn.addEventListener('click', function(){
       P.codesignOptions.splice(parseInt(this.dataset.oi),1);
@@ -3413,7 +3421,7 @@ function renderSettings() {
   });
   var addOptBtn = el('btn-cd-add-opt');
   if(addOptBtn) addOptBtn.addEventListener('click', function(){
-    P.codesignOptions.push({id:'co'+Date.now(),label:'New Use',color:'#888888'});
+    P.codesignOptions.push({id:'co'+Date.now(),label:'New Use',color:'#888888',icon:''});
     markDirty(); renderSettings();
   });
 
@@ -4430,6 +4438,7 @@ function buildChapters() {
             + '    <div class="lead" id="cd-results-'+i+'" style="display:none">\n'
             + '      <div class="cd-results-status" id="cd-results-status-'+i+'"></div>\n'
             + '      <canvas class="cd-results-chart" id="cd-results-chart-'+i+'"></canvas>\n'
+            + '      <div class="cd-results-legend" id="cd-results-legend-'+i+'"></div>\n'
             + '    </div>\n'
           : '    <div class="lead">'+sanitizeBody(sc.body)+'</div>\n')
       + buildExplainerBtn(sc)
@@ -4548,7 +4557,7 @@ function buildCfg() {
     'var QUESTIONS_SHEETDB_URL = ' + JSON.stringify(P.questionsSheetdbUrl||'') + ';',
     'var CODESIGN_ENABLED = ' + (!!P.codesignEnabled) + ';',
     'var CODESIGN_SHEETDB_URL = ' + JSON.stringify(P.codesignSheetdbUrl||'') + ';',
-    'var CODESIGN_OPTIONS = ' + JSON.stringify((P.codesignOptions||[]).map(function(o){return {id:o.id,label:o.label,color:o.color};})) + ';',
+    'var CODESIGN_OPTIONS = ' + JSON.stringify((P.codesignOptions||[]).map(function(o){return {id:o.id,label:o.label,color:o.color,icon:o.icon||''};})) + ';',
     'var RED_LINE = { type:"Feature", geometry:{ type:"Polygon", coordinates:' + JSON.stringify([P.redLine.coordinates]) + ' }, properties:{} };',
     'var CONTEXT_MARKERS = ' + JSON.stringify(markers) + ';',
     'var CONSTRAINTS = ' + JSON.stringify(constraints) + ';',
@@ -5365,6 +5374,10 @@ function buildJS() {
 '    }',
 '  });',
 '  filterZones(idx);',
+'  Object.keys(_cdMarkers).forEach(function(zid){',
+'    var mkEl=_cdMarkers[zid].getElement();',
+'    mkEl.style.display=zoneVisibleOnScene(zid,idx)?"":"none";',
+'  });',
 '  // con-clip-ex controlled by filterZones source data',
 '  sv("con-3d",L.constraints);sv("con-ex",L.constraints);sv("con-f",L.constraints);sv("con-s",L.constraints);',
 '  // Always restore con-ex opacity to data-driven (in case hideStyleExtrusions zeroed it)',
@@ -5421,7 +5434,34 @@ function buildJS() {
 '    return id;',
 '  }catch(e){ return "v-"+Date.now().toString(36); }',
 '}',
-'var _cdPopup=null, _cdCharts={}, _cdChoices={};',
+'var _cdPopup=null, _cdCharts={}, _cdChoices={}, _cdMarkers={};',
+'function mkCdBadgeEl(color,icon){',
+'  var dot=document.createElement("div");',
+'  dot.style.cssText="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(0,0,0,.35);flex-shrink:0";',
+'  dot.style.background=color||"#2255aa";',
+'  if(icon&&/^[a-z][a-z0-9-]+$/.test(icon)){',
+'    var img=document.createElement("img");',
+'    img.src="https://unpkg.com/lucide-static@latest/icons/"+icon+".svg";',
+'    img.alt="";',
+'    img.style.cssText="width:14px;height:14px;filter:invert(1);pointer-events:none";',
+'    dot.appendChild(img);',
+'  }',
+'  return dot;',
+'}',
+'function zoneTopLeft(zoneId){',
+'  var f=CONSTRAINTS.features.filter(function(x){return x.properties.id===zoneId;})[0];',
+'  if(!f) return null;',
+'  var ring=f.geometry.coordinates[0];',
+'  var minLng=Infinity, maxLat=-Infinity;',
+'  ring.forEach(function(c){ if(c[0]<minLng)minLng=c[0]; if(c[1]>maxLat)maxLat=c[1]; });',
+'  return [minLng,maxLat];',
+'}',
+'function zoneVisibleOnScene(zoneId,idx){',
+'  var fi=CONSTRAINTS.features.findIndex(function(x){return x.properties.id===zoneId;});',
+'  if(fi<0) return true;',
+'  var ids=(window._zoneScenes&&window._zoneScenes[fi])||[];',
+'  return ids.length===0 || ids.indexOf(idx)>=0;',
+'}',
 'function openCodesignPicker(p,lngLat){',
 '  if(_cdPopup) _cdPopup.remove();',
 '  var current=_cdChoices[p.id] ? _cdChoices[p.id].optId : null;',
@@ -5437,8 +5477,13 @@ function buildJS() {
 '    var btn=document.createElement("button");',
 '    btn.type="button";',
 '    btn.className="cd-opt-btn"+(current===opt.id?" selected":"");',
-'    btn.textContent=opt.label;',
 '    btn.style.setProperty("--cd-c",opt.color);',
+'    var badge=mkCdBadgeEl(opt.color,opt.icon);',
+'    badge.style.width="20px";badge.style.height="20px";badge.style.border="none";badge.style.boxShadow="none";',
+'    btn.appendChild(badge);',
+'    var txt=document.createElement("span");',
+'    txt.textContent=opt.label;',
+'    btn.appendChild(txt);',
 '    btn.addEventListener("click",function(){ chooseCodesignUse(p.id,p.name,opt.id); });',
 '    optsWrap.appendChild(btn);',
 '  });',
@@ -5451,11 +5496,16 @@ function buildJS() {
 '  _cdChoices[zoneId]={optId:optId,label:opt.label};',
 '  CONSTRAINTS.features.forEach(function(f){ if(f.properties.id===zoneId) f.properties.color=opt.color; });',
 '  try{ filterZones(cS); }catch(e){}',
+'  if(_cdMarkers[zoneId]) _cdMarkers[zoneId].remove();',
+'  var pt=zoneTopLeft(zoneId);',
+'  if(pt&&map){ _cdMarkers[zoneId]=new mapboxgl.Marker({element:mkCdBadgeEl(opt.color,opt.icon),anchor:"center"}).setLngLat(pt).addTo(map); }',
 '  if(_cdPopup){ _cdPopup.remove(); _cdPopup=null; }',
 '  showToast("Picked "+opt.label+" for "+zoneName+" — submit your picks when you\'re ready");',
 '}',
 'function resetCodesignRound(){',
 '  _cdChoices={};',
+'  Object.keys(_cdMarkers).forEach(function(zid){ _cdMarkers[zid].remove(); });',
+'  _cdMarkers={};',
 '  CONSTRAINTS.features.forEach(function(f){ if(f.properties.baseColor) f.properties.color=f.properties.baseColor; });',
 '  try{ filterZones(cS); }catch(e){}',
 '  if(_cdPopup){ _cdPopup.remove(); _cdPopup=null; }',
@@ -5497,6 +5547,8 @@ function buildJS() {
 '  var canvas=document.getElementById("cd-results-chart-"+i);',
 '  if(status){ status.style.display=""; status.textContent="Loading…"; }',
 '  if(canvas) canvas.style.display="none";',
+'  var legendElReset=document.getElementById("cd-results-legend-"+i);',
+'  if(legendElReset) legendElReset.innerHTML="";',
 '  if(!CODESIGN_SHEETDB_URL){ if(status) status.textContent="This site isn\'t connected to a response sheet yet."; return; }',
 '  try{',
 '    var res=await fetch(CODESIGN_SHEETDB_URL);',
@@ -5523,8 +5575,22 @@ function buildJS() {
 '    _cdCharts[i]=new Chart(canvas.getContext("2d"),{',
 '      type:"bar",',
 '      data:{ labels:zoneNames, datasets:datasets },',
-'      options:{ responsive:true, plugins:{ legend:{position:"bottom"}, title:{display:true,text:"How the public would use each plot"} }, scales:{ y:{ beginAtZero:true, ticks:{precision:0}, title:{display:true,text:"Votes"} } } }',
+'      options:{ responsive:true, plugins:{ legend:{display:false}, title:{display:true,text:"How the public would use each plot"} }, scales:{ y:{ beginAtZero:true, ticks:{precision:0}, title:{display:true,text:"Votes"} } } }',
 '    });',
+'    var legendEl=document.getElementById("cd-results-legend-"+i);',
+'    if(legendEl){',
+'      legendEl.innerHTML="";',
+'      CODESIGN_OPTIONS.forEach(function(opt){',
+'        var item=document.createElement("div");',
+'        item.className="cd-legend-item";',
+'        var badge=mkCdBadgeEl(opt.color,opt.icon);',
+'        badge.style.width="18px";badge.style.height="18px";badge.style.border="none";badge.style.boxShadow="none";',
+'        var lbl=document.createElement("span");',
+'        lbl.textContent=opt.label;',
+'        item.appendChild(badge);item.appendChild(lbl);',
+'        legendEl.appendChild(item);',
+'      });',
+'    }',
 '  }catch(e){',
 '    if(status){ status.style.display=""; status.textContent="Couldn\'t load results right now — please try again later."; }',
 '  }',
@@ -5871,10 +5937,11 @@ function buildPopCSS() {
 + '.cd-popup-title{font-size:13px;font-weight:700;margin-bottom:10px;padding-right:14px;line-height:1.35}'
 + '.cd-popup-opts{display:flex;flex-direction:column;gap:6px}'
 + '.cd-opt-btn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:8px 10px;border-radius:6px;border:1.5px solid rgba(15,14,13,.14);background:#fff;font-size:12.5px;font-weight:600;color:#0f0e0d;cursor:pointer;transition:border-color .15s,background .15s;font-family:inherit}'
-+ '.cd-opt-btn::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--cd-c,#888);flex-shrink:0}'
 + '.cd-opt-btn:hover{border-color:var(--cd-c,#888);background:rgba(0,0,0,.03)}'
 + '.cd-opt-btn.selected{border-color:var(--cd-c,#888);box-shadow:0 0 0 1px var(--cd-c,#888) inset}'
 + '.cd-results-status{font-size:15px;line-height:1.8;color:#3a3733}'
++ '.cd-results-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:14px}'
++ '.cd-legend-item{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:#3a3733}'
 + '.cd-results-chart{width:100%!important;max-height:50vh}';
 }
 
