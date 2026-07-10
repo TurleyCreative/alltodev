@@ -599,7 +599,15 @@ var DEF = {
   zones:[{id:'z1',name:'Conservation Area',popup:'New buildings must preserve or enhance the character of the area.',color:'#d4820a',opacity:0.15,scenes:[],coordinates:[[-2.238,53.484],[-2.228,53.484],[-2.228,53.4855],[-2.238,53.4855],[-2.238,53.484]],groupId:null}],
   zoneGroups:[],
   lines:[],
-  lineGroups:[]
+  lineGroups:[],
+  codesignEnabled:false, codesignSheetdbUrl:'',
+  codesignOptions:[
+    {id:'lib',label:'Library',color:'#2255aa'},
+    {id:'caf',label:'Café',color:'#c0392b'},
+    {id:'work',label:'Workspace',color:'#d4820a'},
+    {id:'gal',label:'Gallery',color:'#8b5cf6'},
+    {id:'res',label:'Restaurant',color:'#2a7c6b'}
+  ]
 };
 
 // ═══════════════════════════════════════════════════
@@ -625,6 +633,10 @@ if(P) {
   (P.markers||[]).forEach(function(m){if(m.groupId===undefined)m.groupId=null;});
   (P.zones||[]).forEach(function(z){if(z.groupId===undefined)z.groupId=null;});
   (P.lines||[]).forEach(function(ln){if(ln.groupId===undefined)ln.groupId=null;});
+  if(P.codesignEnabled===undefined) P.codesignEnabled=false;
+  if(P.codesignSheetdbUrl===undefined) P.codesignSheetdbUrl='';
+  if(!P.codesignOptions) P.codesignOptions=JSON.parse(JSON.stringify(DEF.codesignOptions));
+  (P.zones||[]).forEach(function(z){if(z.codesign===undefined)z.codesign=false;});
   if(P.companyLogoUrl === undefined) P.companyLogoUrl = '';
   if(P.clientName === undefined) P.clientName = '';
   if(P.clientLogoUrl === undefined) P.clientLogoUrl = '';
@@ -2128,7 +2140,7 @@ function renderZones() {
 function selZone(i) { AZ=i; AM=null; ensureEditorTab(); renderZones(); renderZoneEditor(i); }
 function addZone() {
   var c = P.siteCentre;
-  markDirty(); P.zones.push({id:'z'+Date.now(),name:'New Zone',popup:'Description.',color:'#2255aa',opacity:0.2,smoothRadius:0,render3d:false,height3d:20,clipMap:false,scenes:[],lightbox:{enabled:false,layout:'popover',heading:'',subheading:'',body:'',img:'',imgCaption:'',embedUrl:''},coordinates:[[c[0]-0.005,c[1]-0.004],[c[0]+0.005,c[1]-0.004],[c[0]+0.005,c[1]+0.004],[c[0]-0.005,c[1]+0.004],[c[0]-0.005,c[1]-0.004]],groupId:null});
+  markDirty(); P.zones.push({id:'z'+Date.now(),name:'New Zone',popup:'Description.',color:'#2255aa',opacity:0.2,smoothRadius:0,render3d:false,height3d:20,clipMap:false,scenes:[],codesign:false,lightbox:{enabled:false,layout:'popover',heading:'',subheading:'',body:'',img:'',imgCaption:'',embedUrl:''},coordinates:[[c[0]-0.005,c[1]-0.004],[c[0]+0.005,c[1]-0.004],[c[0]+0.005,c[1]+0.004],[c[0]-0.005,c[1]+0.004],[c[0]-0.005,c[1]-0.004]],groupId:null});
   AZ = P.zones.length-1;
   ensureEditorTab(); renderZones(); renderZoneEditor(AZ); refreshZN();
 }
@@ -2897,6 +2909,12 @@ function renderZoneEditor(i) {
     + '<button class="tg'+(z.showInDrawer!==false?' on':'')+'" id="zn-showdrawer-tog"></button></div>';
   html += '<div class="nt" style="margin-top:4px">Lists this zone in the keyboard/screen-reader "Map Contents" panel. Turn off for zones that don\'t need a text-based entry, e.g. a clip mask used only to hide existing buildings.</div>';
   html += '</div>';
+  if(P.codesignEnabled) {
+    html += '<div class="rs"><div class="lr"><span class="ll">Include in co-design voting</span>'
+      + '<button class="tg'+(z.codesign?' on':'')+'" id="zn-cd-tog"></button></div>';
+    html += '<div class="nt" style="margin-top:4px">Lets visitors click this plot and pick a use from your Co-Design options (Settings &gt; Co-Design). Takes priority over the lightbox below while a use hasn\'t been picked yet.</div>';
+    html += '</div>';
+  }
   // Lightbox section
   var zlb = z.lightbox || {};
   html += '<div class="rs"><div class="st">Lightbox <small style="font-size:9px;color:var(--ghost);font-family:var(--mono);font-weight:400">(optional)</small></div>';
@@ -2952,6 +2970,11 @@ function renderZoneEditor(i) {
   var showDrawerTog = el('zn-showdrawer-tog');
   if(showDrawerTog) showDrawerTog.addEventListener('click', function(){
     P.zones[i].showInDrawer = P.zones[i].showInDrawer===false ? true : false;
+    markDirty(); renderZoneEditor(i);
+  });
+  var cdTog = el('zn-cd-tog');
+  if(cdTog) cdTog.addEventListener('click', function(){
+    P.zones[i].codesign = !P.zones[i].codesign;
     markDirty(); renderZoneEditor(i);
   });
   var tog3d = el('zn-3d-tog');
@@ -3097,6 +3120,36 @@ function renderSettings() {
     + '<div id="sq-sdb-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
     + '</div>';
   html += '<div class="nt">Every visitor gets a random ID stored in their browser (localStorage), included with every question answer <i>and</i> every Have Your Say pin — so you can filter both sheets by <code>visitorId</code> to see everything one person submitted across the whole site.</div>';
+  html += '</div>';
+  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('users',14,'currentColor')+'Co-Design &amp; Participatory Budgeting</span></div>';
+  html += '<div class="nt" style="margin-bottom:12px">Let visitors click plots you\'ve marked as co-design zones and pick a use for them (library, café, workspace, etc). The plot recolours to match their pick and their choice is saved to a sheet, plus a "See how people would use this space" chart of everyone\'s picks.</div>';
+  html += '<div class="lr" style="margin-bottom:12px"><span class="ll">Enable co-design</span><button class="tg'+(P.codesignEnabled?' on':'')+'" id="cfg-cd-tog"></button></div>';
+  if(P.codesignEnabled) {
+    html += '<div class="nt" style="margin-bottom:12px"><b style="color:var(--ink)">Setup guide:</b><br>'
+      + '1. Create a Google Sheet with columns: <code>id | visitorId | zoneId | zoneName | choice | timestamp</code><br>'
+      + '2. Go to <a href="https://sheetdb.io" target="_blank">sheetdb.io</a> &rarr; connect your sheet &rarr; copy the API URL<br>'
+      + '3. Paste the URL below and click Test</div>';
+    html += '<div class="f"><label class="fl">SheetDB API URL</label>'
+      + '<div style="display:flex;gap:6px">'
+      + '<input type="text" id="cfg-cd-sdb" value="'+h(P.codesignSheetdbUrl)+'" placeholder="https://sheetdb.io/api/v1/..."/>'
+      + '<button class="btn btn-g" id="btn-test-cd-sdb" style="white-space:nowrap;flex-shrink:0">Test</button>'
+      + '</div>'
+      + '<div id="cd-sdb-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
+      + '</div>';
+    html += '<div class="f"><label class="fl">Use options</label>';
+    html += '<div id="cd-opts-list">';
+    (P.codesignOptions||[]).forEach(function(opt, oi){
+      html += '<div class="cr" style="margin-bottom:6px">'
+        + '<input type="color" class="cd-opt-color" value="'+h(opt.color)+'" data-oi="'+oi+'"/>'
+        + '<input type="text" class="cd-opt-label" value="'+h(opt.label)+'" data-oi="'+oi+'" style="flex:1"/>'
+        + '<button class="ib cd-opt-del" data-oi="'+oi+'" aria-label="Remove option">'+lucideSVG('trash-2',12,'currentColor')+'</button>'
+        + '</div>';
+    });
+    html += '</div>';
+    html += '<button class="btn btn-g btn-ic" id="btn-cd-add-opt" style="width:100%;justify-content:center;margin-top:4px">'+lucideSVG('plus',13,'currentColor')+'Add option</button>';
+    html += '</div>';
+    html += '<div class="nt" style="margin-top:12px">Then, on each plot you want voteable, open it under Constraint Zones and turn on "Include in co-design voting". Visitors can change their pick any time — each new pick adds a fresh row to the sheet, so filter to each visitor\'s latest by <code>visitorId</code> + <code>zoneId</code> when analysing.</div>';
+  }
   html += '</div>';
   html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('play',14,'currentColor')+'Entrance Animations</span></div>';
   html += '<div class="lr"><span class="ll">Animate markers &amp; lines on entry</span>'
@@ -3311,6 +3364,38 @@ function renderSettings() {
   }
   bindSdbTest('btn-test-sdb', 'cfg-sdb', 'sdb-status');
   bindSdbTest('btn-test-sq-sdb', 'cfg-sq-sdb', 'sq-sdb-status');
+
+  // Co-design / participatory budgeting
+  var cdTog = el('cfg-cd-tog');
+  if(cdTog) cdTog.addEventListener('click', function(){
+    P.codesignEnabled = !P.codesignEnabled;
+    markDirty(); renderSettings();
+  });
+  bindInput('cfg-cd-sdb', function(v){ P.codesignSheetdbUrl=v; });
+  bindSdbTest('btn-test-cd-sdb', 'cfg-cd-sdb', 'cd-sdb-status');
+  document.querySelectorAll('.cd-opt-color').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      P.codesignOptions[parseInt(this.dataset.oi)].color = this.value;
+      markDirty();
+    });
+  });
+  document.querySelectorAll('.cd-opt-label').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      P.codesignOptions[parseInt(this.dataset.oi)].label = this.value;
+      markDirty();
+    });
+  });
+  document.querySelectorAll('.cd-opt-del').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      P.codesignOptions.splice(parseInt(this.dataset.oi),1);
+      markDirty(); renderSettings();
+    });
+  });
+  var addOptBtn = el('btn-cd-add-opt');
+  if(addOptBtn) addOptBtn.addEventListener('click', function(){
+    P.codesignOptions.push({id:'co'+Date.now(),label:'New Use',color:'#888888'});
+    markDirty(); renderSettings();
+  });
 
   // Reset project
   var resetBtn = el('btn-reset-project');
@@ -4119,6 +4204,7 @@ function buildOutputHTML() {
     + (P.favicon ? '<link rel="icon" href="'+h(P.favicon)+'"/>\n' : '')
     + '<link href="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.css" rel="stylesheet"/>\n'
     + '<script src="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js"><' + '/script>\n'
+    + (P.codesignEnabled ? '<script src="https://cdn.jsdelivr.net/npm/chart.js"><' + '/script>\n' : '')
     + '<link rel="stylesheet" href="https://use.typekit.net/' + (P.typekitId||'dfg2dug') + '.css"/>\n'
     + '<style>\n' + css + '\n' + lbcss + '\n' + buildTextStyleCSS() + '\n</style>\n'
     + (function(){ var cc=''; if(P.accentColor&&P.accentColor!=='#c0392b')cc+='--accent:'+P.accentColor+';--red:'+P.accentColor+';'; if(P.paperColor&&P.paperColor!=='#f8f6f1')cc+='--paper:'+P.paperColor+';'; if(P.progressColor&&P.progressColor!=='#2a7c6b')cc+='--teal:'+P.progressColor+';'; if(P.fontFamily&&P.fontFamily!=='tt-commons-pro')cc+='--f-body:\"'+P.fontFamily+'\",system-ui,sans-serif;'; return cc?'<style>:root{'+cc+'}</style>\n':''; })()
@@ -4136,6 +4222,7 @@ function buildOutputHTML() {
     + buildInfoPanel()
     + buildFeedbackForm()
     + buildMapExplainerModal()
+    + buildCodesignUI()
     + '<div id="fb-toast" role="status" aria-live="polite"></div>\n'
     + '</div>\n'
     + '<style>\n' + pcss + '\n</style>\n'
@@ -4170,6 +4257,7 @@ function buildMapPanel() {
     + '  <div id="map-label">Scene 01</div>\n'
     + '  <div id="map-controls">\n'
     + '    <button class="map-btn" id="orbit-btn" onclick="toggleOrbit()" style="display:none">&#9208; Pause Orbit</button>\n'
+    + (P.codesignEnabled ? '    <button class="map-btn" onclick="openCodesignResults()">See how people would use this space</button>\n' : '')
     + '    <button class="map-btn" onclick="resetToScene()">Reset Scene</button>\n'
     + '  </div>\n'
     + '  <div id="map-loading"><div class="loading-ring"></div><p>Loading map\u2026</p></div>\n'
@@ -4238,6 +4326,18 @@ function buildMapExplainerModal() {
     + '    <button type="button" class="lb-close-btn lb-close-dark" onclick="closeMapExplainer()" aria-label="Close">&#10005;</button>\n'
     + '    <div id="map-explainer-title" class="map-explainer-heading">What this map is showing</div>\n'
     + '    <div id="map-explainer-body" class="map-explainer-text"></div>\n'
+    + '  </div>\n'
+    + '</div>\n';
+}
+
+function buildCodesignUI() {
+  if(!P.codesignEnabled) return '';
+  return '<div id="cd-results-overlay">\n'
+    + '  <div id="cd-results-box" role="dialog" aria-modal="true" aria-labelledby="cd-results-title">\n'
+    + '    <button type="button" class="lb-close-btn lb-close-dark" onclick="closeCodesignResults()" aria-label="Close">&#10005;</button>\n'
+    + '    <div id="cd-results-title" class="map-explainer-heading">How people would use this space</div>\n'
+    + '    <div id="cd-results-status" class="map-explainer-text"></div>\n'
+    + '    <canvas id="cd-results-chart"></canvas>\n'
     + '  </div>\n'
     + '</div>\n';
 }
@@ -4399,7 +4499,7 @@ function buildCfg() {
 
   var markers = {type:'FeatureCollection',features:P.markers.map(function(m){return{type:'Feature',geometry:{type:'Point',coordinates:m.coords},properties:{name:m.name,desc:m.desc,icon:m.icon||'',color:m.color,flyCamera:!!m.flyCamera,camZoom:m.camZoom||15,camPitch:m.camPitch||45,camBearing:m.camBearing||0,lightboxEnabled:!!(m.lightbox&&m.lightbox.enabled),lightboxLayout:(m.lightbox&&m.lightbox.layout)||'card',lightboxHeading:(m.lightbox&&m.lightbox.heading)||'',lightboxSubheading:(m.lightbox&&m.lightbox.subheading)||'',lightboxBody:(m.lightbox&&m.lightbox.body)||'',lightboxImg:(m.lightbox&&m.lightbox.img)||'',lightboxImgCaption:(m.lightbox&&m.lightbox.imgCaption)||'',lightboxImages:JSON.stringify((m.lightbox&&m.lightbox.images)||[]),lightboxEmbedUrl:(m.lightbox&&m.lightbox.embedUrl)||'',scenes:(m.scenes||[]).map(function(sid){var si=P.scenes.findIndex(function(s){return s.id===sid;});return si>=0?si:-1;}).filter(function(si){return si>=0;}).join(','),showInDrawer:m.showInDrawer!==false}};})};
 
-  var constraints = {type:'FeatureCollection',features:P.zones.map(function(z){var zco=z.smoothRadius>0.01?smoothPolygon(z.coordinates,z.smoothRadius):z.coordinates;var zlb=z.lightbox||{};return{type:'Feature',geometry:{type:'Polygon',coordinates:[zco]},properties:{id:z.id||z.name,name:z.name,color:z.color,opacity:z.opacity,scenes:(z.scenes||[]).map(function(sid){var si=P.scenes.findIndex(function(s){return s.id===sid;});return si>=0?si:-1;}).filter(function(si){return si>=0;}).join(','),showHover:z.showHover!==false,extrude:!!z.extrude,extrudeHeight:z.extrudeHeight||20,render3d:!!z.render3d,height3d:z.height3d||20,clipMap:!!z.clipMap,lightboxEnabled:!!zlb.enabled,lightboxLayout:zlb.layout||'popover',lightboxHeading:zlb.heading||'',lightboxSubheading:zlb.subheading||'',lightboxBody:zlb.body||'',lightboxImg:zlb.img||'',lightboxImgCaption:zlb.imgCaption||'',lightboxEmbedUrl:zlb.embedUrl||'',showInDrawer:z.showInDrawer!==false}};})};
+  var constraints = {type:'FeatureCollection',features:P.zones.map(function(z){var zco=z.smoothRadius>0.01?smoothPolygon(z.coordinates,z.smoothRadius):z.coordinates;var zlb=z.lightbox||{};return{type:'Feature',geometry:{type:'Polygon',coordinates:[zco]},properties:{id:z.id||z.name,name:z.name,color:z.color,opacity:z.opacity,scenes:(z.scenes||[]).map(function(sid){var si=P.scenes.findIndex(function(s){return s.id===sid;});return si>=0?si:-1;}).filter(function(si){return si>=0;}).join(','),showHover:z.showHover!==false,extrude:!!z.extrude,extrudeHeight:z.extrudeHeight||20,render3d:!!z.render3d,height3d:z.height3d||20,clipMap:!!z.clipMap,lightboxEnabled:!!zlb.enabled,lightboxLayout:zlb.layout||'popover',lightboxHeading:zlb.heading||'',lightboxSubheading:zlb.subheading||'',lightboxBody:zlb.body||'',lightboxImg:zlb.img||'',lightboxImgCaption:zlb.imgCaption||'',lightboxEmbedUrl:zlb.embedUrl||'',showInDrawer:z.showInDrawer!==false,codesign:!!z.codesign,baseColor:z.color}};})};
 
   var ciLines = P.zones.map(function(z){return '  '+JSON.stringify(z.id||z.name)+': { title:'+JSON.stringify(z.name)+', body:'+JSON.stringify(z.popup||'')+' }';}).join(',\n');
 
@@ -4423,6 +4523,9 @@ function buildCfg() {
     'var SITE_PIN_LABEL = ' + JSON.stringify(P.sitePinLabel||'The Site') + ';',
     'var SHEETDB_URL  = ' + JSON.stringify(P.sheetdbUrl||'') + ';',
     'var QUESTIONS_SHEETDB_URL = ' + JSON.stringify(P.questionsSheetdbUrl||'') + ';',
+    'var CODESIGN_ENABLED = ' + (!!P.codesignEnabled) + ';',
+    'var CODESIGN_SHEETDB_URL = ' + JSON.stringify(P.codesignSheetdbUrl||'') + ';',
+    'var CODESIGN_OPTIONS = ' + JSON.stringify((P.codesignOptions||[]).map(function(o){return {id:o.id,label:o.label,color:o.color};})) + ';',
     'var RED_LINE = { type:"Feature", geometry:{ type:"Polygon", coordinates:' + JSON.stringify([P.redLine.coordinates]) + ' }, properties:{} };',
     'var CONTEXT_MARKERS = ' + JSON.stringify(markers) + ';',
     'var CONSTRAINTS = ' + JSON.stringify(constraints) + ';',
@@ -4524,7 +4627,7 @@ function buildJS() {
 '  map.on("load",function(){',
 '    document.getElementById("map-loading").classList.add("hidden");',
 '    _esMapReady=true; _esMaybeHide();',
-'    addSrc();addLayers();addPin();setupFbClick();buildNav();map.on("move",positionPopover);',
+'    addSrc();addLayers();applyStoredCodesignChoices();addPin();setupFbClick();buildNav();map.on("move",positionPopover);',
 '    hideStyleExtrusions();',
 '    // Re-hide on styledata in case tiles load after initial style parse',
 '    map.on("styledata",function(){ hideStyleExtrusions(); });',
@@ -4880,7 +4983,8 @@ function buildJS() {
 '    var ptitle=info?info.title:p.name, pbody=info?info.body:"";',
 '    if(!ptitle) return;',
 '    var html="<strong>"+ptitle+"</strong>"+(pbody?"<span>"+pbody+"</span>":"");',
-'    if(p.lightboxEnabled) html+="<div style=\\"font-size:10px;margin-top:4px;opacity:.7;font-style:italic\\">Click for more &#8594;</div>";',
+'    if(CODESIGN_ENABLED && p.codesign) html+="<div style=\\"font-size:10px;margin-top:4px;opacity:.7;font-style:italic\\">Click to choose a use here &#8594;</div>";',
+'    else if(p.lightboxEnabled) html+="<div style=\\"font-size:10px;margin-top:4px;opacity:.7;font-style:italic\\">Click for more &#8594;</div>";',
 '    _zonePopup.setLngLat(e.lngLat).setHTML(html).addTo(map);',
 '  });',
 '  map.on("mousemove","con-f",function(e){ _zonePopup.setLngLat(e.lngLat); });',
@@ -4893,6 +4997,7 @@ function buildJS() {
 '    if(!e.features.length) return;',
 '    e.preventDefault();',
 '    var p=e.features[0].properties;',
+'    if(CODESIGN_ENABLED && p.codesign){ _zonePopup.remove(); openCodesignPicker(p,e.lngLat); return; }',
 '    if(!p.lightboxEnabled) return;',
 '    _zonePopup.remove();',
 '    openLB({name:p.name,color:p.color||"#d4820a",coords:[e.lngLat.lng,e.lngLat.lat],lightboxLayout:p.lightboxLayout,lightboxHeading:p.lightboxHeading,lightboxSubheading:p.lightboxSubheading,lightboxBody:p.lightboxBody,lightboxImg:p.lightboxImg,lightboxImgCaption:p.lightboxImgCaption,lightboxEmbedUrl:p.lightboxEmbedUrl});',
@@ -5293,6 +5398,107 @@ function buildJS() {
 '    return id;',
 '  }catch(e){ return "v-"+Date.now().toString(36); }',
 '}',
+'var _cdPopup=null, _cdChart=null;',
+'function getCodesignChoices(){',
+'  try{ return JSON.parse(localStorage.getItem("allto_codesign_choices")||"{}"); }catch(e){ return {}; }',
+'}',
+'function setCodesignChoiceLocal(zoneId,optId){',
+'  var c=getCodesignChoices(); c[zoneId]=optId;',
+'  try{ localStorage.setItem("allto_codesign_choices",JSON.stringify(c)); }catch(e){}',
+'}',
+'function applyStoredCodesignChoices(){',
+'  if(!CODESIGN_ENABLED) return;',
+'  var choices=getCodesignChoices();',
+'  CONSTRAINTS.features.forEach(function(f){',
+'    var optId=choices[f.properties.id];',
+'    if(!optId) return;',
+'    var opt=CODESIGN_OPTIONS.filter(function(o){return o.id===optId;})[0];',
+'    if(opt) f.properties.color=opt.color;',
+'  });',
+'}',
+'function openCodesignPicker(p,lngLat){',
+'  if(_cdPopup) _cdPopup.remove();',
+'  var choices=getCodesignChoices();',
+'  var current=choices[p.id];',
+'  var wrap=document.createElement("div");',
+'  wrap.className="cd-popup-body";',
+'  var title=document.createElement("div");',
+'  title.className="cd-popup-title";',
+'  title.textContent="Choose a use for "+p.name;',
+'  wrap.appendChild(title);',
+'  var optsWrap=document.createElement("div");',
+'  optsWrap.className="cd-popup-opts";',
+'  CODESIGN_OPTIONS.forEach(function(opt){',
+'    var btn=document.createElement("button");',
+'    btn.type="button";',
+'    btn.className="cd-opt-btn"+(current===opt.id?" selected":"");',
+'    btn.textContent=opt.label;',
+'    btn.style.setProperty("--cd-c",opt.color);',
+'    btn.addEventListener("click",function(){ chooseCodesignUse(p.id,p.name,opt.id); });',
+'    optsWrap.appendChild(btn);',
+'  });',
+'  wrap.appendChild(optsWrap);',
+'  _cdPopup=new mapboxgl.Popup({closeButton:true,closeOnClick:false,className:"cd-popup",maxWidth:"230px"}).setLngLat(lngLat).setDOMContent(wrap).addTo(map);',
+'}',
+'function chooseCodesignUse(zoneId,zoneName,optId){',
+'  var opt=CODESIGN_OPTIONS.filter(function(o){return o.id===optId;})[0];',
+'  if(!opt) return;',
+'  setCodesignChoiceLocal(zoneId,optId);',
+'  CONSTRAINTS.features.forEach(function(f){ if(f.properties.id===zoneId) f.properties.color=opt.color; });',
+'  try{ filterZones(cS); }catch(e){}',
+'  if(_cdPopup){ _cdPopup.remove(); _cdPopup=null; }',
+'  showToast("Saved — you picked "+opt.label+" for "+zoneName);',
+'  if(CODESIGN_SHEETDB_URL){',
+'    var row={id:Date.now().toString(),visitorId:getVisitorId(),zoneId:zoneId,zoneName:zoneName,choice:opt.label,timestamp:new Date().toISOString()};',
+'    fetch(CODESIGN_SHEETDB_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:[row]})}).catch(function(){});',
+'  }',
+'}',
+'async function openCodesignResults(){',
+'  var overlay=document.getElementById("cd-results-overlay");',
+'  if(!overlay) return;',
+'  overlay.classList.add("open");',
+'  var status=document.getElementById("cd-results-status");',
+'  var canvas=document.getElementById("cd-results-chart");',
+'  if(status){ status.style.display=""; status.textContent="Loading…"; }',
+'  if(canvas) canvas.style.display="none";',
+'  if(!CODESIGN_SHEETDB_URL){ if(status) status.textContent="This site isn\'t connected to a response sheet yet."; return; }',
+'  try{',
+'    var res=await fetch(CODESIGN_SHEETDB_URL);',
+'    if(!res.ok) throw new Error();',
+'    var rows=await res.json();',
+'    if(!Array.isArray(rows)) throw new Error();',
+'    var latest={};',
+'    rows.forEach(function(r){',
+'      var key=r.visitorId+"|"+r.zoneId;',
+'      if(!latest[key] || new Date(r.timestamp) > new Date(latest[key].timestamp)) latest[key]=r;',
+'    });',
+'    var zoneNames=[], counts={};',
+'    Object.keys(latest).forEach(function(k){',
+'      var r=latest[k];',
+'      if(zoneNames.indexOf(r.zoneName)===-1) zoneNames.push(r.zoneName);',
+'      counts[r.zoneName]=counts[r.zoneName]||{};',
+'      counts[r.zoneName][r.choice]=(counts[r.zoneName][r.choice]||0)+1;',
+'    });',
+'    if(!zoneNames.length){ if(status) status.textContent="No responses yet — be the first to vote!"; return; }',
+'    if(status) status.style.display="none";',
+'    if(canvas) canvas.style.display="";',
+'    var datasets=CODESIGN_OPTIONS.map(function(opt){',
+'      return { label:opt.label, backgroundColor:opt.color, data:zoneNames.map(function(zn){ return (counts[zn]&&counts[zn][opt.label])||0; }) };',
+'    });',
+'    if(_cdChart) _cdChart.destroy();',
+'    _cdChart=new Chart(canvas.getContext("2d"),{',
+'      type:"bar",',
+'      data:{ labels:zoneNames, datasets:datasets },',
+'      options:{ responsive:true, plugins:{ legend:{position:"bottom"}, title:{display:true,text:"How the public would use each plot"} }, scales:{ y:{ beginAtZero:true, ticks:{precision:0}, title:{display:true,text:"Votes"} } } }',
+'    });',
+'  }catch(e){',
+'    if(status){ status.style.display=""; status.textContent="Couldn\'t load results right now — please try again later."; }',
+'  }',
+'}',
+'function closeCodesignResults(){',
+'  var overlay=document.getElementById("cd-results-overlay");',
+'  if(overlay) overlay.classList.remove("open");',
+'}',
 'async function submitSceneQuestion(btn){',
 '  var wrap=btn.closest(".scene-question-group");if(!wrap)return;',
 '  var status=wrap.querySelector(".sq-status");',
@@ -5627,7 +5833,22 @@ function buildPopCSS() {
 + '.mapboxgl-popup-content span{font-size:12px;color:#9a9590;line-height:1.6;display:block}'
 + '.mapboxgl-popup-close-button{color:#9a9590;font-size:16px;right:8px;top:8px}'
 + '.mapboxgl-popup-close-button:hover{color:#fff;background:none}'
-+ '.mapboxgl-popup-tip{border-top-color:#0f0e0d!important;border-bottom-color:#0f0e0d!important}';
++ '.mapboxgl-popup-tip{border-top-color:#0f0e0d!important;border-bottom-color:#0f0e0d!important}'
++ '.cd-popup .mapboxgl-popup-content{background:#f8f6f1;color:#0f0e0d;padding:16px 18px;border-radius:8px;max-width:230px;box-shadow:0 8px 30px rgba(0,0,0,.35);border-top:none}'
++ '.cd-popup .mapboxgl-popup-tip{border-top-color:#f8f6f1!important;border-bottom-color:#f8f6f1!important}'
++ '.cd-popup .mapboxgl-popup-close-button{color:#0f0e0d;opacity:.5;font-size:16px;right:8px;top:8px}'
++ '.cd-popup .mapboxgl-popup-close-button:hover{opacity:1;background:none}'
++ '.cd-popup-title{font-size:13px;font-weight:700;margin-bottom:10px;padding-right:14px;line-height:1.35}'
++ '.cd-popup-opts{display:flex;flex-direction:column;gap:6px}'
++ '.cd-opt-btn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:8px 10px;border-radius:6px;border:1.5px solid rgba(15,14,13,.14);background:#fff;font-size:12.5px;font-weight:600;color:#0f0e0d;cursor:pointer;transition:border-color .15s,background .15s;font-family:inherit}'
++ '.cd-opt-btn::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--cd-c,#888);flex-shrink:0}'
++ '.cd-opt-btn:hover{border-color:var(--cd-c,#888);background:rgba(0,0,0,.03)}'
++ '.cd-opt-btn.selected{border-color:var(--cd-c,#888);box-shadow:0 0 0 1px var(--cd-c,#888) inset}'
++ '#cd-results-overlay{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .25s}'
++ '#cd-results-overlay.open{opacity:1;pointer-events:all}'
++ '#cd-results-box{position:relative;background:var(--paper);color:var(--ink);border-radius:10px;padding:28px;width:min(560px,calc(100vw - 48px));max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:0 16px 60px rgba(0,0,0,.35);transform:translateY(12px) scale(.98);transition:transform .28s}'
++ '#cd-results-overlay.open #cd-results-box{transform:translateY(0) scale(1)}'
++ '#cd-results-chart{width:100%!important;max-height:60vh}';
 }
 
 function buildLbCSS() {
