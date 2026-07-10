@@ -655,6 +655,7 @@ if(P) {
   if(P.scenes) P.scenes.forEach(function(sc) {
     if(!sc.layers) sc.layers = {};
     if(sc.layers.orbit === undefined) sc.layers.orbit = false;
+    if(sc.layers.codesign === undefined) sc.layers.codesign = false;
     if(sc.layers.buildings === undefined) sc.layers.buildings = true;
     if(!sc.camera) sc.camera = {zoom:14,pitch:0,bearing:0,duration:2000};
     if(!sc.questions) sc.questions = (sc.question && sc.question.type && sc.question.type!=='none') ? [sc.question] : [];
@@ -1734,6 +1735,7 @@ function bindExportModal() {
         data.scenes.forEach(function(sc) {
           if(!sc.layers) sc.layers = {};
           if(sc.layers.orbit === undefined) sc.layers.orbit = false;
+          if(sc.layers.codesign === undefined) sc.layers.codesign = false;
           if(!sc.questions) sc.questions = (sc.question && sc.question.type && sc.question.type!=='none') ? [sc.question] : [];
           delete sc.question;
         });
@@ -2310,6 +2312,13 @@ function renderRightPanel() {
   html += lyr('sc-l-buildings3d','3D Buildings', sc.layers.buildings3d);
   html += lyr('sc-l-orbit','3D Buildings + Orbit', sc.layers.orbit||false);
   html += '</div></div>';
+  if(P.codesignEnabled) {
+    html += '<div class="rs"><div class="st">Co-Design</div>';
+    html += '<div class="lr"><span class="ll">Show Submit/Results controls in this scene\'s text panel</span>'
+      + '<button class="tg'+(sc.layers.codesign?' on':'')+'" id="sc-l-codesign"></button></div>';
+    html += '<div class="nt" style="margin-top:4px">Turn this on for whichever scene shows your voteable plots — it adds a "Submit your picks" and "See how people would use this space" prompt to this scene\'s prose, instead of floating over the map on every scene.</div>';
+    html += '</div>';
+  }
 
   setHTML('rpc', html);
 
@@ -2466,6 +2475,7 @@ function renderRightPanel() {
   bindTg('sc-l-custom-bld', function(v){ P.scenes[AS].layers.buildings=v; markDirty(); updatePreview(); });
   bindTg('sc-l-buildings3d', function(v) { P.scenes[AS].layers.buildings3d=v; updatePreview(); });
   bindTg('sc-l-orbit', function(v) { if(!P.scenes[AS].layers) P.scenes[AS].layers={}; P.scenes[AS].layers.orbit=v; updatePreview(); });
+  bindTg('sc-l-codesign', function(v) { if(!P.scenes[AS].layers) P.scenes[AS].layers={}; P.scenes[AS].layers.codesign=v; markDirty(); renderRightPanel(); });
 
 
   var pcb = el('btn-prev-cam');
@@ -3158,7 +3168,7 @@ function renderSettings() {
     html += '</div>';
     html += '<button class="btn btn-g btn-ic" id="btn-cd-add-opt" style="width:100%;justify-content:center;margin-top:4px">'+lucideSVG('plus',13,'currentColor')+'Add option</button>';
     html += '</div>';
-    html += '<div class="nt" style="margin-top:12px">Then, on each plot you want voteable, open it under Constraint Zones and turn on "Include in co-design voting". Each submission writes one row per plot the visitor picked, all sharing the same <code>submissionId</code>, so you can group everything one person submitted in one go — and since the map resets after each submit, several people can use the same device in turn.</div>';
+    html += '<div class="nt" style="margin-top:12px">Then: (1) on each plot you want voteable, open it under Constraint Zones and turn on "Include in co-design voting"; (2) on the scene where you want visitors to submit and see results, open it under Scenes and turn on "Co-Design" — that adds the Submit/Results prompts to that scene\'s text panel instead of floating over the map everywhere. Each submission writes one row per plot the visitor picked, all sharing the same <code>submissionId</code>, so you can group everything one person submitted in one go — and since the map resets after each submit, several people can use the same device in turn.</div>';
   }
   html += '</div>';
   html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('play',14,'currentColor')+'Entrance Animations</span></div>';
@@ -4267,8 +4277,6 @@ function buildMapPanel() {
     + '  <div id="map-label">Scene 01</div>\n'
     + '  <div id="map-controls">\n'
     + '    <button class="map-btn" id="orbit-btn" onclick="toggleOrbit()" style="display:none">&#9208; Pause Orbit</button>\n'
-    + (P.codesignEnabled ? '    <button class="map-btn" onclick="submitCodesignChoices()">Submit your picks</button>\n' : '')
-    + (P.codesignEnabled ? '    <button class="map-btn" onclick="openCodesignResults()">See how people would use this space</button>\n' : '')
     + '    <button class="map-btn" onclick="resetToScene()">Reset Scene</button>\n'
     + '  </div>\n'
     + '  <div id="map-loading"><div class="loading-ring"></div><p>Loading map\u2026</p></div>\n'
@@ -4432,9 +4440,19 @@ function buildChapters() {
       + '    <div class="lead">'+sanitizeBody(sc.body)+'</div>\n'
       + buildExplainerBtn(sc)
       + buildQuestionBlock(sc, i)
+      + buildCodesignBlock(sc)
       + '  </section>\n';
   });
   return out;
+}
+
+function buildCodesignBlock(sc) {
+  if(!P.codesignEnabled || !sc.layers || !sc.layers.codesign) return '';
+  return '    <div class="map-instruction" style="margin-top:20px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Click a plot on the map to choose how it\'s used</div>\n'
+    + '    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">\n'
+    + '      <button type="button" class="map-explain-btn" onclick="submitCodesignChoices()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>Submit your picks</button>\n'
+    + '      <button type="button" class="map-explain-btn" onclick="openCodesignResults()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>See how people would use this space</button>\n'
+    + '    </div>\n';
 }
 
 function buildHYS(i, col) {
