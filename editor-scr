@@ -4242,7 +4242,6 @@ function buildOutputHTML() {
     + buildInfoPanel()
     + buildFeedbackForm()
     + buildMapExplainerModal()
-    + buildCodesignUI()
     + '<div id="fb-toast" role="status" aria-live="polite"></div>\n'
     + '</div>\n'
     + '<style>\n' + pcss + '\n</style>\n'
@@ -4349,18 +4348,6 @@ function buildMapExplainerModal() {
     + '</div>\n';
 }
 
-function buildCodesignUI() {
-  if(!P.codesignEnabled) return '';
-  return '<div id="cd-results-overlay">\n'
-    + '  <div id="cd-results-box" role="dialog" aria-modal="true" aria-labelledby="cd-results-title">\n'
-    + '    <button type="button" class="lb-close-btn lb-close-dark" onclick="closeCodesignResults()" aria-label="Close">&#10005;</button>\n'
-    + '    <div id="cd-results-title" class="map-explainer-heading">How people would use this space</div>\n'
-    + '    <div id="cd-results-status" class="map-explainer-text"></div>\n'
-    + '    <canvas id="cd-results-chart"></canvas>\n'
-    + '  </div>\n'
-    + '</div>\n';
-}
-
 
 function sanitizeBody(html) {
   if (!html) return '';
@@ -4434,24 +4421,31 @@ function buildChapters() {
     var isHYS = (sc.label||'').toLowerCase().indexOf('say') >= 0 || (sc.label||'').toLowerCase().indexOf('your say') >= 0;
     if (isHYS) { out += buildHYS(i, col); return; }
     var tag = 'h1';
+    var isCD = P.codesignEnabled && sc.layers && sc.layers.codesign;
     out += '  <section class="chapter" data-scene="' + i + '">\n'
       + '    <div class="scene-tag"><div class="scene-tag-dot" style="background:'+col+'"></div><span>'+h(sc.label)+'</span></div>\n'
       + '    <'+tag+'>'+h(sc.title)+'</'+tag+'>\n'
-      + '    <div class="lead">'+sanitizeBody(sc.body)+'</div>\n'
+      + (isCD
+          ? '    <div class="lead" id="cd-info-'+i+'">'+sanitizeBody(sc.body)+'</div>\n'
+            + '    <div class="lead" id="cd-results-'+i+'" style="display:none">\n'
+            + '      <div class="cd-results-status" id="cd-results-status-'+i+'"></div>\n'
+            + '      <canvas class="cd-results-chart" id="cd-results-chart-'+i+'"></canvas>\n'
+            + '    </div>\n'
+          : '    <div class="lead">'+sanitizeBody(sc.body)+'</div>\n')
       + buildExplainerBtn(sc)
       + buildQuestionBlock(sc, i)
-      + buildCodesignBlock(sc)
+      + buildCodesignBlock(sc, i)
       + '  </section>\n';
   });
   return out;
 }
 
-function buildCodesignBlock(sc) {
+function buildCodesignBlock(sc, i) {
   if(!P.codesignEnabled || !sc.layers || !sc.layers.codesign) return '';
   return '    <div class="map-instruction" style="margin-top:20px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Click a plot on the map to choose how it\'s used</div>\n'
     + '    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">\n'
     + '      <button type="button" class="map-explain-btn" onclick="submitCodesignChoices()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>Submit your picks</button>\n'
-    + '      <button type="button" class="map-explain-btn" onclick="openCodesignResults()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>See how people would use this space</button>\n'
+    + '      <button type="button" class="map-explain-btn" id="cd-toggle-btn-'+i+'" onclick="toggleCodesignResults('+i+')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>See how people would use this space</button>\n'
     + '    </div>\n';
 }
 
@@ -5427,7 +5421,7 @@ function buildJS() {
 '    return id;',
 '  }catch(e){ return "v-"+Date.now().toString(36); }',
 '}',
-'var _cdPopup=null, _cdChart=null, _cdChoices={};',
+'var _cdPopup=null, _cdCharts={}, _cdChoices={};',
 'function openCodesignPicker(p,lngLat){',
 '  if(_cdPopup) _cdPopup.remove();',
 '  var current=_cdChoices[p.id] ? _cdChoices[p.id].optId : null;',
@@ -5481,12 +5475,26 @@ function buildJS() {
 '  resetCodesignRound();',
 '  showToast("Thanks — your picks have been saved. Map\'s reset if someone else wants a go!");',
 '}',
-'async function openCodesignResults(){',
-'  var overlay=document.getElementById("cd-results-overlay");',
-'  if(!overlay) return;',
-'  overlay.classList.add("open");',
-'  var status=document.getElementById("cd-results-status");',
-'  var canvas=document.getElementById("cd-results-chart");',
+'function toggleCodesignResults(i){',
+'  var infoEl=document.getElementById("cd-info-"+i);',
+'  var resultsEl=document.getElementById("cd-results-"+i);',
+'  var btn=document.getElementById("cd-toggle-btn-"+i);',
+'  if(!infoEl||!resultsEl) return;',
+'  var showingResults=resultsEl.style.display!=="none";',
+'  if(showingResults){',
+'    resultsEl.style.display="none";',
+'    infoEl.style.display="";',
+'    if(btn) btn.textContent="See how people would use this space";',
+'  } else {',
+'    infoEl.style.display="none";',
+'    resultsEl.style.display="";',
+'    if(btn) btn.textContent="Back to about this space";',
+'    loadCodesignResultsInto(i);',
+'  }',
+'}',
+'async function loadCodesignResultsInto(i){',
+'  var status=document.getElementById("cd-results-status-"+i);',
+'  var canvas=document.getElementById("cd-results-chart-"+i);',
 '  if(status){ status.style.display=""; status.textContent="Loading…"; }',
 '  if(canvas) canvas.style.display="none";',
 '  if(!CODESIGN_SHEETDB_URL){ if(status) status.textContent="This site isn\'t connected to a response sheet yet."; return; }',
@@ -5495,20 +5503,24 @@ function buildJS() {
 '    if(!res.ok) throw new Error();',
 '    var rows=await res.json();',
 '    if(!Array.isArray(rows)) throw new Error();',
+'    var valid=rows.filter(function(r){ return r && r.zoneName && r.choice; });',
 '    var zoneNames=[], counts={};',
-'    rows.forEach(function(r){',
+'    valid.forEach(function(r){',
 '      if(zoneNames.indexOf(r.zoneName)===-1) zoneNames.push(r.zoneName);',
 '      counts[r.zoneName]=counts[r.zoneName]||{};',
 '      counts[r.zoneName][r.choice]=(counts[r.zoneName][r.choice]||0)+1;',
 '    });',
-'    if(!zoneNames.length){ if(status) status.textContent="No responses yet — be the first to submit!"; return; }',
+'    if(!zoneNames.length){',
+'      if(status) status.textContent = rows.length ? "Found "+rows.length+" response(s) but couldn\'t read them — check your sheet\'s column headers exactly match: zoneName, choice (case-sensitive, no extra spaces)." : "No responses yet — be the first to submit!";',
+'      return;',
+'    }',
 '    if(status) status.style.display="none";',
 '    if(canvas) canvas.style.display="";',
 '    var datasets=CODESIGN_OPTIONS.map(function(opt){',
 '      return { label:opt.label, backgroundColor:opt.color, data:zoneNames.map(function(zn){ return (counts[zn]&&counts[zn][opt.label])||0; }) };',
 '    });',
-'    if(_cdChart) _cdChart.destroy();',
-'    _cdChart=new Chart(canvas.getContext("2d"),{',
+'    if(_cdCharts[i]) _cdCharts[i].destroy();',
+'    _cdCharts[i]=new Chart(canvas.getContext("2d"),{',
 '      type:"bar",',
 '      data:{ labels:zoneNames, datasets:datasets },',
 '      options:{ responsive:true, plugins:{ legend:{position:"bottom"}, title:{display:true,text:"How the public would use each plot"} }, scales:{ y:{ beginAtZero:true, ticks:{precision:0}, title:{display:true,text:"Votes"} } } }',
@@ -5516,10 +5528,6 @@ function buildJS() {
 '  }catch(e){',
 '    if(status){ status.style.display=""; status.textContent="Couldn\'t load results right now — please try again later."; }',
 '  }',
-'}',
-'function closeCodesignResults(){',
-'  var overlay=document.getElementById("cd-results-overlay");',
-'  if(overlay) overlay.classList.remove("open");',
 '}',
 'async function submitSceneQuestion(btn){',
 '  var wrap=btn.closest(".scene-question-group");if(!wrap)return;',
@@ -5866,11 +5874,8 @@ function buildPopCSS() {
 + '.cd-opt-btn::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--cd-c,#888);flex-shrink:0}'
 + '.cd-opt-btn:hover{border-color:var(--cd-c,#888);background:rgba(0,0,0,.03)}'
 + '.cd-opt-btn.selected{border-color:var(--cd-c,#888);box-shadow:0 0 0 1px var(--cd-c,#888) inset}'
-+ '#cd-results-overlay{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .25s}'
-+ '#cd-results-overlay.open{opacity:1;pointer-events:all}'
-+ '#cd-results-box{position:relative;background:var(--paper);color:var(--ink);border-radius:10px;padding:28px;width:min(560px,calc(100vw - 48px));max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:0 16px 60px rgba(0,0,0,.35);transform:translateY(12px) scale(.98);transition:transform .28s}'
-+ '#cd-results-overlay.open #cd-results-box{transform:translateY(0) scale(1)}'
-+ '#cd-results-chart{width:100%!important;max-height:60vh}';
++ '.cd-results-status{font-size:15px;line-height:1.8;color:#3a3733}'
++ '.cd-results-chart{width:100%!important;max-height:50vh}';
 }
 
 function buildLbCSS() {
