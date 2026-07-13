@@ -5389,7 +5389,7 @@ function buildJS() {
 '    var p=e.features[0].properties,col=p.color||"#888";',
 '    var d=p.timestamp?new Date(p.timestamp).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"";',
 '    new mapboxgl.Popup({offset:16,closeButton:true}).setLngLat(e.features[0].geometry.coordinates)',
-'      .setHTML("<strong style=\\"color:"+col+"\\">"+p.category+"</strong><span>"+p.comment+"</span><span style=\\"font-size:10px;margin-top:4px;display:block\\">"+d+"</span>").addTo(map);',
+'      .setHTML("<strong style=\\"color:"+col+"\\">"+p.category+"</strong><span class=\\"fb-popup-comment\\">"+p.comment+"</span><span style=\\"font-size:10px;margin-top:6px;display:block\\">"+d+"</span>").addTo(map);',
 '  });',
 '  map.on("mouseenter","fb-c",function(){map.getCanvas().style.cursor="pointer";});',
 '  map.on("mouseleave","fb-c",function(){map.getCanvas().style.cursor="";});',
@@ -6018,10 +6018,11 @@ function buildCSS() {
 }
 
 function buildPopCSS() {
-  return '.mapboxgl-popup-content{font-family:"tt-commons-pro",sans-serif;font-size:13px;background:#0f0e0d;color:#f8f6f1;border-radius:6px;padding:14px 18px;box-shadow:0 6px 30px rgba(0,0,0,.4);border-top:2px solid #c0392b;max-width:240px}'
-+ '.mapboxgl-popup-content strong{display:block;font-size:14px;font-weight:700;margin-bottom:6px;color:#fff}'
+  return '.mapboxgl-popup-content{font-family:"tt-commons-pro",sans-serif;font-size:13px;background:#0f0e0d;color:#f8f6f1;border-radius:8px;padding:20px 24px 22px;box-shadow:0 6px 30px rgba(0,0,0,.4);border-top:2px solid #c0392b;max-width:260px}'
++ '.mapboxgl-popup-content strong{display:block;font-size:14px;font-weight:700;margin-bottom:8px;padding-right:14px;color:#fff}'
 + '.mapboxgl-popup-content span{font-size:12px;color:#9a9590;line-height:1.6;display:block}'
-+ '.mapboxgl-popup-close-button{color:#9a9590;font-size:16px;right:8px;top:8px}'
++ '.mapboxgl-popup-content span.fb-popup-comment{font-size:15px;color:#f8f6f1;line-height:1.6}'
++ '.mapboxgl-popup-close-button{color:#9a9590;font-size:16px;right:10px;top:10px}'
 + '.mapboxgl-popup-close-button:hover{color:#fff;background:none}'
 + '.mapboxgl-popup-anchor-top .mapboxgl-popup-tip{border-top-width:0!important;border-bottom-color:#0f0e0d!important}'
 + '.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip{border-bottom-width:0!important;border-top-color:#0f0e0d!important}'
