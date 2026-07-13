@@ -4370,7 +4370,8 @@ function buildInfoPanel() {
   var a11yStatement = h(P.accessibilityStatement||"We want everyone to be able to use this site, regardless of ability. It can be operated fully by keyboard, including reaching and interacting with map markers, zones and lightbox popups, and using Escape to close any open dialog. Screen reader users are supported through labelled buttons and dialogs, live status updates, descriptive text alternatives for map markers, and an accessible \"Map Contents\" list that lets you browse scenes, markers and zones in text form without needing to interact with the map itself. If you're not able to click the map to leave feedback, you can enter a location manually instead. We've also checked colour contrast across the site and provide a light/dark theme option. We're continuing to improve accessibility here — if you run into any difficulty using this site, please get in touch via the feedback form and we'll do what we can to help.");
   var hasClient  = clientLogo || clientAbout;
   return '<button id="info-toggle" onclick="toggleInfo()" title="About this tool" aria-label="About this tool" aria-expanded="false" aria-controls="info-panel">&#10033;</button>\n'
-    + '<div id="info-panel">\n'
+    + '<div id="info-panel" role="dialog" aria-modal="true" aria-label="About this tool">\n'
+    + '  <button type="button" class="lb-close-btn lb-close-dark" onclick="toggleInfo()" aria-label="Close" style="position:absolute;top:12px;right:12px">&#10005;</button>\n'
     + (hasClient
       ? '  <div class="ip-client-block">\n'
         + (clientLogo ? '    <div class="ip-client-logo">'+clientLogo+'</div>\n' : '')
@@ -5793,7 +5794,15 @@ function buildJS() {
 'if(drOv)drOv.addEventListener("click",closeDr);',
 'function closeDr(){if(drawer)drawer.classList.remove("open");if(burger){burger.classList.remove("open");burger.setAttribute("aria-expanded","false");burger.focus();}if(drOv)drOv.classList.remove("open");}',
 'var _io=false;',
-'function toggleInfo(){_io=!_io;document.getElementById("info-panel").classList.toggle("open",_io);var it=document.getElementById("info-toggle");it.classList.toggle("open",_io);it.setAttribute("aria-expanded",_io?"true":"false");}',
+'function toggleInfo(){',
+'  _io=!_io;',
+'  document.getElementById("info-panel").classList.toggle("open",_io);',
+'  var it=document.getElementById("info-toggle");',
+'  it.classList.toggle("open",_io);',
+'  it.setAttribute("aria-expanded",_io?"true":"false");',
+'  if(_io){ setTimeout(function(){ var c=document.querySelector("#info-panel .lb-close-btn"); if(c)c.focus(); },50); }',
+'  else { it.focus(); }',
+'}',
 'document.addEventListener("click",function(e){var p=document.getElementById("info-panel"),t=document.getElementById("info-toggle");if(_io&&p&&t&&!p.contains(e.target)&&!t.contains(e.target)){_io=false;p.classList.remove("open");t.classList.remove("open");}});',
 'function toggleMapMobile(){',
 '  mobVisible=!mobVisible;',
@@ -5831,8 +5840,8 @@ function buildJS() {
 '    else if(_io)toggleInfo();',
 '    return;',
 '  }',
-'  if(ffOpen||lbOpen||meOpen){',
-'    if(e.key==="Tab")trapFocus(e,ffOpen?document.getElementById("feedback-form"):meOpen?document.getElementById("map-explainer-box"):document.getElementById("lb-box"));',
+'  if(ffOpen||lbOpen||meOpen||_io){',
+'    if(e.key==="Tab")trapFocus(e,ffOpen?document.getElementById("feedback-form"):meOpen?document.getElementById("map-explainer-box"):_io?document.getElementById("info-panel"):document.getElementById("lb-box"));',
 '    return;',
 '  }',
 '  if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA") return;',
@@ -5982,7 +5991,7 @@ function buildCSS() {
 + '.sq-item:last-of-type{margin-bottom:0}'
 + '.sq-label{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:16px;line-height:1.5}'
 + '.sq-likert{display:flex;justify-content:space-between;gap:8px;margin-bottom:6px;text-align:center}'
-+ '.sq-likert-opt{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:11px;color:var(--ghost);cursor:pointer;line-height:1.3}'
++ '.sq-likert-opt{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:11px;color:#252525;cursor:pointer;line-height:1.3}'
 + '.sq-likert-opt input{accent-color:var(--accent);transform:scale(1.15);cursor:pointer}'
 + '.sq-radio{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}'
 + '.sq-radio-opt{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink);cursor:pointer}'
