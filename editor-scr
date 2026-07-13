@@ -85,6 +85,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
 .ib{width:22px;height:22px;border-radius:7px;background:var(--mid);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ghost);transition:all .18s}
 .ib:hover{background:var(--border2);color:var(--ink)}.ib.d:hover{background:#c0392b;color:#fff}
 .icon-preview{width:32px;height:32px;border-radius:50%;background:var(--ghost);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.cd-icon-popout{display:none;position:fixed;z-index:500;width:250px;max-height:320px;overflow-y:auto;background:var(--bg);border:1px solid var(--border2);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.35);padding:10px;scrollbar-width:thin}
+.cd-icon-popout.open{display:block}
 .id{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .grp-hdr{padding:8px 10px 8px 6px;border-radius:9px;display:flex;align-items:center;gap:6px;cursor:pointer;margin-bottom:4px;margin-top:10px;transition:background .15s}
 .grp-hdr:first-child{margin-top:0}
@@ -484,7 +486,8 @@ var LUCIDE_PATHS = {
   'plus': '<path d="M5 12h14"/><path d="M12 5v14"/>',
   'chevron-down': '<path d="m6 9 6 6 6-6"/>',
   'id-card': '<path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/>',
-  'briefcase': '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>'
+  'briefcase': '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+  'book-open': '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>'
 };
 
 function lucideSVG(name, size, color) {
@@ -572,6 +575,16 @@ function bindImageUpload(fieldId, maxDim, setter) {
 // Auto-rotated scene-tag dot colors, used unless a scene sets its own tagColor
 var SCENE_TAG_COLORS = ['#c0392b','#d4820a','#2a7c6b','#2255aa','#8b5cf6','#c0392b','#d4820a'];
 
+// Shared curated icon list — used by the marker icon picker and the co-design options icon picker
+var ICON_CATEGORIES = {
+  'Places':  ['map-pin','map','navigation','home','building','building-2','landmark','castle','warehouse','store','hotel','school','hospital','church','library','book-open','stadium','tent','tree-pine'],
+  'Transport':['train','bus','car','bike','plane','ship','truck','tram-front','cable-car','anchor','traffic-cone','route'],
+  'Nature':  ['tree','trees','leaf','flower','flower-2','mountain','mountain-snow','sun','cloud','cloud-rain','waves','wind','flame','snowflake','droplets'],
+  'Activity':['users','user','person-standing','baby','graduation-cap','hard-hat','stethoscope','shopping-bag','briefcase','utensils','coffee','football','dumbbell','palette','music','film','theater'],
+  'Infrastructure':['construction','wrench','hammer','zap','wifi','phone','mail','camera','cctv','factory','pipe','satellite'],
+  'Markers': ['flag','star','heart','bookmark','tag','info','alert-triangle','check-circle','x-circle','circle-dot','crosshair','target','plus-circle','minus-circle','ban']
+};
+
 // ═══════════════════════════════════════════════════
 //  DEFAULT PROJECT
 // ═══════════════════════════════════════════════════
@@ -599,12 +612,62 @@ var DEF = {
   zones:[{id:'z1',name:'Conservation Area',popup:'New buildings must preserve or enhance the character of the area.',color:'#d4820a',opacity:0.15,scenes:[],coordinates:[[-2.238,53.484],[-2.228,53.484],[-2.228,53.4855],[-2.238,53.4855],[-2.238,53.484]],groupId:null}],
   zoneGroups:[],
   lines:[],
-  lineGroups:[]
+  lineGroups:[],
+  codesignEnabled:false, codesignSheetdbUrl:'',
+  codesignOptions:[
+    {id:'lib',label:'Library',color:'#2255aa',icon:'book-open'},
+    {id:'caf',label:'Café',color:'#c0392b',icon:'coffee'},
+    {id:'work',label:'Workspace',color:'#d4820a',icon:'briefcase'},
+    {id:'gal',label:'Gallery',color:'#8b5cf6',icon:'palette'},
+    {id:'res',label:'Restaurant',color:'#2a7c6b',icon:'utensils'}
+  ]
 };
+
+// Backfills every field that might be missing on a project saved by an older version
+// of this tool. Called by every load path (boot autosave, "Open project file",
+// "Import JSON", shareable editor link) so a new field only needs adding here once,
+// instead of each load path drifting out of sync with its own partial migration.
+function migrateProject(data) {
+  if(!data) return data;
+  if(!data.lines) data.lines = [];
+  if(!data.buildings) data.buildings = [];
+  (data.markers||[]).forEach(function(m){ if(m.flyCamera===undefined) m.flyCamera=false; });
+  if(!data.overlays) data.overlays = [];
+  if(!data.zones) data.zones = [];
+  if(!data.markers) data.markers = [];
+  if(!data.markerGroups) data.markerGroups = [];
+  if(!data.zoneGroups) data.zoneGroups = [];
+  if(!data.lineGroups) data.lineGroups = [];
+  (data.markers||[]).forEach(function(m){ if(m.groupId===undefined) m.groupId=null; });
+  (data.zones||[]).forEach(function(z){ if(z.groupId===undefined) z.groupId=null; });
+  (data.lines||[]).forEach(function(ln){ if(ln.groupId===undefined) ln.groupId=null; });
+  if(data.codesignEnabled===undefined) data.codesignEnabled=false;
+  if(data.codesignSheetdbUrl===undefined) data.codesignSheetdbUrl='';
+  if(!data.codesignOptions) data.codesignOptions=JSON.parse(JSON.stringify(DEF.codesignOptions));
+  data.zones.forEach(function(z){ if(z.codesign===undefined) z.codesign=false; });
+  if(data.companyLogoUrl === undefined) data.companyLogoUrl = '';
+  if(data.clientName === undefined) data.clientName = '';
+  if(data.clientLogoUrl === undefined) data.clientLogoUrl = '';
+  if(data.clientAbout === undefined) data.clientAbout = '';
+  if(data.appLogoUrl === undefined) data.appLogoUrl = data.companyLogoUrl||'';
+  if(data.appAbout === undefined) data.appAbout = data.infoAbout||'';
+  if(data.appPrivacy === undefined) data.appPrivacy = data.infoPrivacy||'';
+  if(data.scenes) data.scenes.forEach(function(sc) {
+    if(!sc.layers) sc.layers = {};
+    if(sc.layers.orbit === undefined) sc.layers.orbit = false;
+    if(sc.layers.codesign === undefined) sc.layers.codesign = false;
+    if(sc.layers.buildings === undefined) sc.layers.buildings = true;
+    if(!sc.camera) sc.camera = {zoom:14,pitch:0,bearing:0,duration:2000};
+    if(!sc.questions) sc.questions = (sc.question && sc.question.type && sc.question.type!=='none') ? [sc.question] : [];
+    delete sc.question;
+  });
+  return data;
+}
 
 // ═══════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════
+var autoSaveKey = 'consultation_builder_project';
 var P = JSON.parse(JSON.stringify(DEF));
 // Load from localStorage if available (auto-save)
 try {
@@ -612,47 +675,18 @@ try {
   if(saved) { P = JSON.parse(saved); }
 } catch(e) {}
 // Migrate old projects - add any missing properties
-if(P) {
-  if(!P.lines) P.lines = [];
-  if(!P.buildings) P.buildings = [];
-  (P.markers||[]).forEach(function(m){if(m.flyCamera===undefined)m.flyCamera=false;});
-  if(!P.overlays) P.overlays = [];
-  if(!P.zones) P.zones = [];
-  if(!P.markers) P.markers = [];
-  if(!P.markerGroups) P.markerGroups = [];
-  if(!P.zoneGroups) P.zoneGroups = [];
-  if(!P.lineGroups) P.lineGroups = [];
-  (P.markers||[]).forEach(function(m){if(m.groupId===undefined)m.groupId=null;});
-  (P.zones||[]).forEach(function(z){if(z.groupId===undefined)z.groupId=null;});
-  (P.lines||[]).forEach(function(ln){if(ln.groupId===undefined)ln.groupId=null;});
-  if(P.companyLogoUrl === undefined) P.companyLogoUrl = '';
-  if(P.clientName === undefined) P.clientName = '';
-  if(P.clientLogoUrl === undefined) P.clientLogoUrl = '';
-  if(P.clientAbout === undefined) P.clientAbout = '';
-  if(P.appLogoUrl === undefined) P.appLogoUrl = P.companyLogoUrl||'';
-  if(P.appAbout === undefined) P.appAbout = P.infoAbout||'';
-  if(P.appPrivacy === undefined) P.appPrivacy = P.infoPrivacy||'';
-  if(P.scenes) P.scenes.forEach(function(sc) {
-    if(!sc.layers) sc.layers = {};
-    if(sc.layers.orbit === undefined) sc.layers.orbit = false;
-    if(sc.layers.buildings === undefined) sc.layers.buildings = true;
-    if(!sc.camera) sc.camera = {zoom:14,pitch:0,bearing:0,duration:2000};
-    if(!sc.questions) sc.questions = (sc.question && sc.question.type && sc.question.type!=='none') ? [sc.question] : [];
-    delete sc.question;
-  });
-}
+P = migrateProject(P);
 var AS = 0, AM = null, AZ = null, ALN = -1;
 var pMap = null, pReady = false, pCtxMarkers = [];
 var isDirty = false;       // unsaved changes
 var lastSaved = null;      // timestamp of last save
-var autoSaveKey = 'consultation_builder_project';
 var mainTab = 'editor';
 var APP_VERSION = '1.0.0';
 var APP_STAGE = 'Preview version';
 
 // Load from URL ?p= param
 var urlP = new URLSearchParams(location.search).get('p');
-if (urlP) { try { P = JSON.parse(atob(urlP)); } catch(e) {} }
+if (urlP) { try { P = migrateProject(JSON.parse(atob(urlP))); } catch(e) {} }
 
 // ═══════════════════════════════════════════════════
 //  HELPERS
@@ -1710,15 +1744,7 @@ function bindExportModal() {
       try {
         var data = JSON.parse(ev.target.result);
         if(!data.scenes || !Array.isArray(data.scenes)) { alert('Invalid project file.'); return; }
-        // Migrate missing layer properties
-        data.scenes.forEach(function(sc) {
-          if(!sc.layers) sc.layers = {};
-          if(sc.layers.orbit === undefined) sc.layers.orbit = false;
-          if(!sc.questions) sc.questions = (sc.question && sc.question.type && sc.question.type!=='none') ? [sc.question] : [];
-          delete sc.question;
-        });
-        if(!data.lines) data.lines = [];
-        P = data;
+        P = migrateProject(data);
         AS = 0; AM = -1; AZ = -1; AOV = -1;
         try { localStorage.setItem(autoSaveKey, JSON.stringify(P)); } catch(e) {}
         markDirty(); renderAll();
@@ -1757,7 +1783,7 @@ function bindExportModal() {
       try {
         var data = JSON.parse(ev.target.result);
         if(!data.scenes || !Array.isArray(data.scenes)) { alert('Invalid project JSON.'); return; }
-        P = data;
+        P = migrateProject(data);
         AS = 0; AM = -1; AZ = -1; AOV = -1;
         markDirty(); renderAll();
         if(pMap && pReady) { try{pMap.remove();}catch(e){} pMap=null; pReady=false; pCtxMarkers=[]; }
@@ -2048,6 +2074,7 @@ function renderMarkers() {
       '<div class="ia">'+
         (i>0?'<button class="ib" data-a="up" data-i="'+i+'" title="Move up">'+lucideSVG('arrow-up',12,'currentColor')+'</button>':'')+
         (i<P.markers.length-1?'<button class="ib" data-a="dn" data-i="'+i+'" title="Move down">'+lucideSVG('arrow-down',12,'currentColor')+'</button>':'')+
+        '<button class="ib" data-a="dup" data-i="'+i+'" title="Duplicate">'+lucideSVG('copy',12,'currentColor')+'</button>'+
         '<button class="ib d" data-a="del" data-i="'+i+'">'+lucideSVG('trash-2',12,'currentColor')+'</button>'+
       '</div>';
     div.addEventListener('click', function(e) {
@@ -2058,6 +2085,10 @@ function renderMarkers() {
         if(act==='del') { delMarker(ii); }
         else if(act==='up') { moveItemInScope('markers', ii, -1, refreshMK, selRef); }
         else if(act==='dn') { moveItemInScope('markers', ii, 1, refreshMK, selRef); }
+        else if(act==='dup'){
+          var c=JSON.parse(JSON.stringify(P.markers[ii])); c.id='mk'+Date.now(); c.name=(c.name||'Unnamed')+' (copy)';
+          P.markers.splice(ii+1,0,c); markDirty(); renderMarkers(); refreshMK();
+        }
         return;
       }
       selMarker(i);
@@ -2100,6 +2131,7 @@ function renderZones() {
       '<div class="ia">'+
         (i>0?'<button class="ib" data-a="up" data-i="'+i+'">'+lucideSVG('arrow-up',12,'currentColor')+'</button>':'')+
         (i<P.zones.length-1?'<button class="ib" data-a="dn" data-i="'+i+'">'+lucideSVG('arrow-down',12,'currentColor')+'</button>':'')+
+        '<button class="ib" data-a="dup" data-i="'+i+'" title="Duplicate">'+lucideSVG('copy',12,'currentColor')+'</button>'+
         '<button class="ib d" data-a="del" data-i="'+i+'">'+lucideSVG('trash-2',12,'currentColor')+'</button>'+
       '</div>';
     div.addEventListener('click', function(e) {
@@ -2110,6 +2142,10 @@ function renderZones() {
         if(btn.dataset.a==='del'){ delZone(ii); }
         else if(btn.dataset.a==='up'){ moveItemInScope('zones', ii, -1, afterMove, selRef); }
         else if(btn.dataset.a==='dn'){ moveItemInScope('zones', ii, 1, afterMove, selRef); }
+        else if(btn.dataset.a==='dup'){
+          var c=JSON.parse(JSON.stringify(P.zones[ii])); c.id='z'+Date.now(); c.name=(c.name||'Unnamed')+' (copy)';
+          P.zones.splice(ii+1,0,c); markDirty(); renderZones(); refreshZN();
+        }
         return;
       }
       selZone(i);
@@ -2128,7 +2164,7 @@ function renderZones() {
 function selZone(i) { AZ=i; AM=null; ensureEditorTab(); renderZones(); renderZoneEditor(i); }
 function addZone() {
   var c = P.siteCentre;
-  markDirty(); P.zones.push({id:'z'+Date.now(),name:'New Zone',popup:'Description.',color:'#2255aa',opacity:0.2,smoothRadius:0,render3d:false,height3d:20,clipMap:false,scenes:[],lightbox:{enabled:false,layout:'popover',heading:'',subheading:'',body:'',img:'',imgCaption:'',embedUrl:''},coordinates:[[c[0]-0.005,c[1]-0.004],[c[0]+0.005,c[1]-0.004],[c[0]+0.005,c[1]+0.004],[c[0]-0.005,c[1]+0.004],[c[0]-0.005,c[1]-0.004]],groupId:null});
+  markDirty(); P.zones.push({id:'z'+Date.now(),name:'New Zone',popup:'Description.',color:'#2255aa',opacity:0.2,smoothRadius:0,render3d:false,height3d:20,clipMap:false,scenes:[],codesign:false,lightbox:{enabled:false,layout:'popover',heading:'',subheading:'',body:'',img:'',imgCaption:'',embedUrl:''},coordinates:[[c[0]-0.005,c[1]-0.004],[c[0]+0.005,c[1]-0.004],[c[0]+0.005,c[1]+0.004],[c[0]-0.005,c[1]+0.004],[c[0]-0.005,c[1]-0.004]],groupId:null});
   AZ = P.zones.length-1;
   ensureEditorTab(); renderZones(); renderZoneEditor(AZ); refreshZN();
 }
@@ -2288,6 +2324,13 @@ function renderRightPanel() {
   html += lyr('sc-l-buildings3d','3D Buildings', sc.layers.buildings3d);
   html += lyr('sc-l-orbit','3D Buildings + Orbit', sc.layers.orbit||false);
   html += '</div></div>';
+  if(P.codesignEnabled) {
+    html += '<div class="rs"><div class="st">Co-Design</div>';
+    html += '<div class="lr"><span class="ll">Show Submit/Results controls in this scene\'s text panel</span>'
+      + '<button class="tg'+(sc.layers.codesign?' on':'')+'" id="sc-l-codesign"></button></div>';
+    html += '<div class="nt" style="margin-top:4px">Turn this on for whichever scene shows your voteable plots — it adds a "Submit your picks" and "See how people would use this space" prompt to this scene\'s prose, instead of floating over the map on every scene.</div>';
+    html += '</div>';
+  }
 
   setHTML('rpc', html);
 
@@ -2444,6 +2487,7 @@ function renderRightPanel() {
   bindTg('sc-l-custom-bld', function(v){ P.scenes[AS].layers.buildings=v; markDirty(); updatePreview(); });
   bindTg('sc-l-buildings3d', function(v) { P.scenes[AS].layers.buildings3d=v; updatePreview(); });
   bindTg('sc-l-orbit', function(v) { if(!P.scenes[AS].layers) P.scenes[AS].layers={}; P.scenes[AS].layers.orbit=v; updatePreview(); });
+  bindTg('sc-l-codesign', function(v) { if(!P.scenes[AS].layers) P.scenes[AS].layers={}; P.scenes[AS].layers.codesign=v; markDirty(); renderRightPanel(); });
 
 
   var pcb = el('btn-prev-cam');
@@ -2470,14 +2514,7 @@ function renderMarkerEditor(i) {
   html += '<div class="f"><label class="fl">Group</label><select id="mk-group">'+groupSelectOptions('markerGroups', m.groupId)+'</select></div>';
   html += fldTA('Description (popup)','mk-desc',h(m.desc));
   // Icon library — Lucide SVG icons via unpkg CDN
-  var ICONS = {
-    'Places':  ['map-pin','map','navigation','home','building','building-2','landmark','castle','warehouse','store','hotel','school','hospital','church','library','stadium','tent','tree-pine'],
-    'Transport':['train','bus','car','bike','plane','ship','truck','tram-front','cable-car','anchor','traffic-cone','route'],
-    'Nature':  ['tree','trees','leaf','flower','flower-2','mountain','mountain-snow','sun','cloud','cloud-rain','waves','wind','flame','snowflake','droplets'],
-    'Activity':['users','user','person-standing','baby','graduation-cap','hard-hat','stethoscope','shopping-bag','utensils','coffee','football','dumbbell','palette','music','film','theater'],
-    'Infrastructure':['construction','wrench','hammer','zap','wifi','phone','mail','camera','cctv','factory','pipe','satellite'],
-    'Markers': ['flag','star','heart','bookmark','tag','info','alert-triangle','check-circle','x-circle','circle-dot','crosshair','target','plus-circle','minus-circle','ban']
-  };
+  var ICONS = ICON_CATEGORIES;
   var curIcon = m.icon || '';
 
   // Icon preview box
@@ -2897,6 +2934,12 @@ function renderZoneEditor(i) {
     + '<button class="tg'+(z.showInDrawer!==false?' on':'')+'" id="zn-showdrawer-tog"></button></div>';
   html += '<div class="nt" style="margin-top:4px">Lists this zone in the keyboard/screen-reader "Map Contents" panel. Turn off for zones that don\'t need a text-based entry, e.g. a clip mask used only to hide existing buildings.</div>';
   html += '</div>';
+  if(P.codesignEnabled) {
+    html += '<div class="rs"><div class="lr"><span class="ll">Include in co-design voting</span>'
+      + '<button class="tg'+(z.codesign?' on':'')+'" id="zn-cd-tog"></button></div>';
+    html += '<div class="nt" style="margin-top:4px">Lets visitors click this plot and pick a use from your Co-Design options (Settings &gt; Co-Design). Takes priority over the lightbox below while a use hasn\'t been picked yet.</div>';
+    html += '</div>';
+  }
   // Lightbox section
   var zlb = z.lightbox || {};
   html += '<div class="rs"><div class="st">Lightbox <small style="font-size:9px;color:var(--ghost);font-family:var(--mono);font-weight:400">(optional)</small></div>';
@@ -2952,6 +2995,11 @@ function renderZoneEditor(i) {
   var showDrawerTog = el('zn-showdrawer-tog');
   if(showDrawerTog) showDrawerTog.addEventListener('click', function(){
     P.zones[i].showInDrawer = P.zones[i].showInDrawer===false ? true : false;
+    markDirty(); renderZoneEditor(i);
+  });
+  var cdTog = el('zn-cd-tog');
+  if(cdTog) cdTog.addEventListener('click', function(){
+    P.zones[i].codesign = !P.zones[i].codesign;
     markDirty(); renderZoneEditor(i);
   });
   var tog3d = el('zn-3d-tog');
@@ -3097,6 +3145,40 @@ function renderSettings() {
     + '<div id="sq-sdb-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
     + '</div>';
   html += '<div class="nt">Every visitor gets a random ID stored in their browser (localStorage), included with every question answer <i>and</i> every Have Your Say pin — so you can filter both sheets by <code>visitorId</code> to see everything one person submitted across the whole site.</div>';
+  html += '</div>';
+  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('users',14,'currentColor')+'Co-Design &amp; Participatory Budgeting</span></div>';
+  html += '<div class="nt" style="margin-bottom:12px">Let visitors click plots you\'ve marked as co-design zones and pick a use for them (library, café, workspace, etc). Plots recolour live as they experiment. Nothing is saved until they hit "Submit your picks" — that sends everything they\'ve chosen to your sheet in one go and resets the map, so the next person can have a go too.</div>';
+  html += '<div class="lr" style="margin-bottom:12px"><span class="ll">Enable co-design</span><button class="tg'+(P.codesignEnabled?' on':'')+'" id="cfg-cd-tog"></button></div>';
+  if(P.codesignEnabled) {
+    html += '<div class="nt" style="margin-bottom:12px"><b style="color:var(--ink)">Setup guide:</b><br>'
+      + '1. Create a Google Sheet with columns: <code>id | submissionId | visitorId | zoneId | zoneName | choice | timestamp</code><br>'
+      + '2. Go to <a href="https://sheetdb.io" target="_blank">sheetdb.io</a> &rarr; connect your sheet &rarr; copy the API URL<br>'
+      + '3. Paste the URL below and click Test</div>';
+    html += '<div class="f"><label class="fl">SheetDB API URL</label>'
+      + '<div style="display:flex;gap:6px">'
+      + '<input type="text" id="cfg-cd-sdb" value="'+h(P.codesignSheetdbUrl)+'" placeholder="https://sheetdb.io/api/v1/..."/>'
+      + '<button class="btn btn-g" id="btn-test-cd-sdb" style="white-space:nowrap;flex-shrink:0">Test</button>'
+      + '</div>'
+      + '<div id="cd-sdb-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
+      + '</div>';
+    html += '<div class="f"><label class="fl">Use options</label>';
+    html += '<div class="nt" style="margin-bottom:8px">Click the circle to pick an icon — shown as a badge on the plot once picked, in the picker, and in the results legend.</div>';
+    html += '<div id="cd-opts-list">';
+    (P.codesignOptions||[]).forEach(function(opt, oi){
+      html += '<div class="cr" style="margin-bottom:6px">'
+        + '<input type="color" class="cd-opt-color" value="'+h(opt.color)+'" data-oi="'+oi+'"/>'
+        + '<input type="text" class="cd-opt-label" value="'+h(opt.label)+'" data-oi="'+oi+'" style="flex:1" placeholder="Label"/>'
+        + '<button type="button" class="cd-opt-icon-btn" data-oi="'+oi+'" title="Choose icon" aria-label="Choose icon" style="width:30px;height:30px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--border2);background:'+h(opt.color)+';display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">'
+          + (opt.icon && isLucide(opt.icon) ? lucideSVG(opt.icon,15,'#fff') : '')
+          + '</button>'
+        + '<button class="ib cd-opt-del" data-oi="'+oi+'" aria-label="Remove option">'+lucideSVG('trash-2',12,'currentColor')+'</button>'
+        + '</div>';
+    });
+    html += '</div>';
+    html += '<button class="btn btn-g btn-ic" id="btn-cd-add-opt" style="width:100%;justify-content:center;margin-top:4px">'+lucideSVG('plus',13,'currentColor')+'Add option</button>';
+    html += '</div>';
+    html += '<div class="nt" style="margin-top:12px">Then: (1) on each plot you want voteable, open it under Constraint Zones and turn on "Include in co-design voting"; (2) on the scene where you want visitors to submit and see results, open it under Scenes and turn on "Co-Design" — that adds the Submit/Results prompts to that scene\'s text panel instead of floating over the map everywhere. Each submission writes one row per plot the visitor picked, all sharing the same <code>submissionId</code>, so you can group everything one person submitted in one go — and since the map resets after each submit, several people can use the same device in turn.</div>';
+  }
   html += '</div>';
   html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('play',14,'currentColor')+'Entrance Animations</span></div>';
   html += '<div class="lr"><span class="ll">Animate markers &amp; lines on entry</span>'
@@ -3312,6 +3394,43 @@ function renderSettings() {
   bindSdbTest('btn-test-sdb', 'cfg-sdb', 'sdb-status');
   bindSdbTest('btn-test-sq-sdb', 'cfg-sq-sdb', 'sq-sdb-status');
 
+  // Co-design / participatory budgeting
+  var cdTog = el('cfg-cd-tog');
+  if(cdTog) cdTog.addEventListener('click', function(){
+    P.codesignEnabled = !P.codesignEnabled;
+    markDirty(); renderSettings();
+  });
+  bindInput('cfg-cd-sdb', function(v){ P.codesignSheetdbUrl=v; });
+  bindSdbTest('btn-test-cd-sdb', 'cfg-cd-sdb', 'cd-sdb-status');
+  document.querySelectorAll('.cd-opt-color').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      P.codesignOptions[parseInt(this.dataset.oi)].color = this.value;
+      markDirty();
+    });
+  });
+  document.querySelectorAll('.cd-opt-label').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      P.codesignOptions[parseInt(this.dataset.oi)].label = this.value;
+      markDirty();
+    });
+  });
+  document.querySelectorAll('.cd-opt-icon-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      openCdIconPicker(parseInt(this.dataset.oi), this);
+    });
+  });
+  document.querySelectorAll('.cd-opt-del').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      P.codesignOptions.splice(parseInt(this.dataset.oi),1);
+      markDirty(); renderSettings();
+    });
+  });
+  var addOptBtn = el('btn-cd-add-opt');
+  if(addOptBtn) addOptBtn.addEventListener('click', function(){
+    P.codesignOptions.push({id:'co'+Date.now(),label:'New Use',color:'#888888',icon:''});
+    markDirty(); renderSettings();
+  });
+
   // Reset project
   var resetBtn = el('btn-reset-project');
   if(resetBtn) resetBtn.addEventListener('click', function() {
@@ -3321,6 +3440,63 @@ function renderSettings() {
       markDirty();
     }
   });
+}
+
+var _cdIconPopoutOi = null;
+function openCdIconPicker(oi, anchorEl) {
+  var pop = el('cd-icon-popout');
+  if(!pop) {
+    pop = document.createElement('div');
+    pop.id = 'cd-icon-popout';
+    pop.className = 'cd-icon-popout';
+    document.body.appendChild(pop);
+    document.addEventListener('click', function(e){
+      var p = el('cd-icon-popout');
+      if(!p || !p.classList.contains('open')) return;
+      if(e.target.closest('#cd-icon-popout') || e.target.closest('.cd-opt-icon-btn')) return;
+      closeCdIconPicker();
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape') closeCdIconPicker();
+    });
+  }
+  _cdIconPopoutOi = oi;
+  var cur = (P.codesignOptions[oi] && P.codesignOptions[oi].icon) || '';
+  var html = '<div class="f" style="margin-bottom:8px"><input type="text" id="cd-icon-popout-input" value="'+h(cur)+'" placeholder="type name or paste emoji" style="font-size:11px"/></div>';
+  Object.keys(ICON_CATEGORIES).forEach(function(cat){
+    html += '<div style="font-size:10px;color:var(--ghost);padding:4px 2px 3px;font-weight:500">'+cat+'</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px">';
+    ICON_CATEGORIES[cat].forEach(function(name){
+      var isSel = cur === name;
+      html += '<button type="button" class="icon-btn'+(isSel?' on':'')+'" data-ico="'+name+'" title="'+name+'" aria-label="'+name+'" style="width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:'+(isSel?'var(--accent)':'var(--mid)')+';border:1px solid '+(isSel?'var(--accent)':'var(--border2)')+';border-radius:6px;cursor:pointer;padding:0">'
+        + lucideSVG(name,14,isSel?'#fff':'var(--ghost)')
+        + '</button>';
+    });
+    html += '</div>';
+  });
+  pop.innerHTML = html;
+
+  var r = anchorEl.getBoundingClientRect();
+  pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 266)) + 'px';
+  pop.style.top = Math.min(r.bottom + 6, window.innerHeight - 340) + 'px';
+  pop.classList.add('open');
+
+  bindInput('cd-icon-popout-input', function(v){
+    P.codesignOptions[oi].icon = v.trim();
+    markDirty();
+  });
+  pop.querySelectorAll('.icon-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      P.codesignOptions[oi].icon = this.dataset.ico;
+      markDirty();
+      closeCdIconPicker();
+      renderSettings();
+    });
+  });
+}
+function closeCdIconPicker(){
+  var pop = el('cd-icon-popout');
+  if(pop) pop.classList.remove('open');
 }
 
 function renderSEO() {
@@ -4119,6 +4295,7 @@ function buildOutputHTML() {
     + (P.favicon ? '<link rel="icon" href="'+h(P.favicon)+'"/>\n' : '')
     + '<link href="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.css" rel="stylesheet"/>\n'
     + '<script src="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js"><' + '/script>\n'
+    + (P.codesignEnabled ? '<script src="https://cdn.jsdelivr.net/npm/chart.js"><' + '/script>\n' : '')
     + '<link rel="stylesheet" href="https://use.typekit.net/' + (P.typekitId||'dfg2dug') + '.css"/>\n'
     + '<style>\n' + css + '\n' + lbcss + '\n' + buildTextStyleCSS() + '\n</style>\n'
     + (function(){ var cc=''; if(P.accentColor&&P.accentColor!=='#c0392b')cc+='--accent:'+P.accentColor+';--red:'+P.accentColor+';'; if(P.paperColor&&P.paperColor!=='#f8f6f1')cc+='--paper:'+P.paperColor+';'; if(P.progressColor&&P.progressColor!=='#2a7c6b')cc+='--teal:'+P.progressColor+';'; if(P.fontFamily&&P.fontFamily!=='tt-commons-pro')cc+='--f-body:\"'+P.fontFamily+'\",system-ui,sans-serif;'; return cc?'<style>:root{'+cc+'}</style>\n':''; })()
@@ -4315,15 +4492,33 @@ function buildChapters() {
     var isHYS = (sc.label||'').toLowerCase().indexOf('say') >= 0 || (sc.label||'').toLowerCase().indexOf('your say') >= 0;
     if (isHYS) { out += buildHYS(i, col); return; }
     var tag = 'h1';
+    var isCD = P.codesignEnabled && sc.layers && sc.layers.codesign;
     out += '  <section class="chapter" data-scene="' + i + '">\n'
       + '    <div class="scene-tag"><div class="scene-tag-dot" style="background:'+col+'"></div><span>'+h(sc.label)+'</span></div>\n'
       + '    <'+tag+'>'+h(sc.title)+'</'+tag+'>\n'
-      + '    <div class="lead">'+sanitizeBody(sc.body)+'</div>\n'
+      + (isCD
+          ? '    <div class="lead" id="cd-info-'+i+'">'+sanitizeBody(sc.body)+'</div>\n'
+            + '    <div class="lead" id="cd-results-'+i+'" style="display:none">\n'
+            + '      <div class="cd-results-status" id="cd-results-status-'+i+'"></div>\n'
+            + '      <canvas class="cd-results-chart" id="cd-results-chart-'+i+'"></canvas>\n'
+            + '      <div class="cd-results-legend" id="cd-results-legend-'+i+'"></div>\n'
+            + '    </div>\n'
+          : '    <div class="lead">'+sanitizeBody(sc.body)+'</div>\n')
       + buildExplainerBtn(sc)
       + buildQuestionBlock(sc, i)
+      + buildCodesignBlock(sc, i)
       + '  </section>\n';
   });
   return out;
+}
+
+function buildCodesignBlock(sc, i) {
+  if(!P.codesignEnabled || !sc.layers || !sc.layers.codesign) return '';
+  return '    <div class="map-instruction" style="margin-top:20px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Click a plot on the map to choose how it\'s used</div>\n'
+    + '    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">\n'
+    + '      <button type="button" class="map-explain-btn" onclick="submitCodesignChoices()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>Submit your picks</button>\n'
+    + '      <button type="button" class="map-explain-btn" id="cd-toggle-btn-'+i+'" onclick="toggleCodesignResults('+i+')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>See how people would use this space</button>\n'
+    + '    </div>\n';
 }
 
 function buildHYS(i, col) {
@@ -4399,7 +4594,7 @@ function buildCfg() {
 
   var markers = {type:'FeatureCollection',features:P.markers.map(function(m){return{type:'Feature',geometry:{type:'Point',coordinates:m.coords},properties:{name:m.name,desc:m.desc,icon:m.icon||'',color:m.color,flyCamera:!!m.flyCamera,camZoom:m.camZoom||15,camPitch:m.camPitch||45,camBearing:m.camBearing||0,lightboxEnabled:!!(m.lightbox&&m.lightbox.enabled),lightboxLayout:(m.lightbox&&m.lightbox.layout)||'card',lightboxHeading:(m.lightbox&&m.lightbox.heading)||'',lightboxSubheading:(m.lightbox&&m.lightbox.subheading)||'',lightboxBody:(m.lightbox&&m.lightbox.body)||'',lightboxImg:(m.lightbox&&m.lightbox.img)||'',lightboxImgCaption:(m.lightbox&&m.lightbox.imgCaption)||'',lightboxImages:JSON.stringify((m.lightbox&&m.lightbox.images)||[]),lightboxEmbedUrl:(m.lightbox&&m.lightbox.embedUrl)||'',scenes:(m.scenes||[]).map(function(sid){var si=P.scenes.findIndex(function(s){return s.id===sid;});return si>=0?si:-1;}).filter(function(si){return si>=0;}).join(','),showInDrawer:m.showInDrawer!==false}};})};
 
-  var constraints = {type:'FeatureCollection',features:P.zones.map(function(z){var zco=z.smoothRadius>0.01?smoothPolygon(z.coordinates,z.smoothRadius):z.coordinates;var zlb=z.lightbox||{};return{type:'Feature',geometry:{type:'Polygon',coordinates:[zco]},properties:{id:z.id||z.name,name:z.name,color:z.color,opacity:z.opacity,scenes:(z.scenes||[]).map(function(sid){var si=P.scenes.findIndex(function(s){return s.id===sid;});return si>=0?si:-1;}).filter(function(si){return si>=0;}).join(','),showHover:z.showHover!==false,extrude:!!z.extrude,extrudeHeight:z.extrudeHeight||20,render3d:!!z.render3d,height3d:z.height3d||20,clipMap:!!z.clipMap,lightboxEnabled:!!zlb.enabled,lightboxLayout:zlb.layout||'popover',lightboxHeading:zlb.heading||'',lightboxSubheading:zlb.subheading||'',lightboxBody:zlb.body||'',lightboxImg:zlb.img||'',lightboxImgCaption:zlb.imgCaption||'',lightboxEmbedUrl:zlb.embedUrl||'',showInDrawer:z.showInDrawer!==false}};})};
+  var constraints = {type:'FeatureCollection',features:P.zones.map(function(z){var zco=z.smoothRadius>0.01?smoothPolygon(z.coordinates,z.smoothRadius):z.coordinates;var zlb=z.lightbox||{};return{type:'Feature',geometry:{type:'Polygon',coordinates:[zco]},properties:{id:z.id||z.name,name:z.name,color:z.color,opacity:z.opacity,scenes:(z.scenes||[]).map(function(sid){var si=P.scenes.findIndex(function(s){return s.id===sid;});return si>=0?si:-1;}).filter(function(si){return si>=0;}).join(','),showHover:z.showHover!==false,extrude:!!z.extrude,extrudeHeight:z.extrudeHeight||20,render3d:!!z.render3d,height3d:z.height3d||20,clipMap:!!z.clipMap,lightboxEnabled:!!zlb.enabled,lightboxLayout:zlb.layout||'popover',lightboxHeading:zlb.heading||'',lightboxSubheading:zlb.subheading||'',lightboxBody:zlb.body||'',lightboxImg:zlb.img||'',lightboxImgCaption:zlb.imgCaption||'',lightboxEmbedUrl:zlb.embedUrl||'',showInDrawer:z.showInDrawer!==false,codesign:!!z.codesign,baseColor:z.color}};})};
 
   var ciLines = P.zones.map(function(z){return '  '+JSON.stringify(z.id||z.name)+': { title:'+JSON.stringify(z.name)+', body:'+JSON.stringify(z.popup||'')+' }';}).join(',\n');
 
@@ -4423,6 +4618,9 @@ function buildCfg() {
     'var SITE_PIN_LABEL = ' + JSON.stringify(P.sitePinLabel||'The Site') + ';',
     'var SHEETDB_URL  = ' + JSON.stringify(P.sheetdbUrl||'') + ';',
     'var QUESTIONS_SHEETDB_URL = ' + JSON.stringify(P.questionsSheetdbUrl||'') + ';',
+    'var CODESIGN_ENABLED = ' + (!!P.codesignEnabled) + ';',
+    'var CODESIGN_SHEETDB_URL = ' + JSON.stringify(P.codesignSheetdbUrl||'') + ';',
+    'var CODESIGN_OPTIONS = ' + JSON.stringify((P.codesignOptions||[]).map(function(o){return {id:o.id,label:o.label,color:o.color,icon:o.icon||''};})) + ';',
     'var RED_LINE = { type:"Feature", geometry:{ type:"Polygon", coordinates:' + JSON.stringify([P.redLine.coordinates]) + ' }, properties:{} };',
     'var CONTEXT_MARKERS = ' + JSON.stringify(markers) + ';',
     'var CONSTRAINTS = ' + JSON.stringify(constraints) + ';',
@@ -4880,7 +5078,8 @@ function buildJS() {
 '    var ptitle=info?info.title:p.name, pbody=info?info.body:"";',
 '    if(!ptitle) return;',
 '    var html="<strong>"+ptitle+"</strong>"+(pbody?"<span>"+pbody+"</span>":"");',
-'    if(p.lightboxEnabled) html+="<div style=\\"font-size:10px;margin-top:4px;opacity:.7;font-style:italic\\">Click for more &#8594;</div>";',
+'    if(CODESIGN_ENABLED && p.codesign) html+="<div style=\\"font-size:10px;margin-top:4px;opacity:.7;font-style:italic\\">Click to choose a use here &#8594;</div>";',
+'    else if(p.lightboxEnabled) html+="<div style=\\"font-size:10px;margin-top:4px;opacity:.7;font-style:italic\\">Click for more &#8594;</div>";',
 '    _zonePopup.setLngLat(e.lngLat).setHTML(html).addTo(map);',
 '  });',
 '  map.on("mousemove","con-f",function(e){ _zonePopup.setLngLat(e.lngLat); });',
@@ -4893,6 +5092,7 @@ function buildJS() {
 '    if(!e.features.length) return;',
 '    e.preventDefault();',
 '    var p=e.features[0].properties;',
+'    if(CODESIGN_ENABLED && p.codesign){ _zonePopup.remove(); openCodesignPicker(p,e.lngLat); return; }',
 '    if(!p.lightboxEnabled) return;',
 '    _zonePopup.remove();',
 '    openLB({name:p.name,color:p.color||"#d4820a",coords:[e.lngLat.lng,e.lngLat.lat],lightboxLayout:p.lightboxLayout,lightboxHeading:p.lightboxHeading,lightboxSubheading:p.lightboxSubheading,lightboxBody:p.lightboxBody,lightboxImg:p.lightboxImg,lightboxImgCaption:p.lightboxImgCaption,lightboxEmbedUrl:p.lightboxEmbedUrl});',
@@ -5237,6 +5437,10 @@ function buildJS() {
 '    }',
 '  });',
 '  filterZones(idx);',
+'  Object.keys(_cdMarkers).forEach(function(zid){',
+'    var mkEl=_cdMarkers[zid].getElement();',
+'    mkEl.style.display=zoneVisibleOnScene(zid,idx)?"flex":"none";',
+'  });',
 '  // con-clip-ex controlled by filterZones source data',
 '  sv("con-3d",L.constraints);sv("con-ex",L.constraints);sv("con-f",L.constraints);sv("con-s",L.constraints);',
 '  // Always restore con-ex opacity to data-driven (in case hideStyleExtrusions zeroed it)',
@@ -5292,6 +5496,182 @@ function buildJS() {
 '    }',
 '    return id;',
 '  }catch(e){ return "v-"+Date.now().toString(36); }',
+'}',
+'var _cdPopup=null, _cdCharts={}, _cdChoices={}, _cdMarkers={};',
+'function mkCdBadgeEl(color,icon){',
+'  var dot=document.createElement("div");',
+'  dot.style.cssText="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(0,0,0,.35);flex-shrink:0";',
+'  dot.style.background=color||"#2255aa";',
+'  if(icon&&/^[a-z][a-z0-9-]+$/.test(icon)){',
+'    var img=document.createElement("img");',
+'    img.src="https://unpkg.com/lucide-static@latest/icons/"+icon+".svg";',
+'    img.alt="";',
+'    img.style.cssText="width:14px;height:14px;filter:invert(1);pointer-events:none";',
+'    dot.appendChild(img);',
+'  }',
+'  return dot;',
+'}',
+'function zoneTopLeft(zoneId){',
+'  var f=CONSTRAINTS.features.filter(function(x){return x.properties.id===zoneId;})[0];',
+'  if(!f) return null;',
+'  var ring=f.geometry.coordinates[0];',
+'  var n=ring.length>1?ring.length-1:ring.length, cLng=0, cLat=0;',
+'  for(var i=0;i<n;i++){ cLng+=ring[i][0]; cLat+=ring[i][1]; }',
+'  cLng/=n; cLat/=n;',
+'  var best=null;',
+'  if(map&&map.project){',
+'    var bestScore=Infinity;',
+'    ring.forEach(function(c){',
+'      var pt=map.project(c);',
+'      var score=pt.x+pt.y;',
+'      if(score<bestScore){ bestScore=score; best=c; }',
+'    });',
+'  }',
+'  if(!best){',
+'    var bestLat=-Infinity;',
+'    ring.forEach(function(c){ if(c[1]>bestLat){ bestLat=c[1]; best=c; } });',
+'  }',
+'  var inset=0.18;',
+'  return [ best[0]+(cLng-best[0])*inset, best[1]+(cLat-best[1])*inset ];',
+'}',
+'function zoneVisibleOnScene(zoneId,idx){',
+'  var fi=CONSTRAINTS.features.findIndex(function(x){return x.properties.id===zoneId;});',
+'  if(fi<0) return true;',
+'  var ids=(window._zoneScenes&&window._zoneScenes[fi])||[];',
+'  return ids.length===0 || ids.indexOf(idx)>=0;',
+'}',
+'function openCodesignPicker(p,lngLat){',
+'  if(_cdPopup) _cdPopup.remove();',
+'  var current=_cdChoices[p.id] ? _cdChoices[p.id].optId : null;',
+'  var wrap=document.createElement("div");',
+'  wrap.className="cd-popup-body";',
+'  var title=document.createElement("div");',
+'  title.className="cd-popup-title";',
+'  title.textContent="Choose a use for "+p.name;',
+'  wrap.appendChild(title);',
+'  var optsWrap=document.createElement("div");',
+'  optsWrap.className="cd-popup-opts";',
+'  CODESIGN_OPTIONS.forEach(function(opt){',
+'    var btn=document.createElement("button");',
+'    btn.type="button";',
+'    btn.className="cd-opt-btn"+(current===opt.id?" selected":"");',
+'    btn.style.setProperty("--cd-c",opt.color);',
+'    var badge=mkCdBadgeEl(opt.color,opt.icon);',
+'    badge.style.width="20px";badge.style.height="20px";badge.style.border="none";badge.style.boxShadow="none";',
+'    btn.appendChild(badge);',
+'    var txt=document.createElement("span");',
+'    txt.textContent=opt.label;',
+'    btn.appendChild(txt);',
+'    btn.addEventListener("click",function(){ chooseCodesignUse(p.id,p.name,opt.id); });',
+'    optsWrap.appendChild(btn);',
+'  });',
+'  wrap.appendChild(optsWrap);',
+'  _cdPopup=new mapboxgl.Popup({closeButton:true,closeOnClick:false,className:"cd-popup",maxWidth:"230px"}).setLngLat(lngLat).setDOMContent(wrap).addTo(map);',
+'}',
+'function chooseCodesignUse(zoneId,zoneName,optId){',
+'  var opt=CODESIGN_OPTIONS.filter(function(o){return o.id===optId;})[0];',
+'  if(!opt) return;',
+'  _cdChoices[zoneId]={optId:optId,label:opt.label};',
+'  CONSTRAINTS.features.forEach(function(f){ if(f.properties.id===zoneId) f.properties.color=opt.color; });',
+'  try{ filterZones(cS); }catch(e){}',
+'  if(_cdMarkers[zoneId]) _cdMarkers[zoneId].remove();',
+'  var pt=zoneTopLeft(zoneId);',
+'  if(pt&&map){ _cdMarkers[zoneId]=new mapboxgl.Marker({element:mkCdBadgeEl(opt.color,opt.icon),anchor:"center"}).setLngLat(pt).addTo(map); }',
+'  if(_cdPopup){ _cdPopup.remove(); _cdPopup=null; }',
+'  showToast("Picked "+opt.label+" for "+zoneName+" — submit your picks when you\'re ready");',
+'}',
+'function resetCodesignRound(){',
+'  _cdChoices={};',
+'  Object.keys(_cdMarkers).forEach(function(zid){ _cdMarkers[zid].remove(); });',
+'  _cdMarkers={};',
+'  CONSTRAINTS.features.forEach(function(f){ if(f.properties.baseColor) f.properties.color=f.properties.baseColor; });',
+'  try{ filterZones(cS); }catch(e){}',
+'  if(_cdPopup){ _cdPopup.remove(); _cdPopup=null; }',
+'}',
+'async function submitCodesignChoices(){',
+'  var zoneIds=Object.keys(_cdChoices);',
+'  if(!zoneIds.length){ showToast("Pick a use for at least one plot first"); return; }',
+'  var subId=Date.now().toString(), ts=new Date().toISOString(), vid=getVisitorId();',
+'  var rows=zoneIds.map(function(zid){',
+'    var c=_cdChoices[zid];',
+'    var f=CONSTRAINTS.features.filter(function(x){return x.properties.id===zid;})[0];',
+'    return {id:subId+"-"+zid,submissionId:subId,visitorId:vid,zoneId:zid,zoneName:f?f.properties.name:zid,choice:c.label,timestamp:ts};',
+'  });',
+'  if(CODESIGN_SHEETDB_URL){',
+'    try{ await fetch(CODESIGN_SHEETDB_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:rows})}); }catch(e){}',
+'  }',
+'  resetCodesignRound();',
+'  showToast("Thanks — your picks have been saved. Map\'s reset if someone else wants a go!");',
+'}',
+'function toggleCodesignResults(i){',
+'  var infoEl=document.getElementById("cd-info-"+i);',
+'  var resultsEl=document.getElementById("cd-results-"+i);',
+'  var btn=document.getElementById("cd-toggle-btn-"+i);',
+'  if(!infoEl||!resultsEl) return;',
+'  var showingResults=resultsEl.style.display!=="none";',
+'  if(showingResults){',
+'    resultsEl.style.display="none";',
+'    infoEl.style.display="";',
+'    if(btn) btn.textContent="See how people would use this space";',
+'  } else {',
+'    infoEl.style.display="none";',
+'    resultsEl.style.display="";',
+'    if(btn) btn.textContent="Back to about this space";',
+'    loadCodesignResultsInto(i);',
+'  }',
+'}',
+'async function loadCodesignResultsInto(i){',
+'  var status=document.getElementById("cd-results-status-"+i);',
+'  var canvas=document.getElementById("cd-results-chart-"+i);',
+'  if(status){ status.style.display=""; status.textContent="Loading…"; }',
+'  if(canvas) canvas.style.display="none";',
+'  var legendElReset=document.getElementById("cd-results-legend-"+i);',
+'  if(legendElReset) legendElReset.innerHTML="";',
+'  if(!CODESIGN_SHEETDB_URL){ if(status) status.textContent="This site isn\'t connected to a response sheet yet."; return; }',
+'  try{',
+'    var res=await fetch(CODESIGN_SHEETDB_URL);',
+'    if(!res.ok) throw new Error();',
+'    var rows=await res.json();',
+'    if(!Array.isArray(rows)) throw new Error();',
+'    var valid=rows.filter(function(r){ return r && r.zoneName && r.choice; });',
+'    var zoneNames=[], counts={};',
+'    valid.forEach(function(r){',
+'      if(zoneNames.indexOf(r.zoneName)===-1) zoneNames.push(r.zoneName);',
+'      counts[r.zoneName]=counts[r.zoneName]||{};',
+'      counts[r.zoneName][r.choice]=(counts[r.zoneName][r.choice]||0)+1;',
+'    });',
+'    if(!zoneNames.length){',
+'      if(status) status.textContent = rows.length ? "Found "+rows.length+" response(s) but couldn\'t read them — check your sheet\'s column headers exactly match: zoneName, choice (case-sensitive, no extra spaces)." : "No responses yet — be the first to submit!";',
+'      return;',
+'    }',
+'    if(status) status.style.display="none";',
+'    if(canvas) canvas.style.display="";',
+'    var datasets=CODESIGN_OPTIONS.map(function(opt){',
+'      return { label:opt.label, backgroundColor:opt.color, data:zoneNames.map(function(zn){ return (counts[zn]&&counts[zn][opt.label])||0; }) };',
+'    });',
+'    if(_cdCharts[i]) _cdCharts[i].destroy();',
+'    _cdCharts[i]=new Chart(canvas.getContext("2d"),{',
+'      type:"bar",',
+'      data:{ labels:zoneNames, datasets:datasets },',
+'      options:{ responsive:true, plugins:{ legend:{display:false}, title:{display:true,text:"How the public would use each plot"} }, scales:{ y:{ beginAtZero:true, ticks:{precision:0}, title:{display:true,text:"Votes"} } } }',
+'    });',
+'    var legendEl=document.getElementById("cd-results-legend-"+i);',
+'    if(legendEl){',
+'      legendEl.innerHTML="";',
+'      CODESIGN_OPTIONS.forEach(function(opt){',
+'        var item=document.createElement("div");',
+'        item.className="cd-legend-item";',
+'        var badge=mkCdBadgeEl(opt.color,opt.icon);',
+'        badge.style.width="18px";badge.style.height="18px";badge.style.border="none";badge.style.boxShadow="none";',
+'        var lbl=document.createElement("span");',
+'        lbl.textContent=opt.label;',
+'        item.appendChild(badge);item.appendChild(lbl);',
+'        legendEl.appendChild(item);',
+'      });',
+'    }',
+'  }catch(e){',
+'    if(status){ status.style.display=""; status.textContent="Couldn\'t load results right now — please try again later."; }',
+'  }',
 '}',
 'async function submitSceneQuestion(btn){',
 '  var wrap=btn.closest(".scene-question-group");if(!wrap)return;',
@@ -5627,7 +6007,20 @@ function buildPopCSS() {
 + '.mapboxgl-popup-content span{font-size:12px;color:#9a9590;line-height:1.6;display:block}'
 + '.mapboxgl-popup-close-button{color:#9a9590;font-size:16px;right:8px;top:8px}'
 + '.mapboxgl-popup-close-button:hover{color:#fff;background:none}'
-+ '.mapboxgl-popup-tip{border-top-color:#0f0e0d!important;border-bottom-color:#0f0e0d!important}';
++ '.mapboxgl-popup-tip{border-top-color:#0f0e0d!important;border-bottom-color:#0f0e0d!important}'
++ '.cd-popup .mapboxgl-popup-content{background:#f8f6f1;color:#0f0e0d;padding:16px 18px;border-radius:8px;max-width:230px;box-shadow:0 8px 30px rgba(0,0,0,.35);border-top:none}'
++ '.cd-popup .mapboxgl-popup-tip{border-top-color:#f8f6f1!important;border-bottom-color:#f8f6f1!important}'
++ '.cd-popup .mapboxgl-popup-close-button{color:#0f0e0d;opacity:.5;font-size:16px;right:8px;top:8px}'
++ '.cd-popup .mapboxgl-popup-close-button:hover{opacity:1;background:none}'
++ '.cd-popup-title{font-size:13px;font-weight:700;margin-bottom:10px;padding-right:14px;line-height:1.35}'
++ '.cd-popup-opts{display:flex;flex-direction:column;gap:6px}'
++ '.cd-opt-btn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:8px 10px;border-radius:6px;border:1.5px solid rgba(15,14,13,.14);background:#fff;font-size:12.5px;font-weight:600;color:#0f0e0d;cursor:pointer;transition:border-color .15s,background .15s;font-family:inherit}'
++ '.cd-opt-btn:hover{border-color:var(--cd-c,#888);background:rgba(0,0,0,.03)}'
++ '.cd-opt-btn.selected{border-color:var(--cd-c,#888);box-shadow:0 0 0 1px var(--cd-c,#888) inset}'
++ '.cd-results-status{font-size:15px;line-height:1.8;color:#3a3733}'
++ '.cd-results-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:14px}'
++ '.cd-legend-item{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:#3a3733}'
++ '.cd-results-chart{width:100%!important;max-height:50vh}';
 }
 
 function buildLbCSS() {
