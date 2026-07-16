@@ -595,6 +595,7 @@ var DEF = {
   companyInitials:'YC', companyLogoUrl:'',
   clientName:'', clientLogoUrl:'', clientAbout:'',
   appLogoUrl:'', appAbout:'', appPrivacy:'', accessibilityStatement:'',
+  cookieBannerEnabled:true, cookieMessage:'', cookieAcceptLabel:'', cookieDeclineLabel:'',
   seoTitle:'', seoDescription:'', seoImage:'', favicon:'',
   animateEntrances:true, animDuration:800, animEasing:'easeOut', animDelay:0, animEasingCurve:[0.42,0,0.58,1],
   lbAnimEnabled:true, lbAnimDuration:250, lbAnimEasing:'easeOut', lbAnimDelay:0, lbAnimEasingCurve:[0.42,0,0.58,1],
@@ -652,6 +653,10 @@ function migrateProject(data) {
   if(data.appLogoUrl === undefined) data.appLogoUrl = data.companyLogoUrl||'';
   if(data.appAbout === undefined) data.appAbout = data.infoAbout||'';
   if(data.appPrivacy === undefined) data.appPrivacy = data.infoPrivacy||'';
+  if(data.cookieBannerEnabled === undefined) data.cookieBannerEnabled = true;
+  if(data.cookieMessage === undefined) data.cookieMessage = '';
+  if(data.cookieAcceptLabel === undefined) data.cookieAcceptLabel = '';
+  if(data.cookieDeclineLabel === undefined) data.cookieDeclineLabel = '';
   if(data.scenes) data.scenes.forEach(function(sc) {
     if(!sc.layers) sc.layers = {};
     if(sc.layers.orbit === undefined) sc.layers.orbit = false;
@@ -3086,6 +3091,15 @@ function renderSettings() {
   html += '<div class="f"><label class="fl">Accessibility Statement</label><textarea id="cfg-app-a11y" style="min-height:50px">'+h(P.accessibilityStatement||'')+'</textarea></div>';
   html += '<div class="nt" style="margin-top:-8px">Leave blank to use a default statement covering this tool\'s built-in accessibility features (keyboard navigation, screen reader support, the Map Contents text list, etc). Edit or replace it with your own wording if you need to.</div>';
   html += '</div>';
+  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('check-circle',14,'currentColor')+'Cookie Notice</span></div>';
+  html += '<div class="nt" style="margin-bottom:12px">Shows a one-time banner on the exported site asking visitors to accept or decline non-essential cookies. If declined (or before a choice is made), the anonymous ID normally used to link a visitor\'s feedback, question answers and co-design picks together across visits won\'t be remembered — each visit starts fresh instead.</div>';
+  html += '<div class="lr" style="margin-bottom:12px"><span class="ll">Show cookie notice</span><button class="tg'+(P.cookieBannerEnabled!==false?' on':'')+'" id="cfg-cookie-tog"></button></div>';
+  if(P.cookieBannerEnabled!==false) {
+    html += '<div class="f"><label class="fl">Message</label><textarea id="cfg-cookie-msg" style="min-height:70px" placeholder="This site uses cookies to remember your preferences and link your feedback together. You can accept or decline below.">'+h(P.cookieMessage||'')+'</textarea></div>';
+    html += '<div class="f"><label class="fl">Accept button label</label><input type="text" id="cfg-cookie-accept" value="'+h(P.cookieAcceptLabel||'')+'" placeholder="Accept"/></div>';
+    html += '<div class="f"><label class="fl">Decline button label</label><input type="text" id="cfg-cookie-decline" value="'+h(P.cookieDeclineLabel||'')+'" placeholder="Decline"/></div>';
+  }
+  html += '</div>';
   html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('map',14,'currentColor')+'Map</span></div>';
   html += fld('Mapbox Token','cfg-tok',h(P.mapboxToken),'pk.eyJ1...');
   html += '<div class="f"><label class="fl">Map Style</label>'
@@ -3274,6 +3288,15 @@ function renderSettings() {
   bindTA('cfg-app-about',       function(v){ P.appAbout=v; });
   bindTA('cfg-app-privacy',     function(v){ P.appPrivacy=v; });
   bindTA('cfg-app-a11y',        function(v){ P.accessibilityStatement=v; });
+  var cookieTog = el('cfg-cookie-tog');
+  if(cookieTog) cookieTog.addEventListener('click', function(){
+    P.cookieBannerEnabled = P.cookieBannerEnabled===false ? true : false;
+    markDirty();
+    renderSettings();
+  });
+  bindTA('cfg-cookie-msg',      function(v){ P.cookieMessage=v; });
+  bindInput('cfg-cookie-accept',  function(v){ P.cookieAcceptLabel=v; });
+  bindInput('cfg-cookie-decline', function(v){ P.cookieDeclineLabel=v; });
   bindInput('cfg-tok', function(v){
     P.mapboxToken=v;
     if(pMap && pReady && v.startsWith('pk.')) {
@@ -4317,6 +4340,7 @@ function buildOutputHTML() {
     + buildFeedbackForm()
     + buildMapExplainerModal()
     + buildNavExplainerModal()
+    + buildCookieBanner()
     + '<div id="fb-toast" role="status" aria-live="polite"></div>\n'
     + '</div>\n'
     + '<style>\n' + pcss + '\n</style>\n'
@@ -4420,6 +4444,19 @@ function buildMapExplainerModal() {
     + '    <button type="button" class="lb-close-btn lb-close-dark" onclick="closeMapExplainer()" aria-label="Close">&#10005;</button>\n'
     + '    <div id="map-explainer-title" class="map-explainer-heading">What this map is showing</div>\n'
     + '    <div id="map-explainer-body" class="map-explainer-text"></div>\n'
+    + '  </div>\n'
+    + '</div>\n';
+}
+
+function buildCookieBanner() {
+  var msg = h(P.cookieMessage||'This site uses cookies to remember your preferences and, if you submit feedback, to link your responses together across the site. You can accept or decline below — declining just means we won\'t remember you between visits.');
+  var acceptLabel = h(P.cookieAcceptLabel||'Accept');
+  var declineLabel = h(P.cookieDeclineLabel||'Decline');
+  return '<div id="cookie-banner" role="dialog" aria-modal="false" aria-labelledby="cookie-banner-text">\n'
+    + '  <div id="cookie-banner-text">' + msg + '</div>\n'
+    + '  <div id="cookie-banner-actions">\n'
+    + '    <button type="button" id="cookie-decline-btn" onclick="declineCookies()">' + declineLabel + '</button>\n'
+    + '    <button type="button" id="cookie-accept-btn" onclick="acceptCookies()">' + acceptLabel + '</button>\n'
     + '  </div>\n'
     + '</div>\n';
 }
@@ -4639,6 +4676,7 @@ function buildCfg() {
     'var CODESIGN_ENABLED = ' + (!!P.codesignEnabled) + ';',
     'var CODESIGN_SHEETDB_URL = ' + JSON.stringify(P.codesignSheetdbUrl||'') + ';',
     'var CODESIGN_OPTIONS = ' + JSON.stringify((P.codesignOptions||[]).map(function(o){return {id:o.id,label:o.label,color:o.color,icon:o.icon||''};})) + ';',
+    'var COOKIE_BANNER_ENABLED = ' + (P.cookieBannerEnabled!==false) + ';',
     'var RED_LINE = { type:"Feature", geometry:{ type:"Polygon", coordinates:' + JSON.stringify([P.redLine.coordinates]) + ' }, properties:{} };',
     'var CONTEXT_MARKERS = ' + JSON.stringify(markers) + ';',
     'var CONSTRAINTS = ' + JSON.stringify(constraints) + ';',
@@ -5498,17 +5536,38 @@ function buildJS() {
 'function addFBPin(row){var f={type:"Feature",geometry:{type:"Point",coordinates:[parseFloat(row.lng),parseFloat(row.lat)]},properties:{category:row.category,comment:row.comment,timestamp:row.timestamp,color:CATEGORY_COLOURS[row.category]||"#888"}};fbGJ.features.push(f);if(map&&map.getSource("fb"))map.getSource("fb").setData(fbGJ);}',
 'function updCounter(){var e=document.getElementById("pin-counter");if(e)e.textContent=fbGJ.features.length;}',
 'function showToast(msg){var t=document.getElementById("fb-toast");t.textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},3000);}',
+'function cookieConsentState(){',
+'  if(!COOKIE_BANNER_ENABLED) return "accepted";',
+'  try{ return localStorage.getItem("allto_cookie_consent")||""; }catch(e){ return ""; }',
+'}',
+'function randomVisitorId(){',
+'  try{var a=new Uint32Array(2);crypto.getRandomValues(a);return "v-"+a[0].toString(36)+"-"+a[1].toString(36)+"-"+Date.now().toString(36);}',
+'  catch(e){return "v-"+Math.random().toString(36).slice(2)+"-"+Date.now().toString(36);}',
+'}',
+'var _sessionVisitorId=null;',
 'function getVisitorId(){',
 '  var key="allto_visitor_id";',
+'  if(cookieConsentState()!=="accepted"){',
+'    if(!_sessionVisitorId)_sessionVisitorId=randomVisitorId();',
+'    return _sessionVisitorId;',
+'  }',
 '  try{',
 '    var id=localStorage.getItem(key);',
-'    if(!id){',
-'      try{var a=new Uint32Array(2);crypto.getRandomValues(a);id="v-"+a[0].toString(36)+"-"+a[1].toString(36)+"-"+Date.now().toString(36);}',
-'      catch(e){id="v-"+Math.random().toString(36).slice(2)+"-"+Date.now().toString(36);}',
-'      localStorage.setItem(key,id);',
-'    }',
+'    if(!id){ id=randomVisitorId(); localStorage.setItem(key,id); }',
 '    return id;',
 '  }catch(e){ return "v-"+Date.now().toString(36); }',
+'}',
+'function hideCookieBanner(){',
+'  var b=document.getElementById("cookie-banner");',
+'  if(b)b.classList.remove("show");',
+'}',
+'function acceptCookies(){',
+'  try{localStorage.setItem("allto_cookie_consent","accepted");}catch(e){}',
+'  hideCookieBanner();',
+'}',
+'function declineCookies(){',
+'  try{localStorage.setItem("allto_cookie_consent","declined");localStorage.removeItem("allto_visitor_id");}catch(e){}',
+'  hideCookieBanner();',
 '}',
 'var _cdPopup=null, _cdCharts={}, _cdChoices={}, _cdMarkers={};',
 'function mkCdBadgeEl(color,icon){',
@@ -5926,6 +5985,16 @@ function buildJS() {
 '      }catch(e){}',
 '    },6500);',
 '  }',
+'});',
+'window.addEventListener("load",function(){',
+'  if(!COOKIE_BANNER_ENABLED)return;',
+'  try{',
+'    if(localStorage.getItem("allto_cookie_consent"))return;',
+'  }catch(e){}',
+'  setTimeout(function(){',
+'    var b=document.getElementById("cookie-banner");',
+'    if(b)b.classList.add("show");',
+'  },1200);',
 '});'
   ];
   return lines.join('\n');
@@ -6109,6 +6178,15 @@ function buildCSS() {
 + '.zone-hover-popup.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip{border-bottom-width:0!important;border-top-color:#0f0e0d!important}'
 + '#fb-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#0f0e0d;color:#f8f6f1;padding:10px 20px;border-radius:100px;font-size:12px;white-space:nowrap;border:1px solid rgba(255,255,255,.12);box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;pointer-events:none;z-index:400;transition:opacity .25s,transform .25s}'
 + '#fb-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}'
++ '#cookie-banner{position:fixed;left:0;right:0;bottom:0;z-index:250;background:#0f0e0d;padding:16px 20px;padding-bottom:calc(16px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:16px;flex-wrap:wrap;transform:translateY(120%);transition:transform .35s ease;box-shadow:0 -4px 20px rgba(0,0,0,.25)}'
++ '#cookie-banner.show{transform:translateY(0)}'
++ '#cookie-banner-text{flex:1;min-width:200px;font-size:12.5px;line-height:1.6;color:#e8e4dd}'
++ '#cookie-banner-actions{display:flex;gap:10px;flex-shrink:0}'
++ '#cookie-decline-btn{background:none;border:1px solid rgba(255,255,255,.25);color:#f8f6f1;padding:9px 16px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;font-family:var(--f-body)}'
++ '#cookie-decline-btn:hover{background:rgba(255,255,255,.08)}'
++ '#cookie-accept-btn{background:var(--accent);border:none;color:#fff;padding:9px 18px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;font-family:var(--f-body)}'
++ '#cookie-accept-btn:hover{opacity:.9}'
++ '@media(max-width:768px){#cookie-banner{flex-direction:column;align-items:stretch}#cookie-banner-actions{width:100%}#cookie-decline-btn,#cookie-accept-btn{flex:1}}'
 + '@media(max-width:768px){#shell{flex-direction:row}#prose{width:calc(100vw - var(--nav-w));min-width:0;height:100vh;height:100dvh;scroll-snap-type:none}.chapter{min-height:100vh;min-height:100dvh;padding:80px 24px 100px 24px;scroll-snap-align:none;justify-content:flex-start}#map-panel{position:fixed;top:0;left:0;right:0;bottom:0;height:100vh;height:100dvh;z-index:150;transform:translateY(100%);transition:transform .4s;width:100vw}#map-panel.map-visible{transform:translateY(0)}#map-toggle-wrap{position:fixed;bottom:24px;bottom:calc(24px + env(safe-area-inset-bottom));left:calc(var(--nav-w) + 12px);z-index:60;display:inline-flex}#map-toggle-btn{display:flex;align-items:center;gap:8px;background:var(--accent);color:#f8f6f1;border:1px solid rgba(255,255,255,.2);padding:11px 18px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.35);white-space:nowrap}#map-toggle-btn.map-open{background:#0f0e0d}#map-toggle-btn svg{width:13px;height:13px;flex-shrink:0}#map-toggle-badge{position:absolute;top:-3px;right:-3px;width:13px;height:13px;border-radius:50%;background:#ff3b30;border:2px solid var(--paper);display:none;pointer-events:none}#map-toggle-badge.show{display:block;animation:badgePulse 1.6s ease-in-out infinite}#map-close-btn{display:flex;position:fixed;top:16px;top:calc(16px + env(safe-area-inset-top));right:16px;z-index:161;width:40px;height:40px;border-radius:50%;background:rgba(15,14,13,.88);border:1px solid rgba(255,255,255,.15);color:#f8f6f1;font-size:16px;cursor:pointer;align-items:center;justify-content:center}#progress-bar{left:var(--nav-w);width:calc(100% - var(--nav-w))}#info-panel{right:12px;bottom:148px;width:calc(100vw - var(--nav-w) - 24px);max-width:320px;max-height:calc(100vh - 200px);max-height:calc(100dvh - 200px)}#info-toggle{bottom:24px;bottom:calc(24px + env(safe-area-inset-bottom));right:12px}#map-label{top:16px;left:14px;font-size:10px;padding:8px 12px;height:auto}#map-controls{bottom:52px;bottom:calc(52px + env(safe-area-inset-bottom));right:12px}.mapboxgl-ctrl-top-right{display:none!important}.nav-brand{display:none}}'
 + '@keyframes badgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}'
 + '@media(min-width:769px){#map-toggle-wrap{display:none!important}#map-close-btn{display:none!important}}';
