@@ -5997,7 +5997,7 @@ function buildCSS() {
 + '@keyframes spin{to{transform:rotate(360deg)}}'
 + '#allto-export-splash{position:fixed;inset:0;z-index:9999;background:#252524;display:flex;align-items:center;justify-content:center;transition:opacity .6s ease}'
 + '#allto-export-splash.hide{opacity:0;pointer-events:none}'
-+ '#splash-gif{width:min(420px,70vw);height:auto;display:block}'
++ '#splash-gif{width:min(2100px,92vw,151vh);height:auto;display:block}'
 + '.mk-drop{animation:mkDropIn '+animDur+'ms '+animEasingCSS+' '+animDelay+'ms both}'
 + '@keyframes mkDropIn{0%{opacity:0;margin-top:-28px}60%{opacity:1;margin-top:4px}100%{margin-top:0}}'
 + '#token-notice{position:absolute;inset:0;z-index:30;background:var(--mid);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:48px;text-align:center}'
