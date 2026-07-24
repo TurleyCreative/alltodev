@@ -95,7 +95,7 @@ header{max-width:820px;margin:0 auto;padding:44px 24px 12px}
         <input type="date" id="entry-followup"/>
       </div>
       <div class="sh-form-row" style="grid-template-columns:1fr">
-        <input type="text" id="entry-loggedby" placeholder="Logged by" required/>
+        <input type="email" id="entry-loggedby" placeholder="Logged by (email)" required/>
       </div>
       <div class="sh-rte-toolbar">
         <button type="button" class="sh-rte-btn" data-cmd="bold"><b>B</b></button>
@@ -120,7 +120,10 @@ header{max-width:820px;margin:0 auto;padding:44px 24px 12px}
 var ENGAGEMENTLOG_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/07/workflows/25d74467bf0146499edf231cbf72f8aa/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=f57Z8mWPQJdyfTU3y7kRNiLlJBvKirrBJ9DCt_6QdXI";
 
 // Set once the EngagementLog write flow is built: accepts a POST with
-// {stakeholderId, enType, date, followUp, loggedBy, notes(html)}.
+// {stakeholderId, enType, date, followUp, loggedBy(email), notes(html)}.
+// loggedBy must be an email address — the flow builds the SharePoint
+// Claims value from it (i:0#.f|membership|<email>) to populate the
+// Person field, so a plain display name won't resolve to an account.
 var ENGAGEMENTLOG_WRITE_URL = "";
 
 function qparam(name){
