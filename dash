@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>A new neighbourhood for Manchester · Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;background:#fff;color:#20242b;min-height:100vh;-webkit-font-smoothing:antialiased}#dash-gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}#dash-gate-form{background:#fff;border-radius:20px;padding:40px 34px;width:100%;max-width:360px;box-shadow:0 12px 40px rgba(28,40,64,.08);text-align:center}#dash-gate-form h1{font-size:20px;font-weight:500;margin-bottom:8px}#dash-gate-form p{font-size:13px;font-weight:400;color:#767c88;margin-bottom:20px}#dash-pw-input,#dash-email-input{width:100%;padding:12px 14px;border:1px solid #e3e6ea;border-radius:10px;font-family:inherit;font-size:14px;margin-bottom:12px;background:#f8f9fb}#dash-gate-form button{width:100%;padding:12px;border:none;border-radius:10px;background:#20242b;color:#fff;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer}#dash-gate-error{color:#c0392b;font-size:12px;margin-top:10px;min-height:14px}header{max-width:1080px;margin:0 auto;padding:44px 24px 12px}.dash-title{font-size:26px;font-weight:500;letter-spacing:-.01em}.dash-sub{font-size:12px;font-weight:500;color:#8b909b;margin-top:6px;text-transform:uppercase;letter-spacing:.08em}.dash-header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}.dash-export-btn{padding:11px 20px;border:1px solid #dcdfe3;border-radius:100px;background:#fff;color:#20242b;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer}.dash-export-btn:hover{background:#f2f3f5}.dash-print-only{display:none}.dash-grid{max-width:1080px;margin:0 auto;padding:16px 24px 56px;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:min-content;gap:18px}.dash-card{position:relative;background:#f2f3f5;border-radius:24px;padding:30px 32px;grid-column:span 1;display:flex;flex-direction:column}.dash-tile-sentiment{grid-column:1;grid-row:1 / span 2}.dash-tile-visitors{grid-column:2;grid-row:1}.dash-tile-feedback{grid-column:3;grid-row:1}.dash-tile-codesign{grid-column:2;grid-row:2}.dash-tile-questions{grid-column:3;grid-row:2}.dash-card-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8b909b;font-weight:600;margin-bottom:16px}.dash-card-big{font-size:60px;font-weight:300;line-height:1;letter-spacing:-.02em}.dash-sentiment-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.dash-card-sub{font-size:13px;font-weight:400;color:#8b909b;margin-top:12px}.dash-range-group{display:flex;gap:3px;margin:-6px 0 14px;background:#e7e9ec;border-radius:100px;padding:3px;width:max-content;max-width:100%}.dash-range-btn{border:none;background:transparent;font-family:inherit;font-size:10.5px;font-weight:600;color:#6b7078;padding:5px 10px;border-radius:100px;cursor:pointer;white-space:nowrap}.dash-range-btn.on{background:#fff;color:#20242b;box-shadow:0 1px 3px rgba(28,40,64,.12)}.dash-range-custom{display:flex;align-items:center;gap:6px;margin-bottom:14px}.dash-range-custom input[type=date]{font-family:inherit;font-size:11px;border:1px solid #dcdfe3;border-radius:8px;padding:5px 6px;background:#fff;color:#20242b;flex:1;min-width:0}.dash-range-custom span{font-size:11px;color:#8b909b;flex-shrink:0}.dash-range-apply{border:none;background:#20242b;color:#fff;font-family:inherit;font-size:10.5px;font-weight:600;padding:6px 10px;border-radius:8px;cursor:pointer;flex-shrink:0}#dash-ga-spark{width:100%;height:52px;margin-top:auto}#dash-ga-spark polyline{stroke:#3a8f6f}.dash-tile-visitors{min-height:200px}.dash-stack{display:flex;flex-direction:column;gap:18px}.dash-card-short{flex:1;padding:22px 26px;min-height:0}.dash-card-short .dash-card-label{margin-bottom:10px}#dash-sq-pill,#dash-fb-unique-sub{margin-top:auto}.dash-pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:100px;background:rgba(58,143,111,.12);color:#2f6f52;margin-top:12px}.dash-sentiment{display:flex;gap:16px;margin-top:auto;padding-top:20px}.dash-sentiment-item{flex:1;text-align:center}.dash-sentiment-num{font-size:26px;font-weight:500}.dash-sentiment-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8b909b;margin-top:4px;font-weight:500}.dash-sentiment-pos .dash-sentiment-num{color:#3a8f6f}.dash-sentiment-neg .dash-sentiment-num{color:#5b616b}.dash-sentiment-neu .dash-sentiment-num{color:#a7abb3}.dash-sentiment-tag{font-size:13px;font-weight:500;padding:6px 14px;border-radius:100px;background:#fff}.dash-radial{display:block;width:100%;max-width:230px;margin:8px auto 0;flex:1;min-height:0}.dash-radial-legend{display:flex;flex-wrap:wrap;gap:14px 22px;margin-top:8px;justify-content:center}.dash-radial-legend-item{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:#3a3f47}.dash-radial-legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}.dash-radial-legend-count{color:#8b909b;font-weight:400}.tone-positive .dash-sentiment-tag{color:#2f6f52}.tone-mixed .dash-sentiment-tag{color:#6b7280}.tone-attention .dash-sentiment-tag{color:#5b616b}.dash-cta{display:none;margin-top:16px;text-align:center;padding:12px;border-radius:100px;background:#3a8f6f;color:#fff;font-size:13px;font-weight:500;text-decoration:none}.dash-info-btn{position:absolute;top:22px;right:22px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(18,40,64,.08);color:#5b616b;font-size:11px;font-weight:700;font-style:italic;font-family:Georgia,"Times New Roman",serif;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0}.dash-tooltip{position:fixed;max-width:240px;background:#20242b;color:#fff;font-size:12px;font-weight:400;line-height:1.5;padding:12px 15px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:80;display:none}.dash-tooltip.show{display:block}.dash-cd-list{margin-top:16px;display:flex;flex-direction:column;gap:10px}.dash-cd-row{display:grid;grid-template-columns:88px 1fr 34px;align-items:center;gap:10px}.dash-cd-row-label{font-size:12px;font-weight:500;color:#3a3f47;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dash-cd-row-track{height:8px;border-radius:100px;background:#dcdfe3;overflow:hidden}.dash-cd-row-fill{height:100%;border-radius:100px}.dash-cd-row-count{font-size:12px;font-weight:600;color:#5b616b;text-align:right}.dash-footer{max-width:1080px;margin:0 auto;padding:20px 24px 40px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid #e3e6ea}.dash-footer-text{font-size:11px;line-height:1.5;color:#9aa0aa;max-width:640px}.dash-footer-logo{height:16px;width:auto;flex-shrink:0;opacity:.7}@media(max-width:560px){.dash-footer{flex-direction:column;align-items:flex-start}}@media(max-width:820px){.dash-grid{grid-template-columns:repeat(2,1fr)}.dash-tile-sentiment{grid-column:1;grid-row:1/span 2}.dash-tile-visitors{grid-column:2;grid-row:1}.dash-tile-feedback{grid-column:2;grid-row:2}.dash-tile-codesign{grid-column:1;grid-row:3}.dash-tile-questions{grid-column:2;grid-row:3}}@media(max-width:560px){.dash-grid{grid-template-columns:1fr}.dash-tile-sentiment,.dash-tile-visitors,.dash-tile-feedback,.dash-tile-codesign,.dash-tile-questions{grid-column:1;grid-row:auto}}@media print{  body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}  .dash-export-btn,.dash-info-btn,.dash-tooltip,.dash-cta,.dash-range-group,.dash-range-custom{display:none!important}  .dash-print-only{display:block;max-width:1080px;margin:0 auto;padding:0 24px;font-size:11px;color:#8b909b;text-transform:uppercase;letter-spacing:.08em}  .dash-card{box-shadow:none;border:1px solid #e3e6ea;break-inside:avoid}  .dash-grid{gap:14px}  .dash-footer{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div id="dash-gate">
+  <form id="dash-gate-form">
+    <h1>A new neighbourhood for Manchester</h1>
+    <p>Enter your email and the password to view this dashboard.</p>
+    <input type="email" id="dash-email-input" autocomplete="off" placeholder="Email address"/>
+    <input type="password" id="dash-pw-input" autocomplete="off" placeholder="Password"/>
+    <button type="submit">View Dashboard</button>
+    <div id="dash-gate-error"></div>
+  </form>
+</div>
+<div id="dash-content" style="display:none">
+  <header><div class="dash-header-row"><div><div class="dash-title">A new neighbourhood for Manchester</div><div class="dash-sub">Atester · Engagement Overview</div></div><button class="dash-export-btn" id="dash-export-btn">Export Report</button></div></header>
+  <div class="dash-print-only" id="dash-print-date"></div>
+  <div class="dash-grid">
+    <div class="dash-card dash-tile-sentiment" id="dash-sentiment-card"><button class="dash-info-btn" data-info="Share of Have Your Say feedback pins marked as positive, based on category (Support = positive, Object = negative, Question/General = neutral). Bubble size shows each category\u2019s share of responses.">i</button><div class="dash-card-label">Overall Sentiment</div><div class="dash-sentiment-row"><div class="dash-card-big" id="dash-sentiment-score">—</div><div class="dash-sentiment-tag" id="dash-sentiment-tag"></div></div><svg class="dash-radial" viewBox="0 0 200 200" id="dash-radial-svg"></svg><div class="dash-radial-legend" id="dash-radial-legend"></div><div class="dash-card-sub" id="dash-sentiment-msg">From <span id="dash-sentiment-total">0</span> Have Your Say responses</div><a class="dash-cta" id="dash-sentiment-cta" style="display:none" target="_blank" rel="noopener">Book a catch up</a></div>
+    <div class="dash-card dash-tile-visitors"><button class="dash-info-btn" data-info="Total unique visits over the selected period. Placeholder data for now — connect a Google Analytics relay to make this live.">i</button><div class="dash-card-label">Site Visitors</div><div class="dash-range-group" id="dash-ga-range"><button class="dash-range-btn on" type="button" data-range="months">Months</button><button class="dash-range-btn" type="button" data-range="days">Days</button><button class="dash-range-btn" type="button" data-range="custom">Custom</button></div><div class="dash-range-custom" id="dash-ga-custom" style="display:none"><input type="date" id="dash-ga-from"/><span>–</span><input type="date" id="dash-ga-to"/><button class="dash-range-apply" type="button" id="dash-ga-apply">Apply</button></div><div class="dash-card-big" id="dash-ga-total">—</div><div id="dash-ga-pill"></div><svg id="dash-ga-spark" viewBox="0 0 200 50" preserveAspectRatio="none"></svg></div>
+    <div class="dash-card dash-tile-feedback"><button class="dash-info-btn" data-info="Total pins dropped on the Have Your Say map, split by sentiment category.">i</button><div class="dash-card-label">Feedback Responses</div><div class="dash-card-big" id="dash-fb-total">—</div><div id="dash-fb-pill"></div><div class="dash-sentiment" id="dash-fb-sentiment"></div></div>
+    <div class="dash-card dash-tile-codesign"><button class="dash-info-btn" data-info="How visitors would use the plots you\u2019ve marked for Co-Design, ranked by total picks across all zones.">i</button><div class="dash-card-label">Co-Design Picks</div><div class="dash-card-big" id="dash-cd-total">—</div><div class="dash-card-sub" id="dash-cd-sub">Total picks submitted</div><div class="dash-cd-list" id="dash-cd-list"></div><div class="dash-card-sub" id="dash-cd-status"></div></div>
+    <div class="dash-tile-questions dash-stack"><div class="dash-card dash-card-short"><button class="dash-info-btn" data-info="Total answers submitted across all scene questions on the site — individual answers aren't shown here, just the count.">i</button><div class="dash-card-label">Scene Questions</div><div class="dash-card-big" id="dash-sq-total">—</div><div id="dash-sq-pill"></div></div><div class="dash-card dash-card-short"><button class="dash-info-btn" data-info="How many distinct visitors dropped at least one pin, versus the total number of pins submitted \u2014 shows reach as well as volume.">i</button><div class="dash-card-label">Unique Participants</div><div class="dash-card-big" id="dash-fb-unique">—</div><div class="dash-card-sub" id="dash-fb-unique-sub">Have Your Say visitors</div></div></div>
+  <div id="dash-tooltip" class="dash-tooltip"></div>
+  </div>
+  <footer class="dash-footer"><div class="dash-footer-text">This dashboard is provided for internal review only and is not indexed by search engines. Figures are aggregated from consultation activity and contain no personally identifiable information. By accessing this page you agree to our Terms &amp; Conditions and Privacy Policy.</div><img class="dash-footer-logo" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCAyNTMuODUgODUuMDIiPgogIDwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyOS44LjUsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiAyLjEuMSBCdWlsZCAyKSAgLS0+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5zdDAgewogICAgICAgIGZpbGw6ICNlNzc4NTE7CiAgICAgIH0KCiAgICAgIC5zdDEgewogICAgICAgIGZpbGw6ICMyMDI0MmI7CiAgICAgIH0KCiAgICAgIC5zdDIgewogICAgICAgIGZpbGw6ICNmN2FjYjA7CiAgICAgIH0KCiAgICAgIC5zdDMgewogICAgICAgIGZpbGw6ICM4MmMwZTk7CiAgICAgIH0KCiAgICAgIC5zdDQgewogICAgICAgIGZpbGw6ICNmM2JmNTc7CiAgICAgIH0KCiAgICAgIC5zdDUgewogICAgICAgIGZpbGw6ICM3OGJjNDM7CiAgICAgIH0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0zMS4xNyw1NC42M3YtOC4wNGMwLTguNi0yLjAxLTEzLjYzLTkuOTQtMTMuNjMtMy4zNSwwLTYuMzcuNzgtNi4zNywzLjY5LDAsLjQ1LjExLDEuMDEuMjIsMS41Nmg0LjI1Yy4zNCwxLjQ1LjY3LDMuMDIuNjcsNC4zNiwwLDQuNDctMi43OSw3LjcxLTguNiw3Ljcxcy04LjcxLTMuOTEtOC43MS04LjgzYzAtOC44Myw4LjA0LTE0Ljg2LDIyLjQ2LTE0Ljg2czIzLjM1LDUuMDMsMjMuMzUsMjEuMTF2MjMuMDFjMCw0LjAyLjIyLDUuOTIsMi41Nyw1LjkyLjg5LDAsMi4wMS0uMjIsMy42OS0uODlsMS41Niw1LjdjLTIuMTIsMS40NS03LjA0LDMuNTctMTIuNjIsMy41Ny03LjE1LDAtMTAuMTctMy4wMi0xMS41MS04LjM4LTIuMDEsMy42OS02LjI2LDguMzgtMTUuNzUsOC4zOC04Ljk0LDAtMTYuNDItMy45MS0xNi40Mi0xNC42MywwLTEyLjE4LDguNDktMTUuNzUsMjMuMjQtMTUuNzVoNy45M1pNMzEuMTcsNjcuMzd2LTYuOTNoLTQuMzZjLTcuMDQsMC05LjA1LDIuNzktOS4wNSw4LjYsMCw1LjI1LDEuNzksNy42LDYuMTQsNy42LDMuOCwwLDcuMjYtMi40Niw3LjI2LTkuMjdaIi8+CiAgPHBhdGggY2xhc3M9InN0NCIgZD0iTTg0Ljc5LDB2NzUuM2w3LjcxLjc4djcuNzFoLTMyLjUxdi03LjcxbDcuNDktLjc4VjkuMTZsLTcuNDktLjc4Vi44OWwyNC44LS44OVoiLz4KICA8cGF0aCBjbGFzcz0ic3QzIiBkPSJNMTIyLjEsMHY3NS4zbDcuNzEuNzh2Ny43MWgtMzIuNTF2LTcuNzFsNy40OS0uNzhWOS4xNmwtNy40OS0uNzhWLjg5bDI0LjgtLjg5WiIvPgogIDxwYXRoIGNsYXNzPSJzdDUiIGQ9Ik0xNDAuNjUsMzYuMzFoLTguMzh2LTguNDloOC4zOHYtMTMuOTZsMTAuOTUtMi4yM2g2LjM3djE2LjJoMTQuOTd2OC40OWgtMTQuOTd2MzIuMDZjMCw1LjAzLDEuNDUsNy40OSw1LjM2LDcuNDksNC4xMywwLDYuMTQtMy42OSw4LjM4LTExLjg0bDYuNDgsMS42OGMtMi4xMiwxMi4yOS03LjgyLDE5LjMzLTIwLDE5LjMzLTExLjE3LDAtMTcuNTQtNC42OS0xNy41NC0xNi45OHYtMzEuNzNaIi8+CiAgPHBhdGggY2xhc3M9InN0MiIgZD0iTTIwOS45MiwyNi41OWMyMCwwLDI4LjE1LDEyLjA3LDI4LjE1LDI5LjA1cy05LjYxLDI5LjM4LTI4LjgyLDI5LjM4LTI4LjM4LTExLjk1LTI4LjM4LTI4LjkzLDEwLjA1LTI5LjQ5LDI5LjA1LTI5LjQ5Wk0yMDkuMzYsMzMuNGMtOC4zOCwwLTEwLjE3LDguMDQtMTAuMTcsMjEuOSwwLDE0Ljk3LDEuNzksMjIuNzksMTAuNSwyMi43OSw4LjE2LDAsMTAuMDUtNy45MywxMC4wNS0yMi4wMXMtMS41Ni0yMi42OC0xMC4zOS0yMi42OFoiLz4KICA8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMjM2LjYsMjUuMDJsLTUuMzktNC4zMSw1LjI0LTYuMjUtNy43Ni0xLjgsMi4xNS02LjgzLDcuNTUsMy4wMi0uODctOC40MWg3LjU1bC0uOTQsOC40MSw3LjU1LTMuMDIsMi4xNSw2LjgzLTcuNjksMS44LDUuMTcsNi4yNS01LjM5LDQuMzEtNC42Ny03LjMzLTQuNjcsNy4zM1oiLz4KPC9zdmc+" alt="allto*"/></footer>
+</div>
+<script>
+var DASH_PW = "Test";
+var FB_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/16/workflows/26807660fcee4c739fa5548a503e6c98/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=p0uFHvfLb2ct9ujjxilkJFuRkFE3oXWJo2OxyNlo06w";
+var CD_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/31/workflows/c180228f8e1f42129d4aeecd7b7bb7ee/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=-HMW1n44Gu6b5-JdhI62zQy925VEHzPaG3EezMebHl4";
+var SQ_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/29/workflows/5413b636ee8d4cbe916f05ecf4077325/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=OKZNa7kgaGc_IBJvKXj53Q9tXuEFBlALjKr8f77CfZs";
+var APPROVED_EMAILS = ["john.davison@turley.co.uk","chris.hemsley@turley.co.uk"];
+var CATCHUP_URL = "mailto:chris.hemsley@turley.co.uk";
+function renderRadial(pos, neu, neg, total){
+  var svg = document.getElementById("dash-radial-svg");
+  var legend = document.getElementById("dash-radial-legend");
+  var NS = "http://www.w3.org/2000/svg";
+  var items = [
+    {label:"Positive", value:pos, color:"#3a8f6f", r:90},
+    {label:"Neutral", value:neu, color:"#c7cbd1", r:68},
+    {label:"Negative", value:neg, color:"#5b616b", r:46}
+  ];
+  var strokeW = 15;
+  svg.innerHTML = "";
+  items.forEach(function(it){
+    var c = 2*Math.PI*it.r;
+    var share = total>0 ? it.value/total : 0;
+    var bg = document.createElementNS(NS,"circle");
+    bg.setAttribute("cx","100"); bg.setAttribute("cy","100"); bg.setAttribute("r",it.r);
+    bg.setAttribute("fill","none"); bg.setAttribute("stroke","#e9ebee"); bg.setAttribute("stroke-width",strokeW);
+    svg.appendChild(bg);
+    var fg = document.createElementNS(NS,"circle");
+    fg.setAttribute("cx","100"); fg.setAttribute("cy","100"); fg.setAttribute("r",it.r);
+    fg.setAttribute("fill","none"); fg.setAttribute("stroke",it.color); fg.setAttribute("stroke-width",strokeW);
+    fg.setAttribute("stroke-linecap","round");
+    fg.setAttribute("stroke-dasharray", c.toFixed(2));
+    fg.setAttribute("stroke-dashoffset", (c*(1-share)).toFixed(2));
+    fg.setAttribute("transform","rotate(-90 100 100)");
+    svg.appendChild(fg);
+  });
+  legend.innerHTML = items.map(function(it){
+    return "<div class=\"dash-radial-legend-item\"><span class=\"dash-radial-legend-dot\" style=\"background:"+it.color+"\"></span>"+it.label+" <span class=\"dash-radial-legend-count\">"+it.value+"</span></div>";
+  }).join("");
+}
+function checkAuth(){ try{ return sessionStorage.getItem("allto_dash_auth")==="1"; }catch(e){ return false; } }
+function setAuth(){ try{ sessionStorage.setItem("allto_dash_auth","1"); }catch(e){} }
+function showDashboard(){ document.getElementById("dash-gate").style.display="none"; document.getElementById("dash-content").style.display="block"; loadAll(); }
+var _printDateEl=document.getElementById("dash-print-date");
+if(_printDateEl) _printDateEl.textContent = "Generated " + new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+var _exportBtn=document.getElementById("dash-export-btn");
+if(_exportBtn) _exportBtn.addEventListener("click", function(){ window.print(); });
+Array.prototype.forEach.call(document.querySelectorAll(".dash-range-btn"), function(btn){
+  btn.addEventListener("click", function(){
+    Array.prototype.forEach.call(document.querySelectorAll(".dash-range-btn"), function(b){ b.classList.remove("on"); });
+    btn.classList.add("on");
+    gaRange = btn.getAttribute("data-range");
+    var customEl = document.getElementById("dash-ga-custom");
+    if(gaRange==="custom"){
+      customEl.style.display="flex";
+      var toEl=document.getElementById("dash-ga-to"), fromEl=document.getElementById("dash-ga-from");
+      if(!toEl.value){ var now=new Date(); toEl.value=now.toISOString().slice(0,10); }
+      if(!fromEl.value){ var past=new Date(Date.now()-13*86400000); fromEl.value=past.toISOString().slice(0,10); }
+      loadGA();
+    } else {
+      customEl.style.display="none";
+      loadGA();
+    }
+  });
+});
+var _gaApplyBtn=document.getElementById("dash-ga-apply");
+if(_gaApplyBtn) _gaApplyBtn.addEventListener("click", loadGA);
+if(checkAuth()){ showDashboard(); }
+document.getElementById("dash-gate-form").addEventListener("submit", function(e){
+  e.preventDefault();
+  var emailInput = document.getElementById("dash-email-input");
+  var email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+  var pw = document.getElementById("dash-pw-input").value;
+  if(APPROVED_EMAILS.length && APPROVED_EMAILS.indexOf(email)===-1){
+    document.getElementById("dash-gate-error").textContent = "That email isn\u2019t on the approved list.";
+    return;
+  }
+  if(DASH_PW && pw===DASH_PW){ setAuth(); showDashboard(); }
+  else { document.getElementById("dash-gate-error").textContent = "Incorrect password."; }
+});
+function daysAgo(n){ return Date.now() - n*86400000; }
+function parseTs(s){
+  if(!s) return NaN;
+  var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})/.exec(s);
+  if(m) return new Date(+m[3], +m[1]-1, +m[2], +m[4], +m[5], +m[6]).getTime();
+  return Date.parse(s);
+}
+function countRecent(rows, days){
+  var cutoff = daysAgo(days);
+  return rows.filter(function(r){ var t = r && r.timestamp ? parseTs(r.timestamp) : NaN; return !isNaN(t) && t>=cutoff; }).length;
+}
+function renderPill(id, n, label){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.innerHTML = n>0 ? "<span class=\"dash-pill\">+"+n+" "+label+"</span>" : "";
+}
+function loadAll(){ loadGA(); loadFeedback(); loadCodesign(); loadQuestions(); }
+var gaRange = "months";
+function gaDataset(range, customDays){
+  if(range==="days"){
+    var vals=[]; for(var i=0;i<30;i++){ vals.push(Math.round(60 + Math.sin(i/3)*16 + i*1.6 + (i%5)*4)); }
+    return {vals:vals, pillText:"+8% vs yesterday"};
+  }
+  if(range==="custom"){
+    var n=Math.max(4,Math.min(60,customDays||14)); var vals=[];
+    for(var j=0;j<n;j++){ vals.push(Math.round(70 + Math.sin(j/2.5)*18 + j*1.2)); }
+    return {vals:vals, pillText:n+"-day range"};
+  }
+  return {vals:[420,460,410,530,610,590,700,680,750,820,860,900], pillText:"+12% vs last month"};
+}
+function loadGA(){
+  var customDays=null;
+  if(gaRange==="custom"){
+    var f=document.getElementById("dash-ga-from").value, t=document.getElementById("dash-ga-to").value;
+    if(f&&t){ customDays=Math.max(1, Math.round((new Date(t)-new Date(f))/86400000)+1); }
+  }
+  var ds=gaDataset(gaRange, customDays);
+  var demo=ds.vals;
+  var total=demo.reduce(function(a,b){return a+b;},0);
+  document.getElementById("dash-ga-total").textContent = total.toLocaleString();
+  document.getElementById("dash-ga-pill").innerHTML = "<span class=\"dash-pill\">"+ds.pillText+"</span>";
+  var svg=document.getElementById("dash-ga-spark");
+  var max=Math.max.apply(null,demo), min=Math.min.apply(null,demo);
+  var pts=demo.map(function(v,i){ var x=(i/(demo.length-1))*200; var y=50-((v-min)/(max-min||1))*44-3; return x+","+y; }).join(" ");
+  svg.innerHTML="<polyline points=\""+pts+"\" fill=\"none\" stroke-width=\"2\"/>";
+}
+function loadFeedback(){
+  if(!FB_URL){ document.getElementById("dash-fb-total").textContent="Not connected"; document.getElementById("dash-fb-unique").textContent="Not connected"; return; }
+  fetch(FB_URL).then(function(r){return r.json();}).then(function(rows){
+    if(!Array.isArray(rows)) throw new Error();
+    var pos=0,neg=0,neu=0;
+    var visitors={};
+    rows.forEach(function(r){
+      var c=(r.category||"").toLowerCase();
+      if(c==="support") pos++; else if(c==="object") neg++; else neu++;
+      if(r.visitorId) visitors[r.visitorId]=true;
+    });
+    document.getElementById("dash-fb-total").textContent = rows.length;
+    renderPill("dash-fb-pill", countRecent(rows,7), "this week");
+    var uniqueCount = Object.keys(visitors).length;
+    document.getElementById("dash-fb-unique").textContent = uniqueCount || "—";
+    document.getElementById("dash-fb-unique-sub").textContent = rows.length ? Math.round((uniqueCount/rows.length)*100)+"% of "+rows.length+" pins" : "Have Your Say visitors";
+    document.getElementById("dash-fb-sentiment").innerHTML =
+      "<div class=\"dash-sentiment-item dash-sentiment-pos\"><div class=\"dash-sentiment-num\">"+pos+"</div><div class=\"dash-sentiment-lbl\">Positive</div></div>"
+      +"<div class=\"dash-sentiment-item dash-sentiment-neu\"><div class=\"dash-sentiment-num\">"+neu+"</div><div class=\"dash-sentiment-lbl\">Neutral</div></div>"
+      +"<div class=\"dash-sentiment-item dash-sentiment-neg\"><div class=\"dash-sentiment-num\">"+neg+"</div><div class=\"dash-sentiment-lbl\">Negative</div></div>";
+    var total=pos+neg+neu;
+    var card=document.getElementById("dash-sentiment-card");
+    var scoreEl=document.getElementById("dash-sentiment-score");
+    var tagEl=document.getElementById("dash-sentiment-tag");
+    var totalEl=document.getElementById("dash-sentiment-total");
+    var msgEl=document.getElementById("dash-sentiment-msg");
+    var ctaEl=document.getElementById("dash-sentiment-cta");
+    if(total>0){
+      var pct=Math.round((pos/total)*100);
+      var negShare=neg/total;
+      var tone,tag,msg;
+      if(pct>=55 && negShare<0.3){ tone="tone-positive"; tag="Mostly Positive"; msg="Engagement is looking strong \u2014 nothing needs attention right now."; }
+      else if(pct<35 || negShare>=0.45){ tone="tone-attention"; tag="Needs Attention"; msg="Let\u2019s work on this, book a catch up now."; }
+      else { tone="tone-mixed"; tag="Mixed"; msg="A mix of feedback so far \u2014 worth keeping an eye on."; }
+      card.className="dash-card dash-tile-sentiment "+tone;
+      scoreEl.textContent=pct+"%";
+      tagEl.textContent=tag;
+      totalEl.textContent=total;
+      msgEl.innerHTML = tone==="tone-attention" ? msg : "From "+total+" Have Your Say responses";
+      if(tone==="tone-attention" && CATCHUP_URL){ ctaEl.href=CATCHUP_URL; ctaEl.style.display="block"; } else { ctaEl.style.display="none"; }
+      renderRadial(pos, neu, neg, total);
+    } else {
+      scoreEl.textContent="—";
+      tagEl.textContent="No data yet";
+      ctaEl.style.display="none";
+      document.getElementById("dash-radial-svg").innerHTML="";
+      document.getElementById("dash-radial-legend").innerHTML="";
+    }
+  }).catch(function(){ document.getElementById("dash-fb-total").textContent="Could not load"; document.getElementById("dash-fb-unique").textContent="Could not load"; document.getElementById("dash-sentiment-tag").textContent="Could not load"; });
+}
+function loadQuestions(){
+  if(!SQ_URL){ document.getElementById("dash-sq-total").textContent="Not connected"; return; }
+  fetch(SQ_URL).then(function(r){return r.json();}).then(function(rows){
+    if(!Array.isArray(rows)) throw new Error();
+    document.getElementById("dash-sq-total").textContent = rows.length;
+    renderPill("dash-sq-pill", countRecent(rows,7), "this week");
+  }).catch(function(){ document.getElementById("dash-sq-total").textContent="Could not load"; });
+}
+var GREEN_SHADES = ["#1f5c45","#3a8f6f","#6fbb96","#a8dcc0","#c9e9d8"];
+function loadCodesign(){
+  var status=document.getElementById("dash-cd-status");
+  if(!CD_URL){ if(status)status.textContent="Not connected"; return; }
+  fetch(CD_URL).then(function(r){return r.json();}).then(function(rows){
+    if(!Array.isArray(rows)) throw new Error();
+    var valid=rows.filter(function(r){return r&&r.choice;});
+    if(!valid.length){ if(status)status.textContent = rows.length ? "Found responses but couldn\u2019t read them \u2014 check the sheet\u2019s column headers." : "No responses yet."; document.getElementById("dash-cd-total").textContent="0"; return; }
+    if(status) status.textContent="";
+    var counts={};
+    valid.forEach(function(r){ counts[r.choice]=(counts[r.choice]||0)+1; });
+    var ranked=Object.keys(counts).map(function(k){return {label:k,count:counts[k]};}).sort(function(a,b){return b.count-a.count;});
+    var max=ranked[0].count;
+    document.getElementById("dash-cd-total").textContent = valid.length;
+    document.getElementById("dash-cd-sub").textContent = "Top pick: "+ranked[0].label;
+    var list=document.getElementById("dash-cd-list");
+    list.innerHTML = ranked.slice(0,5).map(function(r,i){
+      var pct = Math.round((r.count/max)*100);
+      var color = GREEN_SHADES[Math.min(i,GREEN_SHADES.length-1)];
+      return "<div class=\"dash-cd-row\"><div class=\"dash-cd-row-label\">"+r.label+"</div><div class=\"dash-cd-row-track\"><div class=\"dash-cd-row-fill\" style=\"width:"+pct+"%;background:"+color+"\"></div></div><div class=\"dash-cd-row-count\">"+r.count+"</div></div>";
+    }).join("");
+  }).catch(function(){ if(status)status.textContent="Could not load results."; });
+}
+document.querySelectorAll(".dash-info-btn").forEach(function(btn){
+  btn.addEventListener("click", function(e){
+    e.stopPropagation();
+    var tip=document.getElementById("dash-tooltip");
+    var already = tip.classList.contains("show") && tip.dataset.owner===btn.dataset.info;
+    if(already){ tip.classList.remove("show"); return; }
+    tip.textContent = btn.dataset.info;
+    tip.dataset.owner = btn.dataset.info;
+    var r = btn.getBoundingClientRect();
+    var left = Math.min(r.left, window.innerWidth - 256);
+    if(left<12) left=12;
+    tip.style.top = (r.bottom+8)+"px";
+    tip.style.left = left+"px";
+    tip.classList.add("show");
+  });
+});
+document.addEventListener("click", function(){ var tip=document.getElementById("dash-tooltip"); if(tip) tip.classList.remove("show"); });
+</script>
+</body>
+</html>
