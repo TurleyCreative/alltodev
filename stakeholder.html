@@ -143,9 +143,10 @@ function initials(name){
 function loadProfile(){
   var name = qparam("name");
   var photo = qparam("photo");
+  var fallback = "<div class=\"sh-avatar-fallback\">"+initials(name).toUpperCase()+"</div>";
   document.getElementById("sh-avatar").innerHTML = photo
-    ? "<img class=\"sh-avatar\" src=\""+photo+"\" alt=\"\"/>"
-    : "<div class=\"sh-avatar-fallback\">"+initials(name).toUpperCase()+"</div>";
+    ? "<img class=\"sh-avatar\" src=\""+photo+"\" alt=\"\" onerror=\"this.outerHTML='"+fallback.replace(/'/g, "\\'")+"'\"/>"
+    : fallback;
   document.getElementById("sh-name").textContent = name || "Unnamed stakeholder";
   document.getElementById("sh-org").textContent = qparam("organisation");
   document.getElementById("sh-type").textContent = qparam("shType");

@@ -342,8 +342,9 @@ function initials(name){
 }
 function avatarHtml(photo, name){
   var url = pickPhotoUrl(photo);
-  if(url) return "<img class=\"hub-avatar\" src=\""+url+"\" alt=\"\"/>";
-  return "<div class=\"hub-avatar-fallback\">"+initials(name).toUpperCase()+"</div>";
+  var fallback = "<div class=\"hub-avatar-fallback\">"+initials(name).toUpperCase()+"</div>";
+  if(!url) return fallback;
+  return "<img class=\"hub-avatar\" src=\""+url+"\" alt=\"\" onerror=\"this.outerHTML='"+fallback.replace(/'/g, "\\'")+"'\"/>";
 }
 function truncate(s, n){ return s.length > n ? s.slice(0,n).trim()+"…" : s; }
 
