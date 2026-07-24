@@ -227,6 +227,7 @@ input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:2
       <div class="tb-tab on" id="tt-editor" onclick="switchMain('editor')">Editor</div>
       <div class="tb-tab" id="tt-settings" onclick="switchMain('settings')">Settings</div>
       <div class="tb-tab" id="tt-seo" onclick="switchMain('seo')">SEO</div>
+      <div class="tb-tab" id="tt-dashboard" onclick="switchMain('dashboard')">Dashboard</div>
       <div class="tb-tab" id="tt-about" onclick="openAboutModal()">About</div>
     </div>
   </div>
@@ -1591,6 +1592,7 @@ function bindTopbar() {
   el('tt-editor').addEventListener('click', function() { switchMain('editor'); });
   el('tt-settings').addEventListener('click', function() { switchMain('settings'); });
   el('tt-seo').addEventListener('click', function() { switchMain('seo'); });
+  el('tt-dashboard').addEventListener('click', function() { switchMain('dashboard'); });
   el('tt-about').addEventListener('click', openAboutModal);
   el('btn-theme-toggle').addEventListener('click', toggleTheme);
   el('btn-export').addEventListener('click', function() { el('em').classList.add('on'); renderA11yChecklist(); });
@@ -1615,18 +1617,21 @@ function switchMain(tab) {
   el('tt-editor').classList.toggle('on', tab==='editor');
   el('tt-settings').classList.toggle('on', tab==='settings');
   el('tt-seo').classList.toggle('on', tab==='seo');
+  el('tt-dashboard').classList.toggle('on', tab==='dashboard');
   if (tab === 'settings') renderSettings();
   else if (tab === 'seo') renderSEO();
+  else if (tab === 'dashboard') renderDashboardSettings();
   else renderRightPanel();
 }
 // Jump back to the Editor main-tab when the user picks something to edit
-// from the left panel (e.g. clicking a scene) while Settings/SEO is showing.
+// from the left panel (e.g. clicking a scene) while Settings/SEO/Dashboard is showing.
 function ensureEditorTab() {
   if (mainTab === 'editor') return;
   mainTab = 'editor';
   el('tt-editor').classList.add('on');
   el('tt-settings').classList.remove('on');
   el('tt-seo').classList.remove('on');
+  el('tt-dashboard').classList.remove('on');
 }
 
 var aboutOpener = null;
@@ -3080,6 +3085,38 @@ function renderZoneEditor(i) {
   });
 }
 
+// Power Automate connection test button (shared across Have Your Say, Co-Design, Scene Questions, Dashboard).
+// mode 'read' (default) probes with GET — for GET-only read flows.
+// mode 'write' probes with an empty-batch POST ({"data":[]}) — needed for POST-only
+// submit flows, since an empty data array loop creates nothing.
+function bindSdbTest(btnId, inputId, statusId, mode) {
+  var testBtn = el(btnId);
+  if(!testBtn) return;
+  testBtn.addEventListener('click', function() {
+    var url = el(inputId) ? el(inputId).value.trim() : '';
+    var status = el(statusId);
+    if(!url) { if(status) status.innerHTML = '<span style="color:#c0392b">Enter a URL first</span>'; return; }
+    if(status) status.innerHTML = '<span style="color:var(--ghost)">Testing...</span>';
+    var req;
+    if(mode === 'write') {
+      req = fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({data:[]})});
+    } else {
+      var testUrl = url + (url.indexOf('?')===-1 ? '?limit=1' : '&limit=1');
+      req = fetch(testUrl);
+    }
+    req.then(function(r) {
+        if(r.ok) {
+          if(status) status.innerHTML = '<span style="color:#2a7c6b" class="ico-h">'+lucideSVG('check',12,'#2a7c6b')+'Connected — working</span>';
+        } else {
+          if(status) status.innerHTML = '<span style="color:#c0392b" class="ico-h">'+lucideSVG('x',12,'#c0392b')+'Server returned ' + r.status + '</span>';
+        }
+      })
+      .catch(function() {
+        if(status) status.innerHTML = '<span style="color:#c0392b" class="ico-h">'+lucideSVG('x',12,'#c0392b')+'Could not reach URL — check it is correct</span>';
+      });
+  });
+}
+
 // ═══════════════════════════════════════════════════
 //  SETTINGS
 // ═══════════════════════════════════════════════════
@@ -3209,42 +3246,6 @@ function renderSettings() {
     html += '<button class="btn btn-g btn-ic" id="btn-cd-add-opt" style="width:100%;justify-content:center;margin-top:4px">'+lucideSVG('plus',13,'currentColor')+'Add option</button>';
     html += '</div>';
     html += '<div class="nt" style="margin-top:12px">Then: (1) on each plot you want voteable, open it under Constraint Zones and turn on "Include in co-design voting"; (2) on the scene where you want visitors to submit and see results, open it under Scenes and turn on "Co-Design" — that adds the Submit/Results prompts to that scene\'s text panel instead of floating over the map everywhere. Each submission writes one row per plot the visitor picked, all sharing the same <code>submissionId</code>, so you can group everything one person submitted in one go — and since the map resets after each submit, several people can use the same device in turn.</div>';
-  }
-  html += '</div>';
-  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('gauge',14,'currentColor')+'Client Dashboard</span></div>';
-  html += '<div class="nt" style="margin-bottom:12px">A simple, password-gated overview page for your client — response counts, sentiment, and the co-design results chart. Exports as its own separate HTML file, independent of the main site.</div>';
-  html += '<div class="lr" style="margin-bottom:12px"><span class="ll">Enable client dashboard</span><button class="tg'+(P.dashboardEnabled?' on':'')+'" id="cfg-dash-tog"></button></div>';
-  if(P.dashboardEnabled) {
-    html += '<div class="f"><label class="fl">Password</label>'
-      + '<input type="text" id="cfg-dash-pw" value="'+h(P.dashboardPassword)+'" placeholder="Set a password for your client"/>'
-      + '<div class="nt" style="margin-top:6px">A simple gate to keep this off search engines and casual visitors — like the rest of this tool\'s data URLs, it\'s baked into the file and visible via view-source, so don\'t use it for anything genuinely sensitive.</div>'
-      + '</div>';
-    html += '<div class="f"><label class="fl">Approved emails (optional)</label>'
-      + '<textarea id="cfg-dash-emails" style="min-height:70px" placeholder="One email per line, or comma-separated">'+h(P.dashboardApprovedEmails||'')+'</textarea>'
-      + '<div class="nt" style="margin-top:6px">Leave blank to skip — anyone with the password gets in. Fill this in to also require an email from this list before the password is checked (still just a front-end check, same caveat as the password above).</div>'
-      + '</div>';
-    html += '<div class="f"><label class="fl">"Book a catch up" link (optional)</label>'
-      + '<input type="text" id="cfg-dash-catchup" value="'+h(P.dashboardCatchupUrl||'')+'" placeholder="Booking link or mailto:you@company.com"/>'
-      + '<div class="nt" style="margin-top:6px">Shown as a button under the sentiment score only when it needs attention. Leave blank to hide the button (the message still shows).</div>'
-      + '</div>';
-    html += '<div class="f"><label class="fl">Scene Questions — Read URL</label>'
-      + '<div style="display:flex;gap:6px">'
-      + '<input type="text" id="cfg-dash-sq-read" value="'+h(P.questionsReadUrl||'')+'" placeholder="Your Power Automate read-flow URL"/>'
-      + '<button class="btn btn-g" id="btn-test-dash-sq-read" style="white-space:nowrap;flex-shrink:0">Test</button>'
-      + '</div>'
-      + '<div id="dash-sq-read-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
-      + '<div class="nt" style="margin-top:6px">Needs its own read flow — Scene Questions only has a submit endpoint elsewhere in this tool, since the public site itself never reads its answers back.</div>'
-      + '</div>';
-    html += '<div class="nt" style="margin-bottom:12px">Have Your Say and Co-Design feed the dashboard from the Read URLs already set further up this panel — nothing extra to configure for those two.</div>';
-    html += '<div class="f"><label class="fl">Footer text (GDPR / Terms &amp; Conditions)</label>'
-      + '<textarea id="cfg-dash-footer" style="min-height:70px" placeholder="Shown bottom-left of the dashboard, next to the allto logo">'+h(P.dashboardFooterText||'')+'</textarea>'
-      + '<div class="nt" style="margin-top:6px">Plain text only, shown small at the bottom of the dashboard next to the allto logo.</div>'
-      + '</div>';
-    html += '<div class="f"><label class="fl">Google Analytics relay URL</label>'
-      + '<input type="text" id="cfg-dash-ga" value="'+h(P.gaRelayUrl||'')+'" placeholder="Not built yet — leave blank"/>'
-      + '<div class="nt" style="margin-top:6px">Not wired up yet. The dashboard shows placeholder traffic numbers regardless of this field, until a GA4 relay is built (same idea as the SharePoint relays — GA4\'s API needs server-side credentials, not a plain URL).</div>'
-      + '</div>';
-    html += '<button class="btn btn-dl btn-ic" id="btn-export-dashboard" style="width:100%;justify-content:center;margin-top:4px">'+lucideSVG('download',13,'currentColor')+'Export Dashboard HTML</button>';
   }
   html += '</div>';
   html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('play',14,'currentColor')+'Entrance Animations</span></div>';
@@ -3446,37 +3447,6 @@ function renderSettings() {
     markDirty();
   });
 
-  // Power Automate connection test button (shared across Have Your Say, Co-Design, Scene Questions)
-  // mode 'read' (default) probes with GET — for GET-only read flows.
-  // mode 'write' probes with an empty-batch POST ({"data":[]}) — needed for POST-only
-  // submit flows, since an empty data array loop creates nothing.
-  function bindSdbTest(btnId, inputId, statusId, mode) {
-    var testBtn = el(btnId);
-    if(!testBtn) return;
-    testBtn.addEventListener('click', function() {
-      var url = el(inputId) ? el(inputId).value.trim() : '';
-      var status = el(statusId);
-      if(!url) { if(status) status.innerHTML = '<span style="color:#c0392b">Enter a URL first</span>'; return; }
-      if(status) status.innerHTML = '<span style="color:var(--ghost)">Testing...</span>';
-      var req;
-      if(mode === 'write') {
-        req = fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({data:[]})});
-      } else {
-        var testUrl = url + (url.indexOf('?')===-1 ? '?limit=1' : '&limit=1');
-        req = fetch(testUrl);
-      }
-      req.then(function(r) {
-          if(r.ok) {
-            if(status) status.innerHTML = '<span style="color:#2a7c6b" class="ico-h">'+lucideSVG('check',12,'#2a7c6b')+'Connected — working</span>';
-          } else {
-            if(status) status.innerHTML = '<span style="color:#c0392b" class="ico-h">'+lucideSVG('x',12,'#c0392b')+'Server returned ' + r.status + '</span>';
-          }
-        })
-        .catch(function() {
-          if(status) status.innerHTML = '<span style="color:#c0392b" class="ico-h">'+lucideSVG('x',12,'#c0392b')+'Could not reach URL — check it is correct</span>';
-        });
-    });
-  }
   bindSdbTest('btn-test-sdb', 'cfg-sdb', 'sdb-status', 'write');
   bindSdbTest('btn-test-sdb-read', 'cfg-sdb-read', 'sdb-read-status', 'read');
   bindSdbTest('btn-test-sq-sdb', 'cfg-sq-sdb', 'sq-sdb-status', 'write');
@@ -3519,22 +3489,6 @@ function renderSettings() {
     P.codesignOptions.push({id:'co'+Date.now(),label:'New Use',color:'#888888',icon:''});
     markDirty(); renderSettings();
   });
-
-  // Client dashboard
-  var dashTog = el('cfg-dash-tog');
-  if(dashTog) dashTog.addEventListener('click', function(){
-    P.dashboardEnabled = !P.dashboardEnabled;
-    markDirty(); renderSettings();
-  });
-  bindInput('cfg-dash-pw', function(v){ P.dashboardPassword=v; });
-  bindTA('cfg-dash-emails', function(v){ P.dashboardApprovedEmails=v; });
-  bindInput('cfg-dash-catchup', function(v){ P.dashboardCatchupUrl=v; });
-  bindTA('cfg-dash-footer', function(v){ P.dashboardFooterText=v; });
-  bindInput('cfg-dash-sq-read', function(v){ P.questionsReadUrl=v; });
-  bindInput('cfg-dash-ga', function(v){ P.gaRelayUrl=v; });
-  bindSdbTest('btn-test-dash-sq-read', 'cfg-dash-sq-read', 'dash-sq-read-status', 'read');
-  var exportDashBtn = el('btn-export-dashboard');
-  if(exportDashBtn) exportDashBtn.addEventListener('click', downloadDashboardHTML);
 
   // Reset project
   var resetBtn = el('btn-reset-project');
@@ -3624,6 +3578,71 @@ function renderSEO() {
   bindImageUpload('cfg-seo-image', 1600, function(dataUri){ P.seoImage=dataUri; });
   bindInput('cfg-favicon', function(v){ P.favicon=v; });
   bindImageUpload('cfg-favicon', 256, function(dataUri){ P.favicon=dataUri; });
+}
+
+function renderDashboardSettings() {
+  var html = '<div class="rh"><div class="rt">Client Dashboard</div></div>';
+  html += '<div class="rs"><div class="nt" style="margin-bottom:0">A simple, password-gated overview page for your client — response counts, sentiment, and the co-design results chart. Exports as its own separate HTML file, independent of the main site.</div></div>';
+  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('gauge',14,'currentColor')+'Enable</span></div>';
+  html += '<div class="lr"><span class="ll">Enable client dashboard</span><button class="tg'+(P.dashboardEnabled?' on':'')+'" id="cfg-dash-tog"></button></div>';
+  html += '</div>';
+  if(P.dashboardEnabled) {
+    html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('id-card',14,'currentColor')+'Access</span></div>';
+    html += '<div class="f"><label class="fl">Password</label>'
+      + '<input type="text" id="cfg-dash-pw" value="'+h(P.dashboardPassword)+'" placeholder="Set a password for your client"/>'
+      + '<div class="nt" style="margin-top:6px">A simple gate to keep this off search engines and casual visitors — like the rest of this tool\'s data URLs, it\'s baked into the file and visible via view-source, so don\'t use it for anything genuinely sensitive.</div>'
+      + '</div>';
+    html += '<div class="f"><label class="fl">Approved emails (optional)</label>'
+      + '<textarea id="cfg-dash-emails" style="min-height:70px" placeholder="One email per line, or comma-separated">'+h(P.dashboardApprovedEmails||'')+'</textarea>'
+      + '<div class="nt" style="margin-top:6px">Leave blank to skip — anyone with the password gets in. Fill this in to also require an email from this list before the password is checked (still just a front-end check, same caveat as the password above).</div>'
+      + '</div>';
+    html += '</div>';
+    html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('link',14,'currentColor')+'Data Sources</span></div>';
+    html += '<div class="nt" style="margin-bottom:12px">Have Your Say and Co-Design feed the dashboard from the Read URLs already set on the Settings tab — nothing extra to configure for those two.</div>';
+    html += '<div class="f"><label class="fl">Scene Questions — Read URL</label>'
+      + '<div style="display:flex;gap:6px">'
+      + '<input type="text" id="cfg-dash-sq-read" value="'+h(P.questionsReadUrl||'')+'" placeholder="Your Power Automate read-flow URL"/>'
+      + '<button class="btn btn-g" id="btn-test-dash-sq-read" style="white-space:nowrap;flex-shrink:0">Test</button>'
+      + '</div>'
+      + '<div id="dash-sq-read-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
+      + '<div class="nt" style="margin-top:6px">Needs its own read flow — Scene Questions only has a submit endpoint elsewhere in this tool, since the public site itself never reads its answers back.</div>'
+      + '</div>';
+    html += '<div class="f"><label class="fl">Google Analytics relay URL</label>'
+      + '<input type="text" id="cfg-dash-ga" value="'+h(P.gaRelayUrl||'')+'" placeholder="Not built yet — leave blank"/>'
+      + '<div class="nt" style="margin-top:6px">Not wired up yet. The dashboard shows placeholder traffic numbers regardless of this field, until a GA4 relay is built (same idea as the SharePoint relays — GA4\'s API needs server-side credentials, not a plain URL).</div>'
+      + '</div>';
+    html += '</div>';
+    html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('palette',14,'currentColor')+'Branding &amp; Footer</span></div>';
+    html += '<div class="f"><label class="fl">"Book a catch up" link (optional)</label>'
+      + '<input type="text" id="cfg-dash-catchup" value="'+h(P.dashboardCatchupUrl||'')+'" placeholder="Booking link or mailto:you@company.com"/>'
+      + '<div class="nt" style="margin-top:6px">Shown as a button under the sentiment score only when it needs attention. Leave blank to hide the button (the message still shows).</div>'
+      + '</div>';
+    html += '<div class="f"><label class="fl">Footer text (GDPR / Terms &amp; Conditions)</label>'
+      + '<textarea id="cfg-dash-footer" style="min-height:70px" placeholder="Shown bottom-left of the dashboard, next to the allto logo">'+h(P.dashboardFooterText||'')+'</textarea>'
+      + '<div class="nt" style="margin-top:6px">Plain text only, shown small at the bottom of the dashboard next to the allto logo.</div>'
+      + '</div>';
+    html += '</div>';
+    html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('download',14,'currentColor')+'Export</span></div>';
+    html += '<button class="btn btn-dl btn-ic" id="btn-export-dashboard" style="width:100%;justify-content:center">'+lucideSVG('download',13,'currentColor')+'Export Dashboard HTML</button>';
+    html += '</div>';
+  }
+  setHTML('rpc', html);
+  var dashTog = el('cfg-dash-tog');
+  if(dashTog) dashTog.addEventListener('click', function(){
+    P.dashboardEnabled = !P.dashboardEnabled;
+    markDirty(); renderDashboardSettings();
+  });
+  if(P.dashboardEnabled) {
+    bindInput('cfg-dash-pw', function(v){ P.dashboardPassword=v; });
+    bindTA('cfg-dash-emails', function(v){ P.dashboardApprovedEmails=v; });
+    bindInput('cfg-dash-catchup', function(v){ P.dashboardCatchupUrl=v; });
+    bindTA('cfg-dash-footer', function(v){ P.dashboardFooterText=v; });
+    bindInput('cfg-dash-sq-read', function(v){ P.questionsReadUrl=v; });
+    bindInput('cfg-dash-ga', function(v){ P.gaRelayUrl=v; });
+    bindSdbTest('btn-test-dash-sq-read', 'cfg-dash-sq-read', 'dash-sq-read-status', 'read');
+    var exportDashBtn = el('btn-export-dashboard');
+    if(exportDashBtn) exportDashBtn.addEventListener('click', downloadDashboardHTML);
+  }
 }
 
 function tryInitPreview() {
@@ -4469,16 +4488,16 @@ function buildDashboardHTML() {
     + '    <div class="dash-tile-questions dash-stack">'
         + '<div class="dash-card dash-card-short">'
           + '<button class="dash-info-btn" data-info="Total answers submitted across all scene questions on the site — individual answers aren\'t shown here, just the count.">i</button>'
-          + '<div class="dash-card-label">Scene Questions</div><div class="dash-card-big dash-split-num" id="dash-sq-total">—</div><div id="dash-sq-pill"></div>'
+          + '<div class="dash-card-label">Scene Questions</div><div class="dash-card-big" id="dash-sq-total">—</div><div id="dash-sq-pill"></div>'
         + '</div>'
         + '<div class="dash-card dash-card-short">'
           + '<button class="dash-info-btn" data-info="How many distinct visitors dropped at least one pin, versus the total number of pins submitted \\u2014 shows reach as well as volume.">i</button>'
-          + '<div class="dash-card-label">Unique Participants</div><div class="dash-card-big dash-split-num" id="dash-fb-unique">—</div><div class="dash-card-sub" id="dash-fb-unique-sub">Have Your Say visitors</div>'
+          + '<div class="dash-card-label">Unique Participants</div><div class="dash-card-big" id="dash-fb-unique">—</div><div class="dash-card-sub" id="dash-fb-unique-sub">Have Your Say visitors</div>'
         + '</div>'
       + '</div>\n'
     + '  <div id="dash-tooltip" class="dash-tooltip"></div>\n'
     + '  </div>\n'
-    + '  <footer class="dash-footer"><div class="dash-footer-text">' + h(P.dashboardFooterText||'') + '</div><img class="dash-footer-logo" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCAyNTMuODUgODUuMDIiPgogIDwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyOS44LjUsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiAyLjEuMSBCdWlsZCAyKSAgLS0+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5zdDAgewogICAgICAgIGZpbGw6ICNlNzc4NTE7CiAgICAgIH0KCiAgICAgIC5zdDEgewogICAgICAgIGZpbGw6ICNmZmY7CiAgICAgIH0KCiAgICAgIC5zdDIgewogICAgICAgIGZpbGw6ICNmN2FjYjA7CiAgICAgIH0KCiAgICAgIC5zdDMgewogICAgICAgIGZpbGw6ICM4MmMwZTk7CiAgICAgIH0KCiAgICAgIC5zdDQgewogICAgICAgIGZpbGw6ICNmM2JmNTc7CiAgICAgIH0KCiAgICAgIC5zdDUgewogICAgICAgIGZpbGw6ICM3OGJjNDM7CiAgICAgIH0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0zMS4xNyw1NC42M3YtOC4wNGMwLTguNi0yLjAxLTEzLjYzLTkuOTQtMTMuNjMtMy4zNSwwLTYuMzcuNzgtNi4zNywzLjY5LDAsLjQ1LjExLDEuMDEuMjIsMS41Nmg0LjI1Yy4zNCwxLjQ1LjY3LDMuMDIuNjcsNC4zNiwwLDQuNDctMi43OSw3LjcxLTguNiw3Ljcxcy04LjcxLTMuOTEtOC43MS04LjgzYzAtOC44Myw4LjA0LTE0Ljg2LDIyLjQ2LTE0Ljg2czIzLjM1LDUuMDMsMjMuMzUsMjEuMTF2MjMuMDFjMCw0LjAyLjIyLDUuOTIsMi41Nyw1LjkyLjg5LDAsMi4wMS0uMjIsMy42OS0uODlsMS41Niw1LjdjLTIuMTIsMS40NS03LjA0LDMuNTctMTIuNjIsMy41Ny03LjE1LDAtMTAuMTctMy4wMi0xMS41MS04LjM4LTIuMDEsMy42OS02LjI2LDguMzgtMTUuNzUsOC4zOC04Ljk0LDAtMTYuNDItMy45MS0xNi40Mi0xNC42MywwLTEyLjE4LDguNDktMTUuNzUsMjMuMjQtMTUuNzVoNy45M1pNMzEuMTcsNjcuMzd2LTYuOTNoLTQuMzZjLTcuMDQsMC05LjA1LDIuNzktOS4wNSw4LjYsMCw1LjI1LDEuNzksNy42LDYuMTQsNy42LDMuOCwwLDcuMjYtMi40Niw3LjI2LTkuMjdaIi8+CiAgPHBhdGggY2xhc3M9InN0NCIgZD0iTTg0Ljc5LDB2NzUuM2w3LjcxLjc4djcuNzFoLTMyLjUxdi03LjcxbDcuNDktLjc4VjkuMTZsLTcuNDktLjc4Vi44OWwyNC44LS44OVoiLz4KICA8cGF0aCBjbGFzcz0ic3QzIiBkPSJNMTIyLjEsMHY3NS4zbDcuNzEuNzh2Ny43MWgtMzIuNTF2LTcuNzFsNy40OS0uNzhWOS4xNmwtNy40OS0uNzhWLjg5bDI0LjgtLjg5WiIvPgogIDxwYXRoIGNsYXNzPSJzdDUiIGQ9Ik0xNDAuNjUsMzYuMzFoLTguMzh2LTguNDloOC4zOHYtMTMuOTZsMTAuOTUtMi4yM2g2LjM3djE2LjJoMTQuOTd2OC40OWgtMTQuOTd2MzIuMDZjMCw1LjAzLDEuNDUsNy40OSw1LjM2LDcuNDksNC4xMywwLDYuMTQtMy42OSw4LjM4LTExLjg0bDYuNDgsMS42OGMtMi4xMiwxMi4yOS03LjgyLDE5LjMzLTIwLDE5LjMzLTExLjE3LDAtMTcuNTQtNC42OS0xNy41NC0xNi45OHYtMzEuNzNaIi8+CiAgPHBhdGggY2xhc3M9InN0MiIgZD0iTTIwOS45MiwyNi41OWMyMCwwLDI4LjE1LDEyLjA3LDI4LjE1LDI5LjA1cy05LjYxLDI5LjM4LTI4LjgyLDI5LjM4LTI4LjM4LTExLjk1LTI4LjM4LTI4LjkzLDEwLjA1LTI5LjQ5LDI5LjA1LTI5LjQ5Wk0yMDkuMzYsMzMuNGMtOC4zOCwwLTEwLjE3LDguMDQtMTAuMTcsMjEuOSwwLDE0Ljk3LDEuNzksMjIuNzksMTAuNSwyMi43OSw4LjE2LDAsMTAuMDUtNy45MywxMC4wNS0yMi4wMXMtMS41Ni0yMi42OC0xMC4zOS0yMi42OFoiLz4KICA8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMjM2LjYsMjUuMDJsLTUuMzktNC4zMSw1LjI0LTYuMjUtNy43Ni0xLjgsMi4xNS02LjgzLDcuNTUsMy4wMi0uODctOC40MWg3LjU1bC0uOTQsOC40MSw3LjU1LTMuMDIsMi4xNSw2LjgzLTcuNjksMS44LDUuMTcsNi4yNS01LjM5LDQuMzEtNC42Ny03LjMzLTQuNjcsNy4zM1oiLz4KPC9zdmc+" alt="allto*"/></footer>\n'
+    + '  <footer class="dash-footer"><div class="dash-footer-text">' + h(P.dashboardFooterText||'') + '</div><img class="dash-footer-logo" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCAyNTMuODUgODUuMDIiPgogIDwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyOS44LjUsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiAyLjEuMSBCdWlsZCAyKSAgLS0+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5zdDAgewogICAgICAgIGZpbGw6ICNlNzc4NTE7CiAgICAgIH0KCiAgICAgIC5zdDEgewogICAgICAgIGZpbGw6ICMyMDI0MmI7CiAgICAgIH0KCiAgICAgIC5zdDIgewogICAgICAgIGZpbGw6ICNmN2FjYjA7CiAgICAgIH0KCiAgICAgIC5zdDMgewogICAgICAgIGZpbGw6ICM4MmMwZTk7CiAgICAgIH0KCiAgICAgIC5zdDQgewogICAgICAgIGZpbGw6ICNmM2JmNTc7CiAgICAgIH0KCiAgICAgIC5zdDUgewogICAgICAgIGZpbGw6ICM3OGJjNDM7CiAgICAgIH0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0zMS4xNyw1NC42M3YtOC4wNGMwLTguNi0yLjAxLTEzLjYzLTkuOTQtMTMuNjMtMy4zNSwwLTYuMzcuNzgtNi4zNywzLjY5LDAsLjQ1LjExLDEuMDEuMjIsMS41Nmg0LjI1Yy4zNCwxLjQ1LjY3LDMuMDIuNjcsNC4zNiwwLDQuNDctMi43OSw3LjcxLTguNiw3Ljcxcy04LjcxLTMuOTEtOC43MS04LjgzYzAtOC44Myw4LjA0LTE0Ljg2LDIyLjQ2LTE0Ljg2czIzLjM1LDUuMDMsMjMuMzUsMjEuMTF2MjMuMDFjMCw0LjAyLjIyLDUuOTIsMi41Nyw1LjkyLjg5LDAsMi4wMS0uMjIsMy42OS0uODlsMS41Niw1LjdjLTIuMTIsMS40NS03LjA0LDMuNTctMTIuNjIsMy41Ny03LjE1LDAtMTAuMTctMy4wMi0xMS41MS04LjM4LTIuMDEsMy42OS02LjI2LDguMzgtMTUuNzUsOC4zOC04Ljk0LDAtMTYuNDItMy45MS0xNi40Mi0xNC42MywwLTEyLjE4LDguNDktMTUuNzUsMjMuMjQtMTUuNzVoNy45M1pNMzEuMTcsNjcuMzd2LTYuOTNoLTQuMzZjLTcuMDQsMC05LjA1LDIuNzktOS4wNSw4LjYsMCw1LjI1LDEuNzksNy42LDYuMTQsNy42LDMuOCwwLDcuMjYtMi40Niw3LjI2LTkuMjdaIi8+CiAgPHBhdGggY2xhc3M9InN0NCIgZD0iTTg0Ljc5LDB2NzUuM2w3LjcxLjc4djcuNzFoLTMyLjUxdi03LjcxbDcuNDktLjc4VjkuMTZsLTcuNDktLjc4Vi44OWwyNC44LS44OVoiLz4KICA8cGF0aCBjbGFzcz0ic3QzIiBkPSJNMTIyLjEsMHY3NS4zbDcuNzEuNzh2Ny43MWgtMzIuNTF2LTcuNzFsNy40OS0uNzhWOS4xNmwtNy40OS0uNzhWLjg5bDI0LjgtLjg5WiIvPgogIDxwYXRoIGNsYXNzPSJzdDUiIGQ9Ik0xNDAuNjUsMzYuMzFoLTguMzh2LTguNDloOC4zOHYtMTMuOTZsMTAuOTUtMi4yM2g2LjM3djE2LjJoMTQuOTd2OC40OWgtMTQuOTd2MzIuMDZjMCw1LjAzLDEuNDUsNy40OSw1LjM2LDcuNDksNC4xMywwLDYuMTQtMy42OSw4LjM4LTExLjg0bDYuNDgsMS42OGMtMi4xMiwxMi4yOS03LjgyLDE5LjMzLTIwLDE5LjMzLTExLjE3LDAtMTcuNTQtNC42OS0xNy41NC0xNi45OHYtMzEuNzNaIi8+CiAgPHBhdGggY2xhc3M9InN0MiIgZD0iTTIwOS45MiwyNi41OWMyMCwwLDI4LjE1LDEyLjA3LDI4LjE1LDI5LjA1cy05LjYxLDI5LjM4LTI4LjgyLDI5LjM4LTI4LjM4LTExLjk1LTI4LjM4LTI4LjkzLDEwLjA1LTI5LjQ5LDI5LjA1LTI5LjQ5Wk0yMDkuMzYsMzMuNGMtOC4zOCwwLTEwLjE3LDguMDQtMTAuMTcsMjEuOSwwLDE0Ljk3LDEuNzksMjIuNzksMTAuNSwyMi43OSw4LjE2LDAsMTAuMDUtNy45MywxMC4wNS0yMi4wMXMtMS41Ni0yMi42OC0xMC4zOS0yMi42OFoiLz4KICA8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMjM2LjYsMjUuMDJsLTUuMzktNC4zMSw1LjI0LTYuMjUtNy43Ni0xLjgsMi4xNS02LjgzLDcuNTUsMy4wMi0uODctOC40MWg3LjU1bC0uOTQsOC40MSw3LjU1LTMuMDIsMi4xNSw2LjgzLTcuNjksMS44LDUuMTcsNi4yNS01LjM5LDQuMzEtNC42Ny03LjMzLTQuNjcsNy4zM1oiLz4KPC9zdmc+" alt="allto*"/></footer>\n'
     + '</div>\n'
     + '<script>\n' + dashboardJS(pwLit, fbUrlLit, cdUrlLit, sqUrlLit, emailsLit, catchupUrlLit, codesignEnabled) + '\n<' + '/script>\n'
     + '</body>\n</html>';
@@ -4526,7 +4545,6 @@ function dashboardCSS() {
     '.dash-stack{display:flex;flex-direction:column;gap:18px}',
     '.dash-card-short{flex:1;padding:22px 26px;min-height:0}',
     '.dash-card-short .dash-card-label{margin-bottom:10px}',
-    '.dash-split-num{font-size:36px}',
     '#dash-sq-pill,#dash-fb-unique-sub{margin-top:auto}',
     '.dash-pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:100px;background:rgba(58,143,111,.12);color:#2f6f52;margin-top:12px}',
     '.dash-sentiment{display:flex;gap:16px;margin-top:auto;padding-top:20px}',
