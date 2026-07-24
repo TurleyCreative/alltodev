@@ -145,7 +145,7 @@ function loadProfile(){
   var photo = qparam("photo");
   var fallback = "<div class=\"sh-avatar-fallback\">"+initials(name).toUpperCase()+"</div>";
   document.getElementById("sh-avatar").innerHTML = photo
-    ? "<img class=\"sh-avatar\" src=\""+photo+"\" alt=\"\" onerror=\"this.outerHTML='"+fallback.replace(/'/g, "\\'")+"'\"/>"
+    ? "<img class=\"sh-avatar\" src=\""+photo+"\" alt=\"\" onerror=\"this.outerHTML='"+fallback.replace(/'/g, "\\'").replace(/"/g, "&quot;")+"'\"/>"
     : fallback;
   document.getElementById("sh-name").textContent = name || "Unnamed stakeholder";
   document.getElementById("sh-org").textContent = qparam("organisation");
