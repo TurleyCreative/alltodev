@@ -79,6 +79,8 @@ header{max-width:1080px;margin:0 auto;padding:44px 24px 12px}
 .hub-stake-scroll{overflow-x:auto}
 .hub-stake-row{display:grid;grid-template-columns:1.3fr 1.3fr 1fr .8fr 1fr;gap:12px;align-items:center;padding:16px 26px;border-bottom:1px solid #e3e6ea;min-width:620px}
 .hub-stake-row:last-child{border-bottom:none}
+a.hub-stake-row{text-decoration:none;color:inherit;cursor:pointer}
+a.hub-stake-row:hover{background:#e9ebee}
 .hub-stake-row.head{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#8b909b;font-weight:600;padding:14px 26px}
 .hub-stake-name{font-size:13px;font-weight:500}
 .hub-stake-org{font-size:12px;color:#5b616b}
@@ -207,7 +209,9 @@ var SQ_URL = "";
 var GETHER_URL = "";
 
 // Set once the Stakeholders SharePoint list + read flow is live: returns
-// an array of {name, organisation, shType, priority, owner}
+// an array of {id, name, organisation, shType, priority, owner}
+// id must be the SharePoint item ID (add "id: ID" to the flow's Select
+// step) — it's what links each row through to their profile page.
 var STAKEHOLDERS_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/02/workflows/5c3e2957a6bd4a5ea5e380fce761041c/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=8OyE0iTBE2SIvXdYmSsTQC9nGN-BWLUfu7QNFurs61E";
 
 function daysAgo(n){ return Date.now() - n*86400000; }
@@ -412,11 +416,11 @@ function loadGether(){
 }
 
 var STAKE_DEMO = [
-  {name:"Sarah Whitfield", organisation:"Riverside Residents Association", shType:"Community Group", priority:"High", owner:"J. Davison"},
-  {name:"Cllr. Tom Reid", organisation:"Manchester City Council", shType:"Councillor", priority:"High", owner:"C. Hemsley"},
-  {name:"Amina Yusuf", organisation:"Resident, Oak Street", shType:"Resident", priority:"Medium", owner:"J. Davison"},
-  {name:"Greater Manchester Chamber", organisation:"Business", shType:"Business", priority:"Low", owner:"C. Hemsley"},
-  {name:"Historic England", organisation:"Statutory Consultee", shType:"Statutory Consultee", priority:"High", owner:"J. Davison"}
+  {id:1, name:"Sarah Whitfield", organisation:"Riverside Residents Association", shType:"Community Group", priority:"High", owner:"J. Davison"},
+  {id:2, name:"Cllr. Tom Reid", organisation:"Manchester City Council", shType:"Councillor", priority:"High", owner:"C. Hemsley"},
+  {id:3, name:"Amina Yusuf", organisation:"Resident, Oak Street", shType:"Resident", priority:"Medium", owner:"J. Davison"},
+  {id:4, name:"Greater Manchester Chamber", organisation:"Business", shType:"Business", priority:"Low", owner:"C. Hemsley"},
+  {id:5, name:"Historic England", organisation:"Statutory Consultee", shType:"Statutory Consultee", priority:"High", owner:"J. Davison"}
 ];
 function loadStakeholders(){
   if(!STAKEHOLDERS_URL){ renderStakeholders(STAKE_DEMO, true); return; }
@@ -434,13 +438,21 @@ function renderStakeholders(rows, isDemo){
   if(!rows.length){ list.innerHTML = "<div class=\"hub-stake-empty\">No stakeholders logged yet.</div>"; return; }
   list.innerHTML = rows.map(function(r){
     var pr = (r.priority||"").toLowerCase();
-    return "<div class=\"hub-stake-row\">"
-      + "<div class=\"hub-stake-name\">"+(r.name||"")+"</div>"
+    var cells = "<div class=\"hub-stake-name\">"+(r.name||"")+"</div>"
       + "<div class=\"hub-stake-org\">"+(r.organisation||"")+"</div>"
       + "<div><span class=\"hub-stake-type\">"+(r.shType||"")+"</span></div>"
       + "<div class=\"hub-stake-priority "+pr+"\">"+(r.priority||"")+"</div>"
-      + "<div class=\"hub-stake-owner\">"+(r.owner||"")+"</div>"
-      + "</div>";
+      + "<div class=\"hub-stake-owner\">"+(r.owner||"")+"</div>";
+    if(r.id!=null){
+      var qs = "id="+encodeURIComponent(r.id)
+        +"&name="+encodeURIComponent(r.name||"")
+        +"&organisation="+encodeURIComponent(r.organisation||"")
+        +"&shType="+encodeURIComponent(r.shType||"")
+        +"&priority="+encodeURIComponent(r.priority||"")
+        +"&owner="+encodeURIComponent(r.owner||"");
+      return "<a class=\"hub-stake-row\" href=\"stakeholder.html?"+qs+"\">"+cells+"</a>";
+    }
+    return "<div class=\"hub-stake-row\">"+cells+"</div>";
   }).join("");
 }
 

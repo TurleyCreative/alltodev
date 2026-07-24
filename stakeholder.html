@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Stakeholder · Consultation Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;background:#fff;color:#20242b;min-height:100vh;-webkit-font-smoothing:antialiased}
+header{max-width:820px;margin:0 auto;padding:44px 24px 12px}
+.sh-back{font-size:12px;font-weight:500;color:#8b909b;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.sh-back:hover{color:#5b616b}
+
+.sh-profile{max-width:820px;margin:0 auto;padding:16px 24px 0}
+.sh-card{background:#f2f3f5;border-radius:24px;padding:30px 32px}
+.sh-name{font-size:24px;font-weight:500;letter-spacing:-.01em}
+.sh-org{font-size:14px;font-weight:400;color:#5b616b;margin-top:4px}
+.sh-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.sh-tag{font-size:11px;font-weight:600;padding:5px 12px;border-radius:100px;background:#fff;color:#3a3f47}
+.sh-tag-priority.high{color:#c0392b}
+.sh-tag-priority.medium{color:#b8860b}
+.sh-tag-priority.low{color:#5b616b}
+.sh-owner{font-size:12px;color:#8b909b;margin-top:14px}
+
+.sh-section{max-width:820px;margin:0 auto;padding:32px 24px 56px}
+.sh-section-title{font-size:16px;font-weight:500;margin-bottom:14px}
+.sh-feed{display:flex;flex-direction:column;gap:10px}
+.sh-entry{background:#f2f3f5;border-radius:16px;padding:18px 22px}
+.sh-entry-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sh-entry-type{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:#fff;color:#3a3f47}
+.sh-entry-date{font-size:12px;color:#8b909b}
+.sh-entry-notes{font-size:13px;font-weight:400;color:#3a3f47;margin-top:10px;line-height:1.5}
+.sh-entry-foot{font-size:11px;color:#8b909b;margin-top:10px}
+.sh-empty{font-size:13px;color:#8b909b;background:#f2f3f5;border-radius:16px;padding:22px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <a class="sh-back" href="hub.html">&larr; Back to hub</a>
+</header>
+
+<div class="sh-profile">
+  <div class="sh-card">
+    <div class="sh-name" id="sh-name">&mdash;</div>
+    <div class="sh-org" id="sh-org"></div>
+    <div class="sh-meta">
+      <span class="sh-tag" id="sh-type"></span>
+      <span class="sh-tag sh-tag-priority" id="sh-priority"></span>
+    </div>
+    <div class="sh-owner" id="sh-owner"></div>
+  </div>
+</div>
+
+<div class="sh-section">
+  <div class="sh-section-title">Activity</div>
+  <div class="sh-feed" id="sh-feed"><div class="sh-empty">Loading…</div></div>
+</div>
+
+<script>
+// Same EngagementLog read flow used across the hub. Expects
+// stakeholderId in the query string, returns an array of
+// {enType, date, loggedBy, notes, followUp}.
+var ENGAGEMENTLOG_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/07/workflows/25d74467bf0146499edf231cbf72f8aa/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=f57Z8mWPQJdyfTU3y7kRNiLlJBvKirrBJ9DCt_6QdXI";
+
+function qparam(name){
+  return new URLSearchParams(window.location.search).get(name) || "";
+}
+
+function loadProfile(){
+  document.getElementById("sh-name").textContent = qparam("name") || "Unnamed stakeholder";
+  document.getElementById("sh-org").textContent = qparam("organisation");
+  document.getElementById("sh-type").textContent = qparam("shType");
+  var priority = qparam("priority");
+  var prEl = document.getElementById("sh-priority");
+  prEl.textContent = priority;
+  prEl.className = "sh-tag sh-tag-priority " + priority.toLowerCase();
+  var owner = qparam("owner");
+  document.getElementById("sh-owner").textContent = owner ? "Owned by " + owner : "";
+}
+
+function fmtDate(s){
+  var d = new Date(s);
+  if(isNaN(d.getTime())) return s || "";
+  return d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
+}
+
+function loadActivity(){
+  var id = qparam("id");
+  var feedEl = document.getElementById("sh-feed");
+  if(!id){ feedEl.innerHTML = "<div class=\"sh-empty\">No stakeholder selected.</div>"; return; }
+  if(!ENGAGEMENTLOG_URL){ feedEl.innerHTML = "<div class=\"sh-empty\">Connect the EngagementLog read flow to show activity here.</div>"; return; }
+  var sep = ENGAGEMENTLOG_URL.indexOf("?")===-1 ? "?" : "&";
+  fetch(ENGAGEMENTLOG_URL + sep + "stakeholderId=" + encodeURIComponent(id))
+    .then(function(r){ return r.json(); })
+    .then(function(rows){
+      if(!Array.isArray(rows)) throw new Error();
+      if(!rows.length){ feedEl.innerHTML = "<div class=\"sh-empty\">No activity logged yet.</div>"; return; }
+      rows.sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
+      feedEl.innerHTML = rows.map(function(r){
+        return "<div class=\"sh-entry\">"
+          + "<div class=\"sh-entry-head\"><span class=\"sh-entry-type\">"+(r.enType||"")+"</span><span class=\"sh-entry-date\">"+fmtDate(r.date)+"</span></div>"
+          + (r.notes ? "<div class=\"sh-entry-notes\">"+r.notes+"</div>" : "")
+          + "<div class=\"sh-entry-foot\">Logged by "+(r.loggedBy||"—")+(r.followUp ? " · Follow up "+fmtDate(r.followUp) : "")+"</div>"
+          + "</div>";
+      }).join("");
+    })
+    .catch(function(){ feedEl.innerHTML = "<div class=\"sh-empty\">Could not load activity.</div>"; });
+}
+
+loadProfile();
+loadActivity();
+</script>
+</body>
+</html>
