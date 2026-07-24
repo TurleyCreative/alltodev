@@ -124,7 +124,7 @@ var ENGAGEMENTLOG_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.enviro
 // loggedBy must be an email address — the flow builds the SharePoint
 // Claims value from it (i:0#.f|membership|<email>) to populate the
 // Person field, so a plain display name won't resolve to an account.
-var ENGAGEMENTLOG_WRITE_URL = "";
+var ENGAGEMENTLOG_WRITE_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/29/workflows/5808b419ed4e4ad593fd32d579e787e6/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=mdbB3NzRpnLg-Z1R6VKsUhl0mqAjEY6X4fJeQnd87lc";
 
 function qparam(name){
   return new URLSearchParams(window.location.search).get(name) || "";
