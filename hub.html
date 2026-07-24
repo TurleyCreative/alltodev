@@ -318,15 +318,23 @@ function stripHtml(html){
 var SP_ORIGIN = "https://turley365.sharepoint.com";
 function pickPhotoUrl(v){
   if(!v) return "";
+  var url = "";
   if(typeof v === "string"){
-    if(v.indexOf("http") === 0) return v;
-    try{ v = JSON.parse(v); }catch(e){ return ""; }
+    if(v.indexOf("http") === 0) url = v;
+    else { try{ v = JSON.parse(v); }catch(e){ return ""; } }
   }
-  if(typeof v === "object"){
+  if(!url && typeof v === "object"){
     var rel = v.serverRelativeUrl || v.ServerRelativeUrl || v.url || v.Url;
-    if(rel) return rel.indexOf("http") === 0 ? rel : SP_ORIGIN + rel;
+    if(rel) url = rel.indexOf("http") === 0 ? rel : SP_ORIGIN + rel;
   }
-  return "";
+  if(!url) return "";
+  // SharePoint/OneDrive "copy link" URLs serve an interactive viewer page
+  // by default — append download=1 to get the raw image bytes an <img>
+  // tag actually needs.
+  if(url.indexOf("sharepoint.com") !== -1 && url.indexOf("download=1") === -1){
+    url += (url.indexOf("?") === -1 ? "?" : "&") + "download=1";
+  }
+  return url;
 }
 function initials(name){
   var parts = (name||"").trim().split(/\s+/);
