@@ -85,7 +85,7 @@ header{max-width:1080px;margin:0 auto;padding:44px 24px 0}
 .hub-section-title{font-size:16px;font-weight:500}
 .hub-stake-count{font-size:12px;color:#8b909b;font-weight:500}
 
-.hub-bulletin-list,.hub-upcoming-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.hub-bulletin-list,.hub-upcoming-list{display:flex;flex-direction:column;gap:10px}
 .hub-bulletin-item{background:#fff;border-radius:14px;padding:14px 16px}
 .hub-bulletin-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .hub-bulletin-type{font-size:10px;font-weight:600;padding:3px 9px;border-radius:100px;background:#e7e9ec;color:#3a3f47;white-space:nowrap}
@@ -214,13 +214,13 @@ a.hub-stake-row:hover{background:#e9ebee}
 <div class="hub-panel" id="panel-activity">
   <div class="hub-activity-grid">
     <div class="hub-col">
-      <div class="hub-card">
+      <div>
         <div class="hub-section-head"><div class="hub-section-title">Recent Activity</div></div>
-        <div class="hub-bulletin-list" id="hub-bulletin-list"></div>
+        <div class="hub-card"><div class="hub-bulletin-list" id="hub-bulletin-list"></div></div>
       </div>
-      <div class="hub-card">
+      <div>
         <div class="hub-section-head"><div class="hub-section-title">Upcoming</div></div>
-        <div class="hub-upcoming-list" id="hub-upcoming-list"></div>
+        <div class="hub-card"><div class="hub-upcoming-list" id="hub-upcoming-list"></div></div>
       </div>
     </div>
     <div class="hub-col">
