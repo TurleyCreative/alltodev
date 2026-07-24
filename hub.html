@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Consultation Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;background:#fff;color:#20242b;min-height:100vh;-webkit-font-smoothing:antialiased}
+header{max-width:1080px;margin:0 auto;padding:44px 24px 12px}
+.hub-title{font-size:26px;font-weight:500;letter-spacing:-.01em}
+.hub-sub{font-size:12px;font-weight:500;color:#8b909b;margin-top:6px;text-transform:uppercase;letter-spacing:.08em}
+.hub-grid{max-width:1080px;margin:0 auto;padding:16px 24px 56px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.hub-card{position:relative;background:#f2f3f5;border-radius:24px;padding:30px 32px;display:flex;flex-direction:column}
+.hub-card-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8b909b;font-weight:600}
+.hub-info-btn{position:absolute;top:22px;right:22px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(18,40,64,.08);color:#5b616b;font-size:11px;font-weight:700;font-style:italic;font-family:Georgia,"Times New Roman",serif;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0}
+.hub-tile-gether{grid-column:1/-1}
+.hub-gether-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.hub-gether-badge{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#8b6d1f;background:rgba(227,178,60,.16);padding:4px 10px;border-radius:100px}
+.hub-gether-row{display:flex;gap:28px;flex-wrap:wrap;margin-top:18px}
+.hub-gether-item{flex:1;min-width:130px;text-align:center;padding:16px 10px;background:#fff;border-radius:16px}
+.hub-gether-num{font-size:30px;font-weight:300;letter-spacing:-.01em}
+.hub-gether-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8b909b;margin-top:6px;font-weight:500}
+.hub-card-sub{font-size:12px;font-weight:400;color:#8b909b;margin-top:14px}
+.hub-tooltip{position:fixed;max-width:240px;background:#20242b;color:#fff;font-size:12px;font-weight:400;line-height:1.5;padding:12px 15px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:80;display:none}
+.hub-tooltip.show{display:block}
+@media(max-width:820px){.hub-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.hub-grid{grid-template-columns:1fr}.hub-gether-item{min-width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hub-title">Consultation Hub</div>
+  <div class="hub-sub">Project Overview</div>
+</header>
+<div class="hub-grid">
+  <div class="hub-card hub-tile-gether" id="hub-gether-card">
+    <button class="hub-info-btn" data-info="Letters of support sent via Gether, and Meta ad reach/spend for this project&#8217;s promoted posts. Demo data for now &#8212; will connect to Gether&#8217;s SharePoint list and Meta reporting once wired up.">i</button>
+    <div class="hub-gether-head">
+      <div class="hub-card-label">Gether Engagement</div>
+      <span class="hub-gether-badge" id="hub-gether-badge">Demo data</span>
+    </div>
+    <div class="hub-gether-row" id="hub-gether-row">
+      <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-letters">&mdash;</div><div class="hub-gether-lbl">Letters Sent</div></div>
+      <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-reach">&mdash;</div><div class="hub-gether-lbl">Meta Reach</div></div>
+      <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-spend">&mdash;</div><div class="hub-gether-lbl">Meta Spend</div></div>
+    </div>
+    <div class="hub-card-sub" id="hub-gether-note">Connect Gether&#8217;s SharePoint list to make this live</div>
+  </div>
+</div>
+<div id="hub-tooltip" class="hub-tooltip"></div>
+<script>
+// Set to a Power Automate HTTP-trigger flow URL returning
+// {"lettersSent":0,"metaReach":0,"metaSpend":0} once Gether's SharePoint list is connected.
+var GETHER_URL = "";
+
+function loadGether(){
+  if(!GETHER_URL){
+    document.getElementById("hub-gether-letters").textContent = "128";
+    document.getElementById("hub-gether-reach").textContent = "24.5k";
+    document.getElementById("hub-gether-spend").textContent = "£860";
+    return;
+  }
+  document.getElementById("hub-gether-badge").style.display = "none";
+  document.getElementById("hub-gether-note").textContent = "";
+  fetch(GETHER_URL).then(function(r){ return r.json(); }).then(function(d){
+    document.getElementById("hub-gether-letters").textContent = (d.lettersSent!=null ? d.lettersSent : "—").toLocaleString ? d.lettersSent.toLocaleString() : d.lettersSent;
+    document.getElementById("hub-gether-reach").textContent = d.metaReach!=null ? d.metaReach.toLocaleString() : "—";
+    document.getElementById("hub-gether-spend").textContent = d.metaSpend!=null ? "£"+d.metaSpend.toLocaleString() : "—";
+  }).catch(function(){
+    document.getElementById("hub-gether-letters").textContent = "Could not load";
+    document.getElementById("hub-gether-reach").textContent = "Could not load";
+    document.getElementById("hub-gether-spend").textContent = "Could not load";
+  });
+}
+loadGether();
+
+document.querySelectorAll(".hub-info-btn").forEach(function(btn){
+  btn.addEventListener("click", function(e){
+    e.stopPropagation();
+    var tip = document.getElementById("hub-tooltip");
+    var already = tip.classList.contains("show") && tip.dataset.owner===btn.dataset.info;
+    if(already){ tip.classList.remove("show"); return; }
+    tip.textContent = btn.dataset.info;
+    tip.dataset.owner = btn.dataset.info;
+    var r = btn.getBoundingClientRect();
+    var left = Math.min(r.left, window.innerWidth - 256);
+    if(left<12) left = 12;
+    tip.style.top = (r.bottom+8)+"px";
+    tip.style.left = left+"px";
+    tip.classList.add("show");
+  });
+});
+document.addEventListener("click", function(){ var tip=document.getElementById("hub-tooltip"); if(tip) tip.classList.remove("show"); });
+</script>
+</body>
+</html>
