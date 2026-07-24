@@ -264,7 +264,7 @@ var SQ_URL = "";
 var GETHER_URL = "";
 
 // Set once the Stakeholders SharePoint list + read flow is live: returns
-// an array of {id, name, organisation, shType, priority, owner, profilePhoto}
+// an array of {id, name, organisation, shType, priority, owner, profilePicture}
 // id must be the SharePoint item ID (add "id: ID" to the flow's Select
 // step) — it's what links each row through to their profile page.
 var STAKEHOLDERS_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/02/workflows/5c3e2957a6bd4a5ea5e380fce761041c/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=8OyE0iTBE2SIvXdYmSsTQC9nGN-BWLUfu7QNFurs61E";
@@ -555,8 +555,8 @@ function renderStakeholders(rows, isDemo){
   if(!rows.length){ list.innerHTML = "<div class=\"hub-stake-empty\">No stakeholders logged yet.</div>"; return; }
   list.innerHTML = rows.map(function(r){
     var pr = (r.priority||"").toLowerCase();
-    var photoUrl = pickPhotoUrl(r.profilePhoto);
-    var cells = "<div>"+avatarHtml(r.profilePhoto, r.name)+"</div>"
+    var photoUrl = pickPhotoUrl(r.profilePicture);
+    var cells = "<div>"+avatarHtml(r.profilePicture, r.name)+"</div>"
       + "<div class=\"hub-stake-name\">"+(r.name||"")+"</div>"
       + "<div class=\"hub-stake-org\">"+(r.organisation||"")+"</div>"
       + "<div><span class=\"hub-stake-type\">"+(r.shType||"")+"</span></div>"
