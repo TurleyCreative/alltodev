@@ -591,7 +591,7 @@ var ICON_CATEGORIES = {
 var DEF = {
   name:'Site Consultation', siteTitle:'Development Site', siteSubtitle:'Northern Quarter, Manchester',
   mapboxToken:'', mapboxStyle:'mapbox://styles/mapbox/dark-v11',
-  sheetdbUrl:'', questionsSheetdbUrl:'', companyName:'Your Company', companyTagline:'Planning & Design Consultants',
+  sheetdbUrl:'', sheetdbReadUrl:'', questionsSheetdbUrl:'', questionsReadUrl:'', companyName:'Your Company', companyTagline:'Planning & Design Consultants',
   companyInitials:'YC', companyLogoUrl:'',
   clientName:'', clientLogoUrl:'', clientAbout:'',
   appLogoUrl:'', appAbout:'', appPrivacy:'', accessibilityStatement:'',
@@ -614,14 +614,16 @@ var DEF = {
   zoneGroups:[],
   lines:[],
   lineGroups:[],
-  codesignEnabled:false, codesignSheetdbUrl:'',
+  codesignEnabled:false, codesignSheetdbUrl:'', codesignReadUrl:'',
   codesignOptions:[
     {id:'lib',label:'Library',color:'#2255aa',icon:'book-open'},
     {id:'caf',label:'Café',color:'#c0392b',icon:'coffee'},
     {id:'work',label:'Workspace',color:'#d4820a',icon:'briefcase'},
     {id:'gal',label:'Gallery',color:'#8b5cf6',icon:'palette'},
     {id:'res',label:'Restaurant',color:'#2a7c6b',icon:'utensils'}
-  ]
+  ],
+  dashboardEnabled:false, dashboardPassword:'', dashboardApprovedEmails:'', dashboardCatchupUrl:'', gaRelayUrl:'',
+  dashboardFooterText:'This dashboard is provided for internal review only and is not indexed by search engines. Figures are aggregated from consultation activity and contain no personally identifiable information. By accessing this page you agree to our Terms & Conditions and Privacy Policy.'
 };
 
 // Backfills every field that might be missing on a project saved by an older version
@@ -644,6 +646,15 @@ function migrateProject(data) {
   (data.lines||[]).forEach(function(ln){ if(ln.groupId===undefined) ln.groupId=null; });
   if(data.codesignEnabled===undefined) data.codesignEnabled=false;
   if(data.codesignSheetdbUrl===undefined) data.codesignSheetdbUrl='';
+  if(data.codesignReadUrl===undefined) data.codesignReadUrl='';
+  if(data.sheetdbReadUrl===undefined) data.sheetdbReadUrl='';
+  if(data.questionsReadUrl===undefined) data.questionsReadUrl='';
+  if(data.dashboardEnabled===undefined) data.dashboardEnabled=false;
+  if(data.dashboardPassword===undefined) data.dashboardPassword='';
+  if(data.dashboardApprovedEmails===undefined) data.dashboardApprovedEmails='';
+  if(data.dashboardCatchupUrl===undefined) data.dashboardCatchupUrl='';
+  if(data.gaRelayUrl===undefined) data.gaRelayUrl='';
+  if(data.dashboardFooterText===undefined) data.dashboardFooterText=DEF.dashboardFooterText;
   if(!data.codesignOptions) data.codesignOptions=JSON.parse(JSON.stringify(DEF.codesignOptions));
   data.zones.forEach(function(z){ if(z.codesign===undefined) z.codesign=false; });
   if(data.companyLogoUrl === undefined) data.companyLogoUrl = '';
@@ -686,7 +697,7 @@ var pMap = null, pReady = false, pCtxMarkers = [];
 var isDirty = false;       // unsaved changes
 var lastSaved = null;      // timestamp of last save
 var mainTab = 'editor';
-var APP_VERSION = '1.0.0';
+var APP_VERSION = '1.0.1';
 var APP_STAGE = 'Preview version';
 
 // Load from URL ?p= param
@@ -1354,7 +1365,9 @@ function renderOverlayEditor(i) {
   html += '<div class="rs"><div class="st">Image</div>';
   html += fld('Name','ov-name',h(ov.name||''));
   html += '<div class="f"><label class="fl">Image URL <span style="font-size:9px;color:var(--ghost);font-family:var(--mono)">PNG with transparency recommended</span></label>';
-  html += '<input type="text" id="ov-url" value="'+h(ov.url||'')+'" placeholder="https://... (.png, .jpg, .webp)"/>' + imageUploadRowHTML('ov-url') + '</div>';
+  html += '<input type="text" id="ov-url" value="'+h(ov.url||'')+'" placeholder="https://... (.png, .jpg, .webp)"/>' + imageUploadRowHTML('ov-url')
+    + '<div class="nt" style="margin-top:6px">Prefer <b style="color:var(--ink)">Upload image</b> over pasting a URL — it auto-resizes to a safe size. A pasted URL skips that, and large images (common with high-res masterplan exports) can render fine on desktop but fail silently on mobile, especially iOS Safari, which has much tighter texture-size limits. If you must use a URL, keep the image under ~2000–2400px on its longest side.</div>'
+    + '</div>';
   html += '<div class="f"><label class="fl">Opacity</label>'+rng('ov-op','Opacity',0,1,0.05,ov.opacity||0.85,'')+'</div>';
   html += '</div>';
   html += '<div class="rs"><div class="st">Visible on scenes</div>';
@@ -2185,7 +2198,7 @@ function renderOnboarding() {
     {done: P.redLine.coordinates.length>3, num:'3', label:'Draw your red line',       hint:'Draw on geojson.io > Settings > Red Line Boundary > paste'},
     {done: P.scenes.length > 1,            num:'4', label:'Add your scenes',          hint:'Scenes tab > use Quick Presets to set up each scene'},
     {done: P.markers.length > 0,           num:'5', label:'Place context markers',    hint:'Markers tab > add markers and click the map to place'},
-    {done: P.sheetdbUrl.length > 0,        num:'6', label:'Connect SheetDB feedback', hint:'Settings > Have Your Say > follow the setup guide'},
+    {done: P.sheetdbUrl.length > 0,        num:'6', label:'Connect feedback map storage', hint:'Settings > Have Your Say > paste your Power Automate submit/read URLs'},
   ]
   var done = steps.filter(function(s){return s.done;}).length;
   var html = '<div class="rh"><div class="re">Getting started</div><div class="rt">Setup checklist</div></div>';
@@ -2311,7 +2324,7 @@ function renderRightPanel() {
     html += '</div>';
   });
   html += '<button type="button" class="btn btn-g" id="sc-q-add" style="width:100%;margin-bottom:6px">+ Add question</button>';
-  if(sqs.length) html += '<div class="nt">Answers post to the Scene Questions SheetDB URL (Settings), tagged with this scene\'s label and a per-visitor ID so you can match up everything one person answered.</div>';
+  if(sqs.length) html += '<div class="nt">Answers post to the Scene Questions submit URL (Settings), tagged with this scene\'s label and a per-visitor ID so you can match up everything one person answered.</div>';
   html += '<div class="f"><label class="fl">Map explanation <span style="font-size:9px;color:var(--ghost);font-family:var(--mono);font-weight:400;margin-left:4px">for the "Explain what is being shown" button</span></label>'
     + '<textarea id="sc-map-explainer" placeholder="Describe in plain language what this view of the map is showing and why it matters — this is read aloud by screen readers.">'+h(sc.mapExplainer||'')+'</textarea></div>';
   html += '<div class="nt">Leave blank to hide the "Explain what is being shown on the map" button on this scene.</div>';
@@ -3130,30 +3143,30 @@ function renderSettings() {
   html += '<div class="f"><label class="fl">Coordinates JSON</label><textarea id="cfg-rl" style="min-height:110px;font-size:10px">'+h(JSON.stringify(P.redLine.coordinates,null,1))+'</textarea></div>';
   html += '</div>';
   html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('map-pin',14,'currentColor')+'Have Your Say</span></div>';
-  html += '<div class="nt" style="margin-bottom:12px"><b style="color:var(--ink)">Setup guide:</b><br>'
-    + '1. Create a Google Sheet with columns: <code>id | lat | lng | category | comment | timestamp</code><br>'
-    + '2. Go to <a href="https://sheetdb.io" target="_blank">sheetdb.io</a> &rarr; connect your sheet &rarr; copy the API URL<br>'
-    + '3. Paste the URL below and click Test</div>';
-  html += '<div class="f"><label class="fl">SheetDB API URL</label>'
+  html += '<div class="nt" style="margin-bottom:12px">Two Power Automate flows: <b>submit</b> receives new pins, <b>read</b> returns existing ones for the live map. Paste the submit-flow URL and the read-flow URL your admin gave you into the two fields below, then click Test on each.</div>';
+  html += '<div class="f"><label class="fl">Submit URL</label>'
     + '<div style="display:flex;gap:6px">'
-    + '<input type="text" id="cfg-sdb" value="'+h(P.sheetdbUrl)+'" placeholder="https://sheetdb.io/api/v1/..."/>'
+    + '<input type="text" id="cfg-sdb" value="'+h(P.sheetdbUrl)+'" placeholder="Your Power Automate submit-flow URL"/>'
     + '<button class="btn btn-g" id="btn-test-sdb" style="white-space:nowrap;flex-shrink:0">Test</button>'
     + '</div>'
     + '<div id="sdb-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
+    + '</div>';
+  html += '<div class="f"><label class="fl">Read URL</label>'
+    + '<div style="display:flex;gap:6px">'
+    + '<input type="text" id="cfg-sdb-read" value="'+h(P.sheetdbReadUrl||'')+'" placeholder="Your Power Automate read-flow URL"/>'
+    + '<button class="btn btn-g" id="btn-test-sdb-read" style="white-space:nowrap;flex-shrink:0">Test</button>'
+    + '</div>'
+    + '<div id="sdb-read-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
     + '</div>';
   html += '<div class="f"><label class="fl">Disable feedback (hide Have Your Say scene)</label>'
     + '<div class="lr"><span class="ll">Leave blank to disable feedback entirely</span></div>'
     + '</div>';
   html += '</div>';
   html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('message-circle',14,'currentColor')+'Scene Questions</span></div>';
-  html += '<div class="nt" style="margin-bottom:12px">Add an optional question to any scene (Scene editor &gt; Content &gt; Question). Answers post here — use a <b>separate</b> sheet from Have Your Say, since the columns are different.<br><br>'
-    + '<b style="color:var(--ink)">Setup guide:</b><br>'
-    + '1. Create a Google Sheet with columns: <code>id | visitorId | sceneLabel | questionText | questionType | answer | timestamp</code><br>'
-    + '2. Go to <a href="https://sheetdb.io" target="_blank">sheetdb.io</a> &rarr; connect your sheet &rarr; copy the API URL<br>'
-    + '3. Paste the URL below and click Test</div>';
-  html += '<div class="f"><label class="fl">SheetDB API URL</label>'
+  html += '<div class="nt" style="margin-bottom:12px">Add an optional question to any scene (Scene editor &gt; Content &gt; Question). Answers post here — use a <b>separate</b> Power Automate flow / SharePoint list from Have Your Say, since the columns are different. Submit-only — no read URL needed.</div>';
+  html += '<div class="f"><label class="fl">Submit URL</label>'
     + '<div style="display:flex;gap:6px">'
-    + '<input type="text" id="cfg-sq-sdb" value="'+h(P.questionsSheetdbUrl||'')+'" placeholder="https://sheetdb.io/api/v1/..."/>'
+    + '<input type="text" id="cfg-sq-sdb" value="'+h(P.questionsSheetdbUrl||'')+'" placeholder="Your Power Automate submit-flow URL"/>'
     + '<button class="btn btn-g" id="btn-test-sq-sdb" style="white-space:nowrap;flex-shrink:0">Test</button>'
     + '</div>'
     + '<div id="sq-sdb-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
@@ -3164,16 +3177,20 @@ function renderSettings() {
   html += '<div class="nt" style="margin-bottom:12px">Let visitors click plots you\'ve marked as co-design zones and pick a use for them (library, café, workspace, etc). Plots recolour live as they experiment. Nothing is saved until they hit "Submit your picks" — that sends everything they\'ve chosen to your sheet in one go and resets the map, so the next person can have a go too.</div>';
   html += '<div class="lr" style="margin-bottom:12px"><span class="ll">Enable co-design</span><button class="tg'+(P.codesignEnabled?' on':'')+'" id="cfg-cd-tog"></button></div>';
   if(P.codesignEnabled) {
-    html += '<div class="nt" style="margin-bottom:12px"><b style="color:var(--ink)">Setup guide:</b><br>'
-      + '1. Create a Google Sheet with columns: <code>id | submissionId | visitorId | zoneId | zoneName | choice | timestamp</code><br>'
-      + '2. Go to <a href="https://sheetdb.io" target="_blank">sheetdb.io</a> &rarr; connect your sheet &rarr; copy the API URL<br>'
-      + '3. Paste the URL below and click Test</div>';
-    html += '<div class="f"><label class="fl">SheetDB API URL</label>'
+    html += '<div class="nt" style="margin-bottom:12px">Two Power Automate flows: <b>submit</b> receives picks, <b>read</b> returns everyone\'s picks for the results chart.</div>';
+    html += '<div class="f"><label class="fl">Submit URL</label>'
       + '<div style="display:flex;gap:6px">'
-      + '<input type="text" id="cfg-cd-sdb" value="'+h(P.codesignSheetdbUrl)+'" placeholder="https://sheetdb.io/api/v1/..."/>'
+      + '<input type="text" id="cfg-cd-sdb" value="'+h(P.codesignSheetdbUrl)+'" placeholder="Your Power Automate submit-flow URL"/>'
       + '<button class="btn btn-g" id="btn-test-cd-sdb" style="white-space:nowrap;flex-shrink:0">Test</button>'
       + '</div>'
       + '<div id="cd-sdb-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
+      + '</div>';
+    html += '<div class="f"><label class="fl">Read URL</label>'
+      + '<div style="display:flex;gap:6px">'
+      + '<input type="text" id="cfg-cd-sdb-read" value="'+h(P.codesignReadUrl||'')+'" placeholder="Your Power Automate read-flow URL"/>'
+      + '<button class="btn btn-g" id="btn-test-cd-sdb-read" style="white-space:nowrap;flex-shrink:0">Test</button>'
+      + '</div>'
+      + '<div id="cd-sdb-read-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
       + '</div>';
     html += '<div class="f"><label class="fl">Use options</label>';
     html += '<div class="nt" style="margin-bottom:8px">Click the circle to pick an icon — shown as a badge on the plot once picked, in the picker, and in the results legend.</div>';
@@ -3192,6 +3209,42 @@ function renderSettings() {
     html += '<button class="btn btn-g btn-ic" id="btn-cd-add-opt" style="width:100%;justify-content:center;margin-top:4px">'+lucideSVG('plus',13,'currentColor')+'Add option</button>';
     html += '</div>';
     html += '<div class="nt" style="margin-top:12px">Then: (1) on each plot you want voteable, open it under Constraint Zones and turn on "Include in co-design voting"; (2) on the scene where you want visitors to submit and see results, open it under Scenes and turn on "Co-Design" — that adds the Submit/Results prompts to that scene\'s text panel instead of floating over the map everywhere. Each submission writes one row per plot the visitor picked, all sharing the same <code>submissionId</code>, so you can group everything one person submitted in one go — and since the map resets after each submit, several people can use the same device in turn.</div>';
+  }
+  html += '</div>';
+  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('gauge',14,'currentColor')+'Client Dashboard</span></div>';
+  html += '<div class="nt" style="margin-bottom:12px">A simple, password-gated overview page for your client — response counts, sentiment, and the co-design results chart. Exports as its own separate HTML file, independent of the main site.</div>';
+  html += '<div class="lr" style="margin-bottom:12px"><span class="ll">Enable client dashboard</span><button class="tg'+(P.dashboardEnabled?' on':'')+'" id="cfg-dash-tog"></button></div>';
+  if(P.dashboardEnabled) {
+    html += '<div class="f"><label class="fl">Password</label>'
+      + '<input type="text" id="cfg-dash-pw" value="'+h(P.dashboardPassword)+'" placeholder="Set a password for your client"/>'
+      + '<div class="nt" style="margin-top:6px">A simple gate to keep this off search engines and casual visitors — like the rest of this tool\'s data URLs, it\'s baked into the file and visible via view-source, so don\'t use it for anything genuinely sensitive.</div>'
+      + '</div>';
+    html += '<div class="f"><label class="fl">Approved emails (optional)</label>'
+      + '<textarea id="cfg-dash-emails" style="min-height:70px" placeholder="One email per line, or comma-separated">'+h(P.dashboardApprovedEmails||'')+'</textarea>'
+      + '<div class="nt" style="margin-top:6px">Leave blank to skip — anyone with the password gets in. Fill this in to also require an email from this list before the password is checked (still just a front-end check, same caveat as the password above).</div>'
+      + '</div>';
+    html += '<div class="f"><label class="fl">"Book a catch up" link (optional)</label>'
+      + '<input type="text" id="cfg-dash-catchup" value="'+h(P.dashboardCatchupUrl||'')+'" placeholder="Booking link or mailto:you@company.com"/>'
+      + '<div class="nt" style="margin-top:6px">Shown as a button under the sentiment score only when it needs attention. Leave blank to hide the button (the message still shows).</div>'
+      + '</div>';
+    html += '<div class="f"><label class="fl">Scene Questions — Read URL</label>'
+      + '<div style="display:flex;gap:6px">'
+      + '<input type="text" id="cfg-dash-sq-read" value="'+h(P.questionsReadUrl||'')+'" placeholder="Your Power Automate read-flow URL"/>'
+      + '<button class="btn btn-g" id="btn-test-dash-sq-read" style="white-space:nowrap;flex-shrink:0">Test</button>'
+      + '</div>'
+      + '<div id="dash-sq-read-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
+      + '<div class="nt" style="margin-top:6px">Needs its own read flow — Scene Questions only has a submit endpoint elsewhere in this tool, since the public site itself never reads its answers back.</div>'
+      + '</div>';
+    html += '<div class="nt" style="margin-bottom:12px">Have Your Say and Co-Design feed the dashboard from the Read URLs already set further up this panel — nothing extra to configure for those two.</div>';
+    html += '<div class="f"><label class="fl">Footer text (GDPR / Terms &amp; Conditions)</label>'
+      + '<textarea id="cfg-dash-footer" style="min-height:70px" placeholder="Shown bottom-left of the dashboard, next to the allto logo">'+h(P.dashboardFooterText||'')+'</textarea>'
+      + '<div class="nt" style="margin-top:6px">Plain text only, shown small at the bottom of the dashboard next to the allto logo.</div>'
+      + '</div>';
+    html += '<div class="f"><label class="fl">Google Analytics relay URL</label>'
+      + '<input type="text" id="cfg-dash-ga" value="'+h(P.gaRelayUrl||'')+'" placeholder="Not built yet — leave blank"/>'
+      + '<div class="nt" style="margin-top:6px">Not wired up yet. The dashboard shows placeholder traffic numbers regardless of this field, until a GA4 relay is built (same idea as the SharePoint relays — GA4\'s API needs server-side credentials, not a plain URL).</div>'
+      + '</div>';
+    html += '<button class="btn btn-dl btn-ic" id="btn-export-dashboard" style="width:100%;justify-content:center;margin-top:4px">'+lucideSVG('download',13,'currentColor')+'Export Dashboard HTML</button>';
   }
   html += '</div>';
   html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('play',14,'currentColor')+'Entrance Animations</span></div>';
@@ -3311,6 +3364,7 @@ function renderSettings() {
   bindInputNum('cfg-lat', function(v){P.siteCentre[1]=v;});
   bindInput('cfg-pin', function(v){P.sitePinLabel=v;});
   bindInput('cfg-sdb', function(v){P.sheetdbUrl=v;});
+  bindInput('cfg-sdb-read', function(v){P.sheetdbReadUrl=v;});
   bindInput('cfg-sq-sdb', function(v){P.questionsSheetdbUrl=v;});
   // Colour pickers
   function applyPreviewCSSVars() {
@@ -3392,8 +3446,11 @@ function renderSettings() {
     markDirty();
   });
 
-  // SheetDB test button (shared by Have Your Say and Scene Questions)
-  function bindSdbTest(btnId, inputId, statusId) {
+  // Power Automate connection test button (shared across Have Your Say, Co-Design, Scene Questions)
+  // mode 'read' (default) probes with GET — for GET-only read flows.
+  // mode 'write' probes with an empty-batch POST ({"data":[]}) — needed for POST-only
+  // submit flows, since an empty data array loop creates nothing.
+  function bindSdbTest(btnId, inputId, statusId, mode) {
     var testBtn = el(btnId);
     if(!testBtn) return;
     testBtn.addEventListener('click', function() {
@@ -3401,10 +3458,16 @@ function renderSettings() {
       var status = el(statusId);
       if(!url) { if(status) status.innerHTML = '<span style="color:#c0392b">Enter a URL first</span>'; return; }
       if(status) status.innerHTML = '<span style="color:var(--ghost)">Testing...</span>';
-      fetch(url + '?limit=1')
-        .then(function(r) {
+      var req;
+      if(mode === 'write') {
+        req = fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({data:[]})});
+      } else {
+        var testUrl = url + (url.indexOf('?')===-1 ? '?limit=1' : '&limit=1');
+        req = fetch(testUrl);
+      }
+      req.then(function(r) {
           if(r.ok) {
-            if(status) status.innerHTML = '<span style="color:#2a7c6b" class="ico-h">'+lucideSVG('check',12,'#2a7c6b')+'Connected — SheetDB is working</span>';
+            if(status) status.innerHTML = '<span style="color:#2a7c6b" class="ico-h">'+lucideSVG('check',12,'#2a7c6b')+'Connected — working</span>';
           } else {
             if(status) status.innerHTML = '<span style="color:#c0392b" class="ico-h">'+lucideSVG('x',12,'#c0392b')+'Server returned ' + r.status + '</span>';
           }
@@ -3414,8 +3477,9 @@ function renderSettings() {
         });
     });
   }
-  bindSdbTest('btn-test-sdb', 'cfg-sdb', 'sdb-status');
-  bindSdbTest('btn-test-sq-sdb', 'cfg-sq-sdb', 'sq-sdb-status');
+  bindSdbTest('btn-test-sdb', 'cfg-sdb', 'sdb-status', 'write');
+  bindSdbTest('btn-test-sdb-read', 'cfg-sdb-read', 'sdb-read-status', 'read');
+  bindSdbTest('btn-test-sq-sdb', 'cfg-sq-sdb', 'sq-sdb-status', 'write');
 
   // Co-design / participatory budgeting
   var cdTog = el('cfg-cd-tog');
@@ -3424,7 +3488,9 @@ function renderSettings() {
     markDirty(); renderSettings();
   });
   bindInput('cfg-cd-sdb', function(v){ P.codesignSheetdbUrl=v; });
-  bindSdbTest('btn-test-cd-sdb', 'cfg-cd-sdb', 'cd-sdb-status');
+  bindInput('cfg-cd-sdb-read', function(v){ P.codesignReadUrl=v; });
+  bindSdbTest('btn-test-cd-sdb', 'cfg-cd-sdb', 'cd-sdb-status', 'write');
+  bindSdbTest('btn-test-cd-sdb-read', 'cfg-cd-sdb-read', 'cd-sdb-read-status', 'read');
   document.querySelectorAll('.cd-opt-color').forEach(function(inp){
     inp.addEventListener('input', function(){
       P.codesignOptions[parseInt(this.dataset.oi)].color = this.value;
@@ -3453,6 +3519,22 @@ function renderSettings() {
     P.codesignOptions.push({id:'co'+Date.now(),label:'New Use',color:'#888888',icon:''});
     markDirty(); renderSettings();
   });
+
+  // Client dashboard
+  var dashTog = el('cfg-dash-tog');
+  if(dashTog) dashTog.addEventListener('click', function(){
+    P.dashboardEnabled = !P.dashboardEnabled;
+    markDirty(); renderSettings();
+  });
+  bindInput('cfg-dash-pw', function(v){ P.dashboardPassword=v; });
+  bindTA('cfg-dash-emails', function(v){ P.dashboardApprovedEmails=v; });
+  bindInput('cfg-dash-catchup', function(v){ P.dashboardCatchupUrl=v; });
+  bindTA('cfg-dash-footer', function(v){ P.dashboardFooterText=v; });
+  bindInput('cfg-dash-sq-read', function(v){ P.questionsReadUrl=v; });
+  bindInput('cfg-dash-ga', function(v){ P.gaRelayUrl=v; });
+  bindSdbTest('btn-test-dash-sq-read', 'cfg-dash-sq-read', 'dash-sq-read-status', 'read');
+  var exportDashBtn = el('btn-export-dashboard');
+  if(exportDashBtn) exportDashBtn.addEventListener('click', downloadDashboardHTML);
 
   // Reset project
   var resetBtn = el('btn-reset-project');
@@ -4296,6 +4378,428 @@ function downloadHTML() {
   }
 }
 
+function downloadDashboardHTML() {
+  try {
+    if(!P.dashboardPassword) { alert('Set a password before exporting the dashboard.'); return; }
+    var html = buildDashboardHTML();
+    var fname = (P.name||'consultation').toLowerCase().replace(/\s+/g,'-') + '-dashboard.html';
+    var encoded = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+    var a = document.createElement('a');
+    a.href = encoded;
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch(err) {
+    console.error('Dashboard download failed:', err);
+    alert('Dashboard download failed: ' + err.message);
+  }
+}
+
+function buildDashboardHTML() {
+  var pwLit = JSON.stringify(P.dashboardPassword||'');
+  var fbUrlLit = JSON.stringify(P.sheetdbReadUrl || P.sheetdbUrl || '');
+  var cdUrlLit = JSON.stringify(P.codesignReadUrl || P.codesignSheetdbUrl || '');
+  var sqUrlLit = JSON.stringify(P.questionsReadUrl || '');
+  var approvedEmails = (P.dashboardApprovedEmails||'').split(/[\n,]/).map(function(e){return e.trim().toLowerCase();}).filter(Boolean);
+  var emailsLit = JSON.stringify(approvedEmails);
+  var requireEmail = approvedEmails.length > 0;
+  var catchupUrlLit = JSON.stringify(P.dashboardCatchupUrl||'');
+  var codesignEnabled = !!P.codesignEnabled;
+  var clientName = h(P.clientName || P.companyName || 'Client');
+  var siteTitle = h(P.siteTitle || P.name || 'Consultation');
+
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8"/>\n<meta name="viewport" content="width=device-width,initial-scale=1"/>\n'
+    + '<title>' + siteTitle + ' · Dashboard</title>\n'
+    + '<link rel="preconnect" href="https://fonts.googleapis.com"/>\n'
+    + '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>\n'
+    + '<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>\n'
+    + '<style>\n' + dashboardCSS() + '\n</style>\n'
+    + '</head>\n<body>\n'
+    + '<div id="dash-gate">\n'
+    + '  <form id="dash-gate-form">\n'
+    + '    <h1>' + siteTitle + '</h1>\n'
+    + '    <p>' + (requireEmail ? 'Enter your email and the password to view this dashboard.' : 'Enter the password to view this dashboard.') + '</p>\n'
+    + (requireEmail ? '    <input type="email" id="dash-email-input" autocomplete="off" placeholder="Email address"/>\n' : '')
+    + '    <input type="password" id="dash-pw-input" autocomplete="off" placeholder="Password"/>\n'
+    + '    <button type="submit">View Dashboard</button>\n'
+    + '    <div id="dash-gate-error"></div>\n'
+    + '  </form>\n'
+    + '</div>\n'
+    + '<div id="dash-content" style="display:none">\n'
+    + '  <header><div class="dash-header-row"><div><div class="dash-title">' + siteTitle + '</div><div class="dash-sub">' + clientName + ' · Engagement Overview</div></div><button class="dash-export-btn" id="dash-export-btn">Export Report</button></div></header>\n'
+    + '  <div class="dash-print-only" id="dash-print-date"></div>\n'
+    + '  <div class="dash-grid">\n'
+    + '    <div class="dash-card dash-tile-sentiment" id="dash-sentiment-card">'
+        + '<button class="dash-info-btn" data-info="Share of Have Your Say feedback pins marked as positive, based on category (Support = positive, Object = negative, Question/General = neutral). Bubble size shows each category\\u2019s share of responses.">i</button>'
+        + '<div class="dash-card-label">Overall Sentiment</div>'
+        + '<div class="dash-sentiment-row">'
+          + '<div class="dash-card-big" id="dash-sentiment-score">—</div>'
+          + '<div class="dash-sentiment-tag" id="dash-sentiment-tag"></div>'
+        + '</div>'
+        + '<svg class="dash-radial" viewBox="0 0 200 200" id="dash-radial-svg"></svg>'
+        + '<div class="dash-radial-legend" id="dash-radial-legend"></div>'
+        + '<div class="dash-card-sub" id="dash-sentiment-msg">From ' + '<span id="dash-sentiment-total">0</span> Have Your Say responses</div>'
+        + '<a class="dash-cta" id="dash-sentiment-cta" style="display:none" target="_blank" rel="noopener">Book a catch up</a>'
+      + '</div>\n'
+    + '    <div class="dash-card dash-tile-visitors">'
+        + '<button class="dash-info-btn" data-info="Total unique visits over the selected period. Placeholder data for now — connect a Google Analytics relay to make this live.">i</button>'
+        + '<div class="dash-card-label">Site Visitors</div>'
+        + '<div class="dash-range-group" id="dash-ga-range">'
+          + '<button class="dash-range-btn on" type="button" data-range="months">Months</button>'
+          + '<button class="dash-range-btn" type="button" data-range="days">Days</button>'
+          + '<button class="dash-range-btn" type="button" data-range="custom">Custom</button>'
+        + '</div>'
+        + '<div class="dash-range-custom" id="dash-ga-custom" style="display:none">'
+          + '<input type="date" id="dash-ga-from"/><span>–</span><input type="date" id="dash-ga-to"/>'
+          + '<button class="dash-range-apply" type="button" id="dash-ga-apply">Apply</button>'
+        + '</div>'
+        + '<div class="dash-card-big" id="dash-ga-total">—</div><div id="dash-ga-pill"></div><svg id="dash-ga-spark" viewBox="0 0 200 50" preserveAspectRatio="none"></svg>'
+      + '</div>\n'
+    + '    <div class="dash-card dash-tile-feedback">'
+        + '<button class="dash-info-btn" data-info="Total pins dropped on the Have Your Say map, split by sentiment category.">i</button>'
+        + '<div class="dash-card-label">Feedback Responses</div><div class="dash-card-big" id="dash-fb-total">—</div><div id="dash-fb-pill"></div><div class="dash-sentiment" id="dash-fb-sentiment"></div>'
+      + '</div>\n'
+    + (codesignEnabled ? '    <div class="dash-card dash-tile-codesign">'
+        + '<button class="dash-info-btn" data-info="How visitors would use the plots you\\u2019ve marked for Co-Design, ranked by total picks across all zones.">i</button>'
+        + '<div class="dash-card-label">Co-Design Picks</div><div class="dash-card-big" id="dash-cd-total">—</div><div class="dash-card-sub" id="dash-cd-sub">Total picks submitted</div>'
+        + '<div class="dash-cd-list" id="dash-cd-list"></div>'
+        + '<div class="dash-card-sub" id="dash-cd-status"></div>'
+      + '</div>\n' : '')
+    + '    <div class="dash-tile-questions dash-stack">'
+        + '<div class="dash-card dash-card-short">'
+          + '<button class="dash-info-btn" data-info="Total answers submitted across all scene questions on the site — individual answers aren\'t shown here, just the count.">i</button>'
+          + '<div class="dash-card-label">Scene Questions</div><div class="dash-card-big dash-split-num" id="dash-sq-total">—</div><div id="dash-sq-pill"></div>'
+        + '</div>'
+        + '<div class="dash-card dash-card-short">'
+          + '<button class="dash-info-btn" data-info="How many distinct visitors dropped at least one pin, versus the total number of pins submitted \\u2014 shows reach as well as volume.">i</button>'
+          + '<div class="dash-card-label">Unique Participants</div><div class="dash-card-big dash-split-num" id="dash-fb-unique">—</div><div class="dash-card-sub" id="dash-fb-unique-sub">Have Your Say visitors</div>'
+        + '</div>'
+      + '</div>\n'
+    + '  <div id="dash-tooltip" class="dash-tooltip"></div>\n'
+    + '  </div>\n'
+    + '  <footer class="dash-footer"><div class="dash-footer-text">' + h(P.dashboardFooterText||'') + '</div><img class="dash-footer-logo" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCAyNTMuODUgODUuMDIiPgogIDwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyOS44LjUsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiAyLjEuMSBCdWlsZCAyKSAgLS0+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5zdDAgewogICAgICAgIGZpbGw6ICNlNzc4NTE7CiAgICAgIH0KCiAgICAgIC5zdDEgewogICAgICAgIGZpbGw6ICNmZmY7CiAgICAgIH0KCiAgICAgIC5zdDIgewogICAgICAgIGZpbGw6ICNmN2FjYjA7CiAgICAgIH0KCiAgICAgIC5zdDMgewogICAgICAgIGZpbGw6ICM4MmMwZTk7CiAgICAgIH0KCiAgICAgIC5zdDQgewogICAgICAgIGZpbGw6ICNmM2JmNTc7CiAgICAgIH0KCiAgICAgIC5zdDUgewogICAgICAgIGZpbGw6ICM3OGJjNDM7CiAgICAgIH0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0zMS4xNyw1NC42M3YtOC4wNGMwLTguNi0yLjAxLTEzLjYzLTkuOTQtMTMuNjMtMy4zNSwwLTYuMzcuNzgtNi4zNywzLjY5LDAsLjQ1LjExLDEuMDEuMjIsMS41Nmg0LjI1Yy4zNCwxLjQ1LjY3LDMuMDIuNjcsNC4zNiwwLDQuNDctMi43OSw3LjcxLTguNiw3Ljcxcy04LjcxLTMuOTEtOC43MS04LjgzYzAtOC44Myw4LjA0LTE0Ljg2LDIyLjQ2LTE0Ljg2czIzLjM1LDUuMDMsMjMuMzUsMjEuMTF2MjMuMDFjMCw0LjAyLjIyLDUuOTIsMi41Nyw1LjkyLjg5LDAsMi4wMS0uMjIsMy42OS0uODlsMS41Niw1LjdjLTIuMTIsMS40NS03LjA0LDMuNTctMTIuNjIsMy41Ny03LjE1LDAtMTAuMTctMy4wMi0xMS41MS04LjM4LTIuMDEsMy42OS02LjI2LDguMzgtMTUuNzUsOC4zOC04Ljk0LDAtMTYuNDItMy45MS0xNi40Mi0xNC42MywwLTEyLjE4LDguNDktMTUuNzUsMjMuMjQtMTUuNzVoNy45M1pNMzEuMTcsNjcuMzd2LTYuOTNoLTQuMzZjLTcuMDQsMC05LjA1LDIuNzktOS4wNSw4LjYsMCw1LjI1LDEuNzksNy42LDYuMTQsNy42LDMuOCwwLDcuMjYtMi40Niw3LjI2LTkuMjdaIi8+CiAgPHBhdGggY2xhc3M9InN0NCIgZD0iTTg0Ljc5LDB2NzUuM2w3LjcxLjc4djcuNzFoLTMyLjUxdi03LjcxbDcuNDktLjc4VjkuMTZsLTcuNDktLjc4Vi44OWwyNC44LS44OVoiLz4KICA8cGF0aCBjbGFzcz0ic3QzIiBkPSJNMTIyLjEsMHY3NS4zbDcuNzEuNzh2Ny43MWgtMzIuNTF2LTcuNzFsNy40OS0uNzhWOS4xNmwtNy40OS0uNzhWLjg5bDI0LjgtLjg5WiIvPgogIDxwYXRoIGNsYXNzPSJzdDUiIGQ9Ik0xNDAuNjUsMzYuMzFoLTguMzh2LTguNDloOC4zOHYtMTMuOTZsMTAuOTUtMi4yM2g2LjM3djE2LjJoMTQuOTd2OC40OWgtMTQuOTd2MzIuMDZjMCw1LjAzLDEuNDUsNy40OSw1LjM2LDcuNDksNC4xMywwLDYuMTQtMy42OSw4LjM4LTExLjg0bDYuNDgsMS42OGMtMi4xMiwxMi4yOS03LjgyLDE5LjMzLTIwLDE5LjMzLTExLjE3LDAtMTcuNTQtNC42OS0xNy41NC0xNi45OHYtMzEuNzNaIi8+CiAgPHBhdGggY2xhc3M9InN0MiIgZD0iTTIwOS45MiwyNi41OWMyMCwwLDI4LjE1LDEyLjA3LDI4LjE1LDI5LjA1cy05LjYxLDI5LjM4LTI4LjgyLDI5LjM4LTI4LjM4LTExLjk1LTI4LjM4LTI4LjkzLDEwLjA1LTI5LjQ5LDI5LjA1LTI5LjQ5Wk0yMDkuMzYsMzMuNGMtOC4zOCwwLTEwLjE3LDguMDQtMTAuMTcsMjEuOSwwLDE0Ljk3LDEuNzksMjIuNzksMTAuNSwyMi43OSw4LjE2LDAsMTAuMDUtNy45MywxMC4wNS0yMi4wMXMtMS41Ni0yMi42OC0xMC4zOS0yMi42OFoiLz4KICA8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMjM2LjYsMjUuMDJsLTUuMzktNC4zMSw1LjI0LTYuMjUtNy43Ni0xLjgsMi4xNS02LjgzLDcuNTUsMy4wMi0uODctOC40MWg3LjU1bC0uOTQsOC40MSw3LjU1LTMuMDIsMi4xNSw2LjgzLTcuNjksMS44LDUuMTcsNi4yNS01LjM5LDQuMzEtNC42Ny03LjMzLTQuNjcsNy4zM1oiLz4KPC9zdmc+" alt="allto*"/></footer>\n'
+    + '</div>\n'
+    + '<script>\n' + dashboardJS(pwLit, fbUrlLit, cdUrlLit, sqUrlLit, emailsLit, catchupUrlLit, codesignEnabled) + '\n<' + '/script>\n'
+    + '</body>\n</html>';
+}
+
+function dashboardCSS() {
+  return [
+    '*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}',
+    'body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;background:#fff;color:#20242b;min-height:100vh;-webkit-font-smoothing:antialiased}',
+    '#dash-gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}',
+    '#dash-gate-form{background:#fff;border-radius:20px;padding:40px 34px;width:100%;max-width:360px;box-shadow:0 12px 40px rgba(28,40,64,.08);text-align:center}',
+    '#dash-gate-form h1{font-size:20px;font-weight:500;margin-bottom:8px}',
+    '#dash-gate-form p{font-size:13px;font-weight:400;color:#767c88;margin-bottom:20px}',
+    '#dash-pw-input,#dash-email-input{width:100%;padding:12px 14px;border:1px solid #e3e6ea;border-radius:10px;font-family:inherit;font-size:14px;margin-bottom:12px;background:#f8f9fb}',
+    '#dash-gate-form button{width:100%;padding:12px;border:none;border-radius:10px;background:#20242b;color:#fff;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer}',
+    '#dash-gate-error{color:#c0392b;font-size:12px;margin-top:10px;min-height:14px}',
+    'header{max-width:1080px;margin:0 auto;padding:44px 24px 12px}',
+    '.dash-title{font-size:26px;font-weight:500;letter-spacing:-.01em}',
+    '.dash-sub{font-size:12px;font-weight:500;color:#8b909b;margin-top:6px;text-transform:uppercase;letter-spacing:.08em}',
+    '.dash-header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}',
+    '.dash-export-btn{padding:11px 20px;border:1px solid #dcdfe3;border-radius:100px;background:#fff;color:#20242b;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer}',
+    '.dash-export-btn:hover{background:#f2f3f5}',
+    '.dash-print-only{display:none}',
+    '.dash-grid{max-width:1080px;margin:0 auto;padding:16px 24px 56px;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:min-content;gap:18px}',
+    '.dash-card{position:relative;background:#f2f3f5;border-radius:24px;padding:30px 32px;grid-column:span 1;display:flex;flex-direction:column}',
+    '.dash-tile-sentiment{grid-column:1;grid-row:1 / span 2}',
+    '.dash-tile-visitors{grid-column:2;grid-row:1}',
+    '.dash-tile-feedback{grid-column:3;grid-row:1}',
+    '.dash-tile-codesign{grid-column:2;grid-row:2}',
+    '.dash-tile-questions{grid-column:3;grid-row:2}',
+    '.dash-card-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8b909b;font-weight:600;margin-bottom:16px}',
+    '.dash-card-big{font-size:60px;font-weight:300;line-height:1;letter-spacing:-.02em}',
+    '.dash-sentiment-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}',
+    '.dash-card-sub{font-size:13px;font-weight:400;color:#8b909b;margin-top:12px}',
+    '.dash-range-group{display:flex;gap:3px;margin:-6px 0 14px;background:#e7e9ec;border-radius:100px;padding:3px;width:max-content;max-width:100%}',
+    '.dash-range-btn{border:none;background:transparent;font-family:inherit;font-size:10.5px;font-weight:600;color:#6b7078;padding:5px 10px;border-radius:100px;cursor:pointer;white-space:nowrap}',
+    '.dash-range-btn.on{background:#fff;color:#20242b;box-shadow:0 1px 3px rgba(28,40,64,.12)}',
+    '.dash-range-custom{display:flex;align-items:center;gap:6px;margin-bottom:14px}',
+    '.dash-range-custom input[type=date]{font-family:inherit;font-size:11px;border:1px solid #dcdfe3;border-radius:8px;padding:5px 6px;background:#fff;color:#20242b;flex:1;min-width:0}',
+    '.dash-range-custom span{font-size:11px;color:#8b909b;flex-shrink:0}',
+    '.dash-range-apply{border:none;background:#20242b;color:#fff;font-family:inherit;font-size:10.5px;font-weight:600;padding:6px 10px;border-radius:8px;cursor:pointer;flex-shrink:0}',
+    '#dash-ga-spark{width:100%;height:52px;margin-top:auto}',
+    '#dash-ga-spark polyline{stroke:#3a8f6f}',
+    '.dash-tile-visitors{min-height:200px}',
+    '.dash-stack{display:flex;flex-direction:column;gap:18px}',
+    '.dash-card-short{flex:1;padding:22px 26px;min-height:0}',
+    '.dash-card-short .dash-card-label{margin-bottom:10px}',
+    '.dash-split-num{font-size:36px}',
+    '#dash-sq-pill,#dash-fb-unique-sub{margin-top:auto}',
+    '.dash-pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:100px;background:rgba(58,143,111,.12);color:#2f6f52;margin-top:12px}',
+    '.dash-sentiment{display:flex;gap:16px;margin-top:auto;padding-top:20px}',
+    '.dash-sentiment-item{flex:1;text-align:center}',
+    '.dash-sentiment-num{font-size:26px;font-weight:500}',
+    '.dash-sentiment-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8b909b;margin-top:4px;font-weight:500}',
+    '.dash-sentiment-pos .dash-sentiment-num{color:#3a8f6f}',
+    '.dash-sentiment-neg .dash-sentiment-num{color:#5b616b}',
+    '.dash-sentiment-neu .dash-sentiment-num{color:#a7abb3}',
+    '.dash-sentiment-tag{font-size:13px;font-weight:500;padding:6px 14px;border-radius:100px;background:#fff}',
+    '.dash-radial{display:block;width:100%;max-width:230px;margin:8px auto 0;flex:1;min-height:0}',
+    '.dash-radial-legend{display:flex;flex-wrap:wrap;gap:14px 22px;margin-top:8px;justify-content:center}',
+    '.dash-radial-legend-item{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:#3a3f47}',
+    '.dash-radial-legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}',
+    '.dash-radial-legend-count{color:#8b909b;font-weight:400}',
+    '.tone-positive .dash-sentiment-tag{color:#2f6f52}',
+    '.tone-mixed .dash-sentiment-tag{color:#6b7280}',
+    '.tone-attention .dash-sentiment-tag{color:#5b616b}',
+    '.dash-cta{display:none;margin-top:16px;text-align:center;padding:12px;border-radius:100px;background:#3a8f6f;color:#fff;font-size:13px;font-weight:500;text-decoration:none}',
+    '.dash-info-btn{position:absolute;top:22px;right:22px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(18,40,64,.08);color:#5b616b;font-size:11px;font-weight:700;font-style:italic;font-family:Georgia,"Times New Roman",serif;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0}',
+    '.dash-tooltip{position:fixed;max-width:240px;background:#20242b;color:#fff;font-size:12px;font-weight:400;line-height:1.5;padding:12px 15px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:80;display:none}',
+    '.dash-tooltip.show{display:block}',
+    '.dash-cd-list{margin-top:16px;display:flex;flex-direction:column;gap:10px}',
+    '.dash-cd-row{display:grid;grid-template-columns:88px 1fr 34px;align-items:center;gap:10px}',
+    '.dash-cd-row-label{font-size:12px;font-weight:500;color:#3a3f47;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.dash-cd-row-track{height:8px;border-radius:100px;background:#dcdfe3;overflow:hidden}',
+    '.dash-cd-row-fill{height:100%;border-radius:100px}',
+    '.dash-cd-row-count{font-size:12px;font-weight:600;color:#5b616b;text-align:right}',
+    '.dash-footer{max-width:1080px;margin:0 auto;padding:20px 24px 40px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid #e3e6ea}',
+    '.dash-footer-text{font-size:11px;line-height:1.5;color:#9aa0aa;max-width:640px}',
+    '.dash-footer-logo{height:16px;width:auto;flex-shrink:0;opacity:.7}',
+    '@media(max-width:560px){.dash-footer{flex-direction:column;align-items:flex-start}}',
+    '@media(max-width:820px){.dash-grid{grid-template-columns:repeat(2,1fr)}.dash-tile-sentiment{grid-column:1;grid-row:1/span 2}.dash-tile-visitors{grid-column:2;grid-row:1}.dash-tile-feedback{grid-column:2;grid-row:2}.dash-tile-codesign{grid-column:1;grid-row:3}.dash-tile-questions{grid-column:2;grid-row:3}}',
+    '@media(max-width:560px){.dash-grid{grid-template-columns:1fr}.dash-tile-sentiment,.dash-tile-visitors,.dash-tile-feedback,.dash-tile-codesign,.dash-tile-questions{grid-column:1;grid-row:auto}}',
+    '@media print{',
+    '  body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
+    '  .dash-export-btn,.dash-info-btn,.dash-tooltip,.dash-cta,.dash-range-group,.dash-range-custom{display:none!important}',
+    '  .dash-print-only{display:block;max-width:1080px;margin:0 auto;padding:0 24px;font-size:11px;color:#8b909b;text-transform:uppercase;letter-spacing:.08em}',
+    '  .dash-card{box-shadow:none;border:1px solid #e3e6ea;break-inside:avoid}',
+    '  .dash-grid{gap:14px}',
+    '  .dash-footer{break-inside:avoid}',
+    '}'
+  ].join('');
+}
+
+function dashboardJS(pwLit, fbUrlLit, cdUrlLit, sqUrlLit, emailsLit, catchupUrlLit, codesignEnabled) {
+  var lines = [];
+  lines.push('var DASH_PW = ' + pwLit + ';');
+  lines.push('var FB_URL = ' + fbUrlLit + ';');
+  lines.push('var CD_URL = ' + cdUrlLit + ';');
+  lines.push('var SQ_URL = ' + sqUrlLit + ';');
+  lines.push('var APPROVED_EMAILS = ' + emailsLit + ';');
+  lines.push('var CATCHUP_URL = ' + catchupUrlLit + ';');
+  lines.push('function renderRadial(pos, neu, neg, total){');
+  lines.push('  var svg = document.getElementById("dash-radial-svg");');
+  lines.push('  var legend = document.getElementById("dash-radial-legend");');
+  lines.push('  var NS = "http://www.w3.org/2000/svg";');
+  lines.push('  var items = [');
+  lines.push('    {label:"Positive", value:pos, color:"#3a8f6f", r:90},');
+  lines.push('    {label:"Neutral", value:neu, color:"#c7cbd1", r:68},');
+  lines.push('    {label:"Negative", value:neg, color:"#5b616b", r:46}');
+  lines.push('  ];');
+  lines.push('  var strokeW = 15;');
+  lines.push('  svg.innerHTML = "";');
+  lines.push('  items.forEach(function(it){');
+  lines.push('    var c = 2*Math.PI*it.r;');
+  lines.push('    var share = total>0 ? it.value/total : 0;');
+  lines.push('    var bg = document.createElementNS(NS,"circle");');
+  lines.push('    bg.setAttribute("cx","100"); bg.setAttribute("cy","100"); bg.setAttribute("r",it.r);');
+  lines.push('    bg.setAttribute("fill","none"); bg.setAttribute("stroke","#e9ebee"); bg.setAttribute("stroke-width",strokeW);');
+  lines.push('    svg.appendChild(bg);');
+  lines.push('    var fg = document.createElementNS(NS,"circle");');
+  lines.push('    fg.setAttribute("cx","100"); fg.setAttribute("cy","100"); fg.setAttribute("r",it.r);');
+  lines.push('    fg.setAttribute("fill","none"); fg.setAttribute("stroke",it.color); fg.setAttribute("stroke-width",strokeW);');
+  lines.push('    fg.setAttribute("stroke-linecap","round");');
+  lines.push('    fg.setAttribute("stroke-dasharray", c.toFixed(2));');
+  lines.push('    fg.setAttribute("stroke-dashoffset", (c*(1-share)).toFixed(2));');
+  lines.push('    fg.setAttribute("transform","rotate(-90 100 100)");');
+  lines.push('    svg.appendChild(fg);');
+  lines.push('  });');
+  lines.push('  legend.innerHTML = items.map(function(it){');
+  lines.push('    return "<div class=\\"dash-radial-legend-item\\"><span class=\\"dash-radial-legend-dot\\" style=\\"background:"+it.color+"\\"></span>"+it.label+" <span class=\\"dash-radial-legend-count\\">"+it.value+"</span></div>";');
+  lines.push('  }).join("");');
+  lines.push('}');
+  lines.push('function checkAuth(){ try{ return sessionStorage.getItem("allto_dash_auth")==="1"; }catch(e){ return false; } }');
+  lines.push('function setAuth(){ try{ sessionStorage.setItem("allto_dash_auth","1"); }catch(e){} }');
+  lines.push('function showDashboard(){ document.getElementById("dash-gate").style.display="none"; document.getElementById("dash-content").style.display="block"; loadAll(); }');
+  lines.push('var _printDateEl=document.getElementById("dash-print-date");');
+  lines.push('if(_printDateEl) _printDateEl.textContent = "Generated " + new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});');
+  lines.push('var _exportBtn=document.getElementById("dash-export-btn");');
+  lines.push('if(_exportBtn) _exportBtn.addEventListener("click", function(){ window.print(); });');
+  lines.push('Array.prototype.forEach.call(document.querySelectorAll(".dash-range-btn"), function(btn){');
+  lines.push('  btn.addEventListener("click", function(){');
+  lines.push('    Array.prototype.forEach.call(document.querySelectorAll(".dash-range-btn"), function(b){ b.classList.remove("on"); });');
+  lines.push('    btn.classList.add("on");');
+  lines.push('    gaRange = btn.getAttribute("data-range");');
+  lines.push('    var customEl = document.getElementById("dash-ga-custom");');
+  lines.push('    if(gaRange==="custom"){');
+  lines.push('      customEl.style.display="flex";');
+  lines.push('      var toEl=document.getElementById("dash-ga-to"), fromEl=document.getElementById("dash-ga-from");');
+  lines.push('      if(!toEl.value){ var now=new Date(); toEl.value=now.toISOString().slice(0,10); }');
+  lines.push('      if(!fromEl.value){ var past=new Date(Date.now()-13*86400000); fromEl.value=past.toISOString().slice(0,10); }');
+  lines.push('      loadGA();');
+  lines.push('    } else {');
+  lines.push('      customEl.style.display="none";');
+  lines.push('      loadGA();');
+  lines.push('    }');
+  lines.push('  });');
+  lines.push('});');
+  lines.push('var _gaApplyBtn=document.getElementById("dash-ga-apply");');
+  lines.push('if(_gaApplyBtn) _gaApplyBtn.addEventListener("click", loadGA);');
+  lines.push('if(checkAuth()){ showDashboard(); }');
+  lines.push('document.getElementById("dash-gate-form").addEventListener("submit", function(e){');
+  lines.push('  e.preventDefault();');
+  lines.push('  var emailInput = document.getElementById("dash-email-input");');
+  lines.push('  var email = emailInput ? emailInput.value.trim().toLowerCase() : "";');
+  lines.push('  var pw = document.getElementById("dash-pw-input").value;');
+  lines.push('  if(APPROVED_EMAILS.length && APPROVED_EMAILS.indexOf(email)===-1){');
+  lines.push('    document.getElementById("dash-gate-error").textContent = "That email isn\\u2019t on the approved list.";');
+  lines.push('    return;');
+  lines.push('  }');
+  lines.push('  if(DASH_PW && pw===DASH_PW){ setAuth(); showDashboard(); }');
+  lines.push('  else { document.getElementById("dash-gate-error").textContent = "Incorrect password."; }');
+  lines.push('});');
+  lines.push('function daysAgo(n){ return Date.now() - n*86400000; }');
+  lines.push('function parseTs(s){');
+  lines.push('  if(!s) return NaN;');
+  lines.push('  var m = /^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})\\s+(\\d{1,2}):(\\d{2}):(\\d{2})/.exec(s);');
+  lines.push('  if(m) return new Date(+m[3], +m[1]-1, +m[2], +m[4], +m[5], +m[6]).getTime();');
+  lines.push('  return Date.parse(s);');
+  lines.push('}');
+  lines.push('function countRecent(rows, days){');
+  lines.push('  var cutoff = daysAgo(days);');
+  lines.push('  return rows.filter(function(r){ var t = r && r.timestamp ? parseTs(r.timestamp) : NaN; return !isNaN(t) && t>=cutoff; }).length;');
+  lines.push('}');
+  lines.push('function renderPill(id, n, label){');
+  lines.push('  var el = document.getElementById(id);');
+  lines.push('  if(!el) return;');
+  lines.push('  el.innerHTML = n>0 ? "<span class=\\"dash-pill\\">+"+n+" "+label+"</span>" : "";');
+  lines.push('}');
+  lines.push('function loadAll(){ loadGA(); loadFeedback(); ' + (codesignEnabled ? 'loadCodesign(); ' : '') + 'loadQuestions(); }');
+  lines.push('var gaRange = "months";');
+  lines.push('function gaDataset(range, customDays){');
+  lines.push('  if(range==="days"){');
+  lines.push('    var vals=[]; for(var i=0;i<30;i++){ vals.push(Math.round(60 + Math.sin(i/3)*16 + i*1.6 + (i%5)*4)); }');
+  lines.push('    return {vals:vals, pillText:"+8% vs yesterday"};');
+  lines.push('  }');
+  lines.push('  if(range==="custom"){');
+  lines.push('    var n=Math.max(4,Math.min(60,customDays||14)); var vals=[];');
+  lines.push('    for(var j=0;j<n;j++){ vals.push(Math.round(70 + Math.sin(j/2.5)*18 + j*1.2)); }');
+  lines.push('    return {vals:vals, pillText:n+"-day range"};');
+  lines.push('  }');
+  lines.push('  return {vals:[420,460,410,530,610,590,700,680,750,820,860,900], pillText:"+12% vs last month"};');
+  lines.push('}');
+  lines.push('function loadGA(){');
+  lines.push('  var customDays=null;');
+  lines.push('  if(gaRange==="custom"){');
+  lines.push('    var f=document.getElementById("dash-ga-from").value, t=document.getElementById("dash-ga-to").value;');
+  lines.push('    if(f&&t){ customDays=Math.max(1, Math.round((new Date(t)-new Date(f))/86400000)+1); }');
+  lines.push('  }');
+  lines.push('  var ds=gaDataset(gaRange, customDays);');
+  lines.push('  var demo=ds.vals;');
+  lines.push('  var total=demo.reduce(function(a,b){return a+b;},0);');
+  lines.push('  document.getElementById("dash-ga-total").textContent = total.toLocaleString();');
+  lines.push('  document.getElementById("dash-ga-pill").innerHTML = "<span class=\\"dash-pill\\">"+ds.pillText+"</span>";');
+  lines.push('  var svg=document.getElementById("dash-ga-spark");');
+  lines.push('  var max=Math.max.apply(null,demo), min=Math.min.apply(null,demo);');
+  lines.push('  var pts=demo.map(function(v,i){ var x=(i/(demo.length-1))*200; var y=50-((v-min)/(max-min||1))*44-3; return x+","+y; }).join(" ");');
+  lines.push('  svg.innerHTML="<polyline points=\\""+pts+"\\" fill=\\"none\\" stroke-width=\\"2\\"/>";');
+  lines.push('}');
+  lines.push('function loadFeedback(){');
+  lines.push('  if(!FB_URL){ document.getElementById("dash-fb-total").textContent="Not connected"; document.getElementById("dash-fb-unique").textContent="Not connected"; return; }');
+  lines.push('  fetch(FB_URL).then(function(r){return r.json();}).then(function(rows){');
+  lines.push('    if(!Array.isArray(rows)) throw new Error();');
+  lines.push('    var pos=0,neg=0,neu=0;');
+  lines.push('    var visitors={};');
+  lines.push('    rows.forEach(function(r){');
+  lines.push('      var c=(r.category||"").toLowerCase();');
+  lines.push('      if(c==="support") pos++; else if(c==="object") neg++; else neu++;');
+  lines.push('      if(r.visitorId) visitors[r.visitorId]=true;');
+  lines.push('    });');
+  lines.push('    document.getElementById("dash-fb-total").textContent = rows.length;');
+  lines.push('    renderPill("dash-fb-pill", countRecent(rows,7), "this week");');
+  lines.push('    var uniqueCount = Object.keys(visitors).length;');
+  lines.push('    document.getElementById("dash-fb-unique").textContent = uniqueCount || "—";');
+  lines.push('    document.getElementById("dash-fb-unique-sub").textContent = rows.length ? Math.round((uniqueCount/rows.length)*100)+"% of "+rows.length+" pins" : "Have Your Say visitors";');
+  lines.push('    document.getElementById("dash-fb-sentiment").innerHTML =');
+  lines.push('      "<div class=\\"dash-sentiment-item dash-sentiment-pos\\"><div class=\\"dash-sentiment-num\\">"+pos+"</div><div class=\\"dash-sentiment-lbl\\">Positive</div></div>"');
+  lines.push('      +"<div class=\\"dash-sentiment-item dash-sentiment-neu\\"><div class=\\"dash-sentiment-num\\">"+neu+"</div><div class=\\"dash-sentiment-lbl\\">Neutral</div></div>"');
+  lines.push('      +"<div class=\\"dash-sentiment-item dash-sentiment-neg\\"><div class=\\"dash-sentiment-num\\">"+neg+"</div><div class=\\"dash-sentiment-lbl\\">Negative</div></div>";');
+  lines.push('    var total=pos+neg+neu;');
+  lines.push('    var card=document.getElementById("dash-sentiment-card");');
+  lines.push('    var scoreEl=document.getElementById("dash-sentiment-score");');
+  lines.push('    var tagEl=document.getElementById("dash-sentiment-tag");');
+  lines.push('    var totalEl=document.getElementById("dash-sentiment-total");');
+  lines.push('    var msgEl=document.getElementById("dash-sentiment-msg");');
+  lines.push('    var ctaEl=document.getElementById("dash-sentiment-cta");');
+  lines.push('    if(total>0){');
+  lines.push('      var pct=Math.round((pos/total)*100);');
+  lines.push('      var negShare=neg/total;');
+  lines.push('      var tone,tag,msg;');
+  lines.push('      if(pct>=55 && negShare<0.3){ tone="tone-positive"; tag="Mostly Positive"; msg="Engagement is looking strong \\u2014 nothing needs attention right now."; }');
+  lines.push('      else if(pct<35 || negShare>=0.45){ tone="tone-attention"; tag="Needs Attention"; msg="Let\\u2019s work on this, book a catch up now."; }');
+  lines.push('      else { tone="tone-mixed"; tag="Mixed"; msg="A mix of feedback so far \\u2014 worth keeping an eye on."; }');
+  lines.push('      card.className="dash-card dash-tile-sentiment "+tone;');
+  lines.push('      scoreEl.textContent=pct+"%";');
+  lines.push('      tagEl.textContent=tag;');
+  lines.push('      totalEl.textContent=total;');
+  lines.push('      msgEl.innerHTML = tone==="tone-attention" ? msg : "From "+total+" Have Your Say responses";');
+  lines.push('      if(tone==="tone-attention" && CATCHUP_URL){ ctaEl.href=CATCHUP_URL; ctaEl.style.display="block"; } else { ctaEl.style.display="none"; }');
+  lines.push('      renderRadial(pos, neu, neg, total);');
+  lines.push('    } else {');
+  lines.push('      scoreEl.textContent="—";');
+  lines.push('      tagEl.textContent="No data yet";');
+  lines.push('      ctaEl.style.display="none";');
+  lines.push('      document.getElementById("dash-radial-svg").innerHTML="";');
+  lines.push('      document.getElementById("dash-radial-legend").innerHTML="";');
+  lines.push('    }');
+  lines.push('  }).catch(function(){ document.getElementById("dash-fb-total").textContent="Could not load"; document.getElementById("dash-fb-unique").textContent="Could not load"; document.getElementById("dash-sentiment-tag").textContent="Could not load"; });');
+  lines.push('}');
+  lines.push('function loadQuestions(){');
+  lines.push('  if(!SQ_URL){ document.getElementById("dash-sq-total").textContent="Not connected"; return; }');
+  lines.push('  fetch(SQ_URL).then(function(r){return r.json();}).then(function(rows){');
+  lines.push('    if(!Array.isArray(rows)) throw new Error();');
+  lines.push('    document.getElementById("dash-sq-total").textContent = rows.length;');
+  lines.push('    renderPill("dash-sq-pill", countRecent(rows,7), "this week");');
+  lines.push('  }).catch(function(){ document.getElementById("dash-sq-total").textContent="Could not load"; });');
+  lines.push('}');
+  if(codesignEnabled) {
+    lines.push('var GREEN_SHADES = ["#1f5c45","#3a8f6f","#6fbb96","#a8dcc0","#c9e9d8"];');
+    lines.push('function loadCodesign(){');
+    lines.push('  var status=document.getElementById("dash-cd-status");');
+    lines.push('  if(!CD_URL){ if(status)status.textContent="Not connected"; return; }');
+    lines.push('  fetch(CD_URL).then(function(r){return r.json();}).then(function(rows){');
+    lines.push('    if(!Array.isArray(rows)) throw new Error();');
+    lines.push('    var valid=rows.filter(function(r){return r&&r.choice;});');
+    lines.push('    if(!valid.length){ if(status)status.textContent = rows.length ? "Found responses but couldn\\u2019t read them \\u2014 check the sheet\\u2019s column headers." : "No responses yet."; document.getElementById("dash-cd-total").textContent="0"; return; }');
+    lines.push('    if(status) status.textContent="";');
+    lines.push('    var counts={};');
+    lines.push('    valid.forEach(function(r){ counts[r.choice]=(counts[r.choice]||0)+1; });');
+    lines.push('    var ranked=Object.keys(counts).map(function(k){return {label:k,count:counts[k]};}).sort(function(a,b){return b.count-a.count;});');
+    lines.push('    var max=ranked[0].count;');
+    lines.push('    document.getElementById("dash-cd-total").textContent = valid.length;');
+    lines.push('    document.getElementById("dash-cd-sub").textContent = "Top pick: "+ranked[0].label;');
+    lines.push('    var list=document.getElementById("dash-cd-list");');
+    lines.push('    list.innerHTML = ranked.slice(0,5).map(function(r,i){');
+    lines.push('      var pct = Math.round((r.count/max)*100);');
+    lines.push('      var color = GREEN_SHADES[Math.min(i,GREEN_SHADES.length-1)];');
+    lines.push('      return "<div class=\\"dash-cd-row\\"><div class=\\"dash-cd-row-label\\">"+r.label+"</div><div class=\\"dash-cd-row-track\\"><div class=\\"dash-cd-row-fill\\" style=\\"width:"+pct+"%;background:"+color+"\\"></div></div><div class=\\"dash-cd-row-count\\">"+r.count+"</div></div>";');
+    lines.push('    }).join("");');
+    lines.push('  }).catch(function(){ if(status)status.textContent="Could not load results."; });');
+    lines.push('}');
+  }
+  lines.push('document.querySelectorAll(".dash-info-btn").forEach(function(btn){');
+  lines.push('  btn.addEventListener("click", function(e){');
+  lines.push('    e.stopPropagation();');
+  lines.push('    var tip=document.getElementById("dash-tooltip");');
+  lines.push('    var already = tip.classList.contains("show") && tip.dataset.owner===btn.dataset.info;');
+  lines.push('    if(already){ tip.classList.remove("show"); return; }');
+  lines.push('    tip.textContent = btn.dataset.info;');
+  lines.push('    tip.dataset.owner = btn.dataset.info;');
+  lines.push('    var r = btn.getBoundingClientRect();');
+  lines.push('    var left = Math.min(r.left, window.innerWidth - 256);');
+  lines.push('    if(left<12) left=12;');
+  lines.push('    tip.style.top = (r.bottom+8)+"px";');
+  lines.push('    tip.style.left = left+"px";');
+  lines.push('    tip.classList.add("show");');
+  lines.push('  });');
+  lines.push('});');
+  lines.push('document.addEventListener("click", function(){ var tip=document.getElementById("dash-tooltip"); if(tip) tip.classList.remove("show"); });');
+  return lines.join('\n');
+}
+
 function buildOutputHTML() {
   var cfg   = buildCfg();
   var css   = buildCSS();
@@ -4327,15 +4831,14 @@ function buildOutputHTML() {
     + '<div id="shell">\n'
     + buildNav()
     + buildDrawer()
-    + '<main id="prose">\n' + chaps + '\n</main>\n'
+    + '<main id="prose">\n<div id="prose-track">\n' + chaps + '\n</div>\n</main>\n'
+    + '<button id="mob-drawer-handle" aria-label="Expand content" aria-expanded="false" aria-controls="prose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></button>\n'
+    + '<div id="mob-drawer-nav">'
+    + '<button type="button" id="mob-prev-btn" onclick="mobGoScene(cS-1)" aria-label="Previous scene"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>'
+    + '<button type="button" id="mob-next-btn" onclick="mobGoScene(cS+1)" aria-label="Next scene"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>'
+    + '</div>\n'
     + '<div id="progress-bar"><div id="progress-fill"></div></div>\n'
     + buildMapPanel()
-    + '<div id="map-toggle-wrap">'
-    + '<button id="map-toggle-btn" onclick="toggleMapMobile()">'
-    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l6-4 6 4 6-4v14l-6 4-6-4-6 4V7z"/><line x1="9" y1="3" x2="9" y2="17"/><line x1="15" y1="7" x2="15" y2="21"/></svg>'
-    + ' Show Map</button>'
-    + '<span id="map-toggle-badge" aria-hidden="true"></span>'
-    + '</div>\n'
     + buildInfoPanel()
     + buildFeedbackForm()
     + buildMapExplainerModal()
@@ -4381,7 +4884,6 @@ function buildMapPanel() {
     + '  <div id="token-notice" style="display:none"></div>\n'
     + '  <div id="lb-overlay">'+'<div id="lb-box" role="dialog" aria-modal="true">'+'<div id="lb-content"></div></div>'+'<div id="lb-stem"></div></div>\n'
     + '  <div id="lb-fs"><img alt=""/><button id="lb-fs-close" onclick="closeLbFs()" aria-label="Close full-size image">&#10005;</button></div>\n'
-    + '  <button id="map-close-btn" onclick="toggleMapMobile()" aria-label="Close map">&#10005;</button>\n'
     + '</div>\n';
 }
 
@@ -4467,7 +4969,7 @@ function buildNavExplainerModal() {
     + '    <div id="nav-explainer-title" class="map-explainer-heading">Getting around on mobile</div>\n'
     + '    <div class="nav-explainer-text">\n'
     + '      <div class="nav-explainer-item"><span class="nav-explainer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span><span>Scroll down to read about each part of the project.</span></div>\n'
-    + '      <div class="nav-explainer-item"><span class="nav-explainer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l6-4 6 4 6-4v14l-6 4-6-4-6 4V7z"/><line x1="9" y1="3" x2="9" y2="17"/><line x1="15" y1="7" x2="15" y2="21"/></svg></span><span>Tap "Show Map" (or swipe sideways) to see the map for what you\'re reading.</span></div>\n'
+    + '      <div class="nav-explainer-item"><span class="nav-explainer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l6-4 6 4 6-4v14l-6 4-6-4-6 4V7z"/><line x1="9" y1="3" x2="9" y2="17"/><line x1="15" y1="7" x2="15" y2="21"/></svg></span><span>Swipe left or right on the panel below to move between scenes, or use the arrows at the bottom.</span></div>\n'
     + '    </div>\n'
     + '    <button type="button" id="nav-explainer-ok" onclick="closeNavExplainer()">Got it</button>\n'
     + '  </div>\n'
@@ -4672,9 +5174,11 @@ function buildCfg() {
     'var SITE_CENTRE  = [' + P.siteCentre[0] + ', ' + P.siteCentre[1] + '];',
     'var SITE_PIN_LABEL = ' + JSON.stringify(P.sitePinLabel||'The Site') + ';',
     'var SHEETDB_URL  = ' + JSON.stringify(P.sheetdbUrl||'') + ';',
+    'var SHEETDB_READ_URL = ' + JSON.stringify(P.sheetdbReadUrl||P.sheetdbUrl||'') + ';',
     'var QUESTIONS_SHEETDB_URL = ' + JSON.stringify(P.questionsSheetdbUrl||'') + ';',
     'var CODESIGN_ENABLED = ' + (!!P.codesignEnabled) + ';',
     'var CODESIGN_SHEETDB_URL = ' + JSON.stringify(P.codesignSheetdbUrl||'') + ';',
+    'var CODESIGN_READ_URL = ' + JSON.stringify(P.codesignReadUrl||P.codesignSheetdbUrl||'') + ';',
     'var CODESIGN_OPTIONS = ' + JSON.stringify((P.codesignOptions||[]).map(function(o){return {id:o.id,label:o.label,color:o.color,icon:o.icon||''};})) + ';',
     'var COOKIE_BANNER_ENABLED = ' + (P.cookieBannerEnabled!==false) + ';',
     'var RED_LINE = { type:"Feature", geometry:{ type:"Polygon", coordinates:' + JSON.stringify([P.redLine.coordinates]) + ' }, properties:{} };',
@@ -4768,8 +5272,9 @@ function buildJS() {
 '  if(!tok||!tok.startsWith("pk."))return;',
 '  document.getElementById("token-notice").style.display="none";',
 '  mapboxgl.accessToken=tok;',
-'  map=new mapboxgl.Map({container:"map",style:MAPBOX_STYLE,center:SCENES[0].camera.center,zoom:SCENES[0].camera.zoom,pitch:SCENES[0].camera.pitch,bearing:SCENES[0].camera.bearing,antialias:true});',
+'  map=new mapboxgl.Map({container:"map",style:MAPBOX_STYLE,center:SCENES[0].camera.center,zoom:SCENES[0].camera.zoom,pitch:SCENES[0].camera.pitch,bearing:SCENES[0].camera.bearing,antialias:true,attributionControl:false});',
 '  map.addControl(new mapboxgl.NavigationControl({showCompass:true}),"top-right");',
+'  map.addControl(new mapboxgl.AttributionControl({compact:true}),"top-right");',
 '  map.on("load",function(){',
 '    document.getElementById("map-loading").classList.add("hidden");',
 '    _esMapReady=true; _esMaybeHide();',
@@ -4781,6 +5286,7 @@ function buildJS() {
 '    setTimeout(hideStyleExtrusions,500);',
 '    setTimeout(hideStyleExtrusions,1500);',
 '    applyScene(0,false);',
+'    updateMobProseTransform(false);',
 '    // Close lightbox when clicking map background',
 '    map.on("click", function(e){ if(!e.defaultPrevented) closeLightbox(); });',
 '  });',
@@ -5532,7 +6038,7 @@ function buildJS() {
 '  closeFeedbackForm();addFBPin(row);updCounter();showToast("Thanks \u2014 your pin has been saved!");',
 '  btn.disabled=false;btn.textContent="Submit";',
 '}',
-'async function loadFBPins(){fbGJ={type:"FeatureCollection",features:[]};fbPins=[];if(map&&map.getSource("fb"))map.getSource("fb").setData(fbGJ);if(!SHEETDB_URL)return;try{var r=await fetch(SHEETDB_URL);if(!r.ok)throw new Error();var rows=await r.json();if(Array.isArray(rows)){rows.forEach(function(row){addFBPin(row);});updCounter();}}catch(e){}}',
+'async function loadFBPins(){fbGJ={type:"FeatureCollection",features:[]};fbPins=[];if(map&&map.getSource("fb"))map.getSource("fb").setData(fbGJ);if(!SHEETDB_READ_URL)return;try{var r=await fetch(SHEETDB_READ_URL);if(!r.ok)throw new Error();var rows=await r.json();if(Array.isArray(rows)){rows.forEach(function(row){addFBPin(row);});updCounter();}}catch(e){}}',
 'function addFBPin(row){var f={type:"Feature",geometry:{type:"Point",coordinates:[parseFloat(row.lng),parseFloat(row.lat)]},properties:{category:row.category,comment:row.comment,timestamp:row.timestamp,color:CATEGORY_COLOURS[row.category]||"#888"}};fbGJ.features.push(f);if(map&&map.getSource("fb"))map.getSource("fb").setData(fbGJ);}',
 'function updCounter(){var e=document.getElementById("pin-counter");if(e)e.textContent=fbGJ.features.length;}',
 'function showToast(msg){var t=document.getElementById("fb-toast");t.textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},3000);}',
@@ -5699,9 +6205,9 @@ function buildJS() {
 '  if(canvas) canvas.style.display="none";',
 '  var legendElReset=document.getElementById("cd-results-legend-"+i);',
 '  if(legendElReset) legendElReset.innerHTML="";',
-'  if(!CODESIGN_SHEETDB_URL){ if(status) status.textContent="This site isn\'t connected to a response sheet yet."; return; }',
+'  if(!CODESIGN_READ_URL){ if(status) status.textContent="This site isn\'t connected to a response sheet yet."; return; }',
 '  try{',
-'    var res=await fetch(CODESIGN_SHEETDB_URL);',
+'    var res=await fetch(CODESIGN_READ_URL);',
 '    if(!res.ok) throw new Error();',
 '    var rows=await res.json();',
 '    if(!Array.isArray(rows)) throw new Error();',
@@ -5797,23 +6303,16 @@ function buildJS() {
 '  if(o)o.classList.remove("open");',
 '  try{localStorage.setItem("allto_nav_explainer_shown","1");}catch(e){}',
 '}',
-'var _prevProseScrollTop=0,_snapUpBusy=false;',
 'prose.addEventListener("scroll",function(){',
-
-'  var st=prose.scrollTop;var goingUp=st<_prevProseScrollTop;_prevProseScrollTop=st;',
+'  if(isMobileW())return;',
+'  var st=prose.scrollTop;',
 '  var mx=prose.scrollHeight-prose.clientHeight;',
 '  document.getElementById("progress-fill").style.width=(mx>0?(st/mx)*100:0)+"%";',
 '  var my=st+prose.clientHeight*0.35;var ac=0;',
 '  sections.forEach(function(s,i){if(s.offsetTop<=my)ac=i;});',
-'  var prevCS=cS;',
 '  if(ac!==cS)applyScene(ac,true);',
-'  if(goingUp&&ac<prevCS&&!_snapUpBusy&&window.innerWidth<=768){',
-'    _snapUpBusy=true;scrollTo(ac);setTimeout(function(){_snapUpBusy=false;},500);',
-'  }',
-'  var mtb=document.getElementById("map-toggle-badge");',
-'  if(mtb)mtb.classList.toggle("show",!mobVisible&&cS!==lastSeenScene);',
 '});',
-'function scrollTo(idx){var s=sections[idx];if(s)prose.scrollTo({top:s.offsetTop,behavior:"smooth"});}',
+'function scrollTo(idx){if(isMobileW()){mobGoScene(idx);return;}var s=sections[idx];if(s)prose.scrollTo({top:s.offsetTop,behavior:"smooth"});}',
 'function resetToScene(){applyScene(cS,true);}',
 'function zoneCentroid(coords){',
 '  var xs=0,ys=0,n=coords.length-1;if(n<1)n=coords.length;',
@@ -5894,55 +6393,68 @@ function buildJS() {
 '  else { it.focus(); }',
 '}',
 'document.addEventListener("click",function(e){var p=document.getElementById("info-panel"),t=document.getElementById("info-toggle");if(_io&&p&&t&&!p.contains(e.target)&&!t.contains(e.target)){_io=false;p.classList.remove("open");t.classList.remove("open");}});',
-'function toggleMapMobile(){',
-'  mobVisible=!mobVisible;',
-'  var p=document.getElementById("map-panel"),b=document.getElementById("map-toggle-btn");',
-'  p.classList.toggle("map-visible",mobVisible);',
-'  b.classList.toggle("map-open",mobVisible);',
-'  if(mobVisible){ lastSeenScene=cS; var mtb=document.getElementById("map-toggle-badge"); if(mtb)mtb.classList.remove("show"); }',
-'  var it=document.getElementById("info-toggle");',
-'  if(it){',
-'    if(mobVisible){',
-'      var mc=document.getElementById("map-controls");',
-'      var mcH=mc?mc.getBoundingClientRect().height:0;',
-'      it.style.bottom="calc("+(52+mcH+12)+"px + env(safe-area-inset-bottom))";',
-'    } else { it.style.bottom="calc(24px + env(safe-area-inset-bottom))"; }',
+'function isMobileW(){ return window.innerWidth<=768; }',
+'function updateMobProseTransform(anim){',
+'  if(!isMobileW()) return;',
+'  var proseTrack=document.getElementById("prose-track");',
+'  proseTrack.style.transition = anim===false ? "none" : "";',
+'  proseTrack.style.transform = "translateX(-"+(cS*100)+"%)";',
+'  var pb=document.getElementById("mob-prev-btn"),nb=document.getElementById("mob-next-btn");',
+'  if(pb)pb.disabled=(cS<=0);',
+'  if(nb)nb.disabled=(cS>=SCENES.length-1);',
+'  var pf=document.getElementById("progress-fill");',
+'  if(pf)pf.style.width=(SCENES.length>1?(cS/(SCENES.length-1))*100:0)+"%";',
+'}',
+'function toggleMobDrawer(expand){',
+'  if(typeof expand!=="boolean") expand=!document.body.classList.contains("mob-expanded");',
+'  document.body.classList.toggle("mob-expanded",expand);',
+'  var h=document.getElementById("mob-drawer-handle");',
+'  if(h)h.setAttribute("aria-expanded",expand?"true":"false");',
+'  if(map)setTimeout(function(){map.resize();},380);',
+'}',
+'function mobGoScene(idx){',
+'  idx=Math.max(0,Math.min(SCENES.length-1,idx));',
+'  if(idx===cS){ updateMobProseTransform(); return; }',
+'  if(document.body.classList.contains("mob-expanded")){',
+'    toggleMobDrawer(false);',
+'    setTimeout(function(){ applyScene(idx,true); updateMobProseTransform(); },420);',
+'  } else {',
+'    applyScene(idx,true);',
+'    updateMobProseTransform();',
 '  }',
-'  b.innerHTML=mobVisible?"<svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><line x1=\'18\' y1=\'6\' x2=\'6\' y2=\'18\'/><line x1=\'6\' y1=\'6\' x2=\'18\' y2=\'18\'/></svg> Close Map":"<svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><path d=\'M3 7l6-4 6 4 6-4v14l-6 4-6-4-6 4V7z\'/><line x1=\'9\' y1=\'3\' x2=\'9\' y2=\'17\'/><line x1=\'15\' y1=\'7\' x2=\'15\' y2=\'21\'/></svg> Show Map";',
-'  if(mobVisible&&map)setTimeout(function(){map.resize();},50);',
 '}',
 '(function(){',
-'  function isMobileW(){ return window.innerWidth<=768; }',
-'  var sx=0, sy=0, active=false;',
-'  function swipeDx(e){',
-'    if(!active) return null;',
-'    active=false;',
-'    var t=e.changedTouches[0];',
-'    var dx=t.clientX-sx, dy=t.clientY-sy;',
-'    if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5) return dx;',
-'    return null;',
+'  var handle=document.getElementById("mob-drawer-handle");',
+'  if(handle){',
+'    handle.addEventListener("click",function(){ toggleMobDrawer(); });',
+'    var hsy=0, hActive=false;',
+'    handle.addEventListener("touchstart",function(e){',
+'      if(!isMobileW()) return;',
+'      hsy=e.touches[0].clientY; hActive=true;',
+'    },{passive:true});',
+'    handle.addEventListener("touchend",function(e){',
+'      if(!hActive) return; hActive=false;',
+'      var dy=e.changedTouches[0].clientY-hsy;',
+'      if(Math.abs(dy)>30) toggleMobDrawer(dy<0);',
+'    },{passive:true});',
 '  }',
+'  var bsx=0, bsy=0, bActive=false;',
 '  if(prose){',
 '    prose.addEventListener("touchstart",function(e){',
 '      if(!isMobileW()) return;',
-'      var t=e.touches[0]; sx=t.clientX; sy=t.clientY; active=true;',
+'      var t=e.touches[0]; bsx=t.clientX; bsy=t.clientY; bActive=true;',
 '    },{passive:true});',
 '    prose.addEventListener("touchend",function(e){',
-'      if(swipeDx(e)!==null && !mobVisible) toggleMapMobile();',
+'      if(!bActive||!isMobileW()) return; bActive=false;',
+'      var t=e.changedTouches[0]; var dx=t.clientX-bsx, dy=t.clientY-bsy;',
+'      if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.5){',
+'        mobGoScene(dx<0?cS+1:cS-1);',
+'      } else if(Math.abs(dy)>50 && Math.abs(dy)>Math.abs(dx)*1.5 && !document.body.classList.contains("mob-expanded")){',
+'        toggleMobDrawer(dy<0);',
+'      }',
 '    },{passive:true});',
 '  }',
-'  var mpEl=document.getElementById("map-panel");',
-'  if(mpEl){',
-'    mpEl.addEventListener("touchstart",function(e){',
-'      if(!isMobileW()) return;',
-'      var t=e.touches[0];',
-'      if(t.clientX>36 && t.clientX<window.innerWidth-36) return;',
-'      sx=t.clientX; sy=t.clientY; active=true;',
-'    },{passive:true});',
-'    mpEl.addEventListener("touchend",function(e){',
-'      if(swipeDx(e)!==null && mobVisible) toggleMapMobile();',
-'    },{passive:true});',
-'  }',
+'  window.addEventListener("resize",function(){ if(isMobileW())updateMobProseTransform(false); });',
 '})();',
 'function trapFocus(e,container){',
 '  if(!container)return;',
@@ -6187,9 +6699,36 @@ function buildCSS() {
 + '#cookie-accept-btn{background:var(--accent);border:none;color:#fff;padding:9px 18px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;font-family:var(--f-body)}'
 + '#cookie-accept-btn:hover{opacity:.9}'
 + '@media(max-width:768px){#cookie-banner{flex-direction:column;align-items:stretch}#cookie-banner-actions{width:100%}#cookie-decline-btn,#cookie-accept-btn{flex:1}}'
-+ '@media(max-width:768px){#shell{flex-direction:row}#prose{width:calc(100vw - var(--nav-w));min-width:0;height:100vh;height:100dvh;scroll-snap-type:none}.chapter{min-height:100vh;min-height:100dvh;padding:80px 24px 100px 24px;scroll-snap-align:none;justify-content:flex-start}#map-panel{position:fixed;top:0;left:0;right:0;bottom:0;height:100vh;height:100dvh;z-index:150;transform:translateY(100%);transition:transform .4s;width:100vw}#map-panel.map-visible{transform:translateY(0)}#map-toggle-wrap{position:fixed;bottom:24px;bottom:calc(24px + env(safe-area-inset-bottom));left:calc(var(--nav-w) + 12px);z-index:60;display:inline-flex}#map-toggle-btn{display:flex;align-items:center;gap:8px;background:var(--accent);color:#f8f6f1;border:1px solid rgba(255,255,255,.2);padding:11px 18px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.35);white-space:nowrap}#map-toggle-btn.map-open{background:#0f0e0d}#map-toggle-btn svg{width:13px;height:13px;flex-shrink:0}#map-toggle-badge{position:absolute;top:-3px;right:-3px;width:13px;height:13px;border-radius:50%;background:#ff3b30;border:2px solid var(--paper);display:none;pointer-events:none}#map-toggle-badge.show{display:block;animation:badgePulse 1.6s ease-in-out infinite}#map-close-btn{display:flex;position:fixed;top:16px;top:calc(16px + env(safe-area-inset-top));right:16px;z-index:161;width:40px;height:40px;border-radius:50%;background:rgba(15,14,13,.88);border:1px solid rgba(255,255,255,.15);color:#f8f6f1;font-size:16px;cursor:pointer;align-items:center;justify-content:center}#progress-bar{left:var(--nav-w);width:calc(100% - var(--nav-w))}#info-panel{right:12px;bottom:148px;width:calc(100vw - var(--nav-w) - 24px);max-width:320px;max-height:calc(100vh - 200px);max-height:calc(100dvh - 200px)}#info-toggle{bottom:24px;bottom:calc(24px + env(safe-area-inset-bottom));right:12px}#map-label{top:16px;left:14px;font-size:10px;padding:8px 12px;height:auto}#map-controls{bottom:52px;bottom:calc(52px + env(safe-area-inset-bottom));right:12px}.mapboxgl-ctrl-top-right{display:none!important}.nav-brand{display:none}#splash-gif{width:min(1470px,64.4vw,105.7vh)}}'
-+ '@keyframes badgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}'
-+ '@media(min-width:769px){#map-toggle-wrap{display:none!important}#map-close-btn{display:none!important}}';
+    + '@media(max-width:768px){'
+    + '#shell{flex-direction:row}'
+    + '#map-panel{position:fixed;top:0;left:var(--nav-w);right:0;height:70vh;height:70dvh;width:auto;bottom:auto;transform:none;transition:height .4s var(--ease)}'
+    + 'body.mob-expanded #map-panel{height:0;overflow:hidden}'
+    + '#prose{position:fixed;left:var(--nav-w);right:0;top:70vh;top:70dvh;bottom:0;width:auto;height:auto;overflow:hidden;scroll-snap-type:none;transition:top .4s var(--ease);box-sizing:border-box;padding-bottom:56px;padding-bottom:calc(56px + env(safe-area-inset-bottom))}'
+    + 'body.mob-expanded #prose{top:0}'
+    + '#prose-track{display:flex;flex-direction:row;height:100%;width:100%;transition:transform .4s var(--ease);will-change:transform}'
+    + '.chapter{flex:0 0 100%;width:100%;max-width:100%;height:100%;min-height:0;overflow-y:hidden;padding:28px 24px 24px;scroll-snap-align:none;justify-content:flex-start;box-sizing:border-box}'
+    + 'body.mob-expanded .chapter{overflow-y:auto}'
+    + '#mob-drawer-handle{position:fixed;left:var(--nav-w);right:0;top:calc(70vh - 26px);top:calc(70dvh - 26px);height:26px;display:flex;align-items:center;justify-content:center;z-index:40;background:none;border:none;padding:0;cursor:pointer;color:var(--ink);transition:top .4s var(--ease)}'
+    + 'body.mob-expanded #mob-drawer-handle{top:0}'
+    + '#mob-drawer-handle svg{width:20px;height:20px;transition:transform .4s var(--ease)}'
+    + 'body.mob-expanded #mob-drawer-handle svg{transform:rotate(180deg)}'
+    + '#mob-drawer-nav{position:fixed;left:var(--nav-w);right:0;bottom:0;height:calc(56px + env(safe-area-inset-bottom));padding:0 20px env(safe-area-inset-bottom);display:flex;align-items:center;justify-content:flex-start;gap:14px;background:var(--paper);border-top:1px solid var(--mid);z-index:40;box-sizing:border-box}'
+    + '#mob-drawer-nav button{width:40px;height:40px;border-radius:50%;border:1px solid var(--mid);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);padding:0}'
+    + '#mob-drawer-nav button svg{width:18px;height:18px}'
+    + '#mob-drawer-nav button:disabled{opacity:.3;cursor:default}'
+    + '#progress-bar{left:var(--nav-w);width:calc(100% - var(--nav-w))}'
+    + '#info-panel{right:12px;bottom:calc(56px + env(safe-area-inset-bottom) + 68px);width:calc(100vw - var(--nav-w) - 24px);max-width:320px;max-height:calc(70vh - 90px);max-height:calc(70dvh - 90px)}'
+    + '#info-toggle{bottom:calc(10px + env(safe-area-inset-bottom));right:20px}'
+    + '#map-label{top:16px;left:14px;font-size:10px;padding:8px 12px;height:auto}'
+    + '#map-controls{bottom:12px;right:12px}'
+    + '.scene-pips{display:none}'
+    + '.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group{display:none!important}'
+    + '.mapboxgl-ctrl-top-right{top:10px!important;right:10px!important}'
+    + '.mapboxgl-ctrl-bottom-left,.mapboxgl-ctrl-bottom-right{display:none!important}'
+    + '.nav-brand{display:none}'
+    + '#splash-gif{width:min(1470px,64.4vw,105.7vh)}'
+    + '}'
++ '@media(min-width:769px){#mob-drawer-handle{display:none!important}#mob-drawer-nav{display:none!important}}';
 }
 
 function buildPopCSS() {
