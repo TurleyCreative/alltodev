@@ -10,9 +10,15 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;background:#fff;color:#20242b;min-height:100vh;-webkit-font-smoothing:antialiased}
-header{max-width:1080px;margin:0 auto;padding:44px 24px 12px}
+header{max-width:1080px;margin:0 auto;padding:44px 24px 0}
 .hub-title{font-size:26px;font-weight:500;letter-spacing:-.01em}
 .hub-sub{font-size:12px;font-weight:500;color:#8b909b;margin-top:6px;text-transform:uppercase;letter-spacing:.08em}
+
+.hub-tabs{max-width:1080px;margin:24px auto 0;padding:0 24px;display:flex;gap:0;border-bottom:1px solid #e3e6ea}
+.hub-tab{border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:500;color:#8b909b;padding:0 0 12px;margin-right:28px;cursor:pointer;border-bottom:2px solid transparent}
+.hub-tab.on{color:#20242b;border-bottom-color:#20242b}
+.hub-panel{display:none}
+.hub-panel.on{display:block}
 
 .hub-grid{max-width:1080px;margin:0 auto;padding:16px 24px 0;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:min-content;gap:18px}
 .hub-card{position:relative;background:#f2f3f5;border-radius:24px;padding:30px 32px;display:flex;flex-direction:column}
@@ -71,13 +77,27 @@ header{max-width:1080px;margin:0 auto;padding:44px 24px 12px}
 .hub-gether-num{font-size:30px;font-weight:300;letter-spacing:-.01em}
 .hub-gether-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8b909b;margin-top:6px;font-weight:500}
 
-.hub-section{max-width:1080px;margin:0 auto;padding:32px 24px 56px}
+.hub-grid-pad{padding-bottom:56px}
+
+.hub-activity-grid{max-width:1080px;margin:0 auto;padding:16px 24px 56px;display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start}
+.hub-col{display:flex;flex-direction:column;gap:20px}
 .hub-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
-.hub-section-title{font-size:18px;font-weight:500}
+.hub-section-title{font-size:16px;font-weight:500}
 .hub-stake-count{font-size:12px;color:#8b909b;font-weight:500}
+
+.hub-bulletin-list,.hub-upcoming-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.hub-bulletin-item{background:#fff;border-radius:14px;padding:14px 16px}
+.hub-bulletin-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.hub-bulletin-type{font-size:10px;font-weight:600;padding:3px 9px;border-radius:100px;background:#e7e9ec;color:#3a3f47;white-space:nowrap}
+.hub-bulletin-date{font-size:11px;color:#8b909b;white-space:nowrap}
+.hub-bulletin-who{font-size:12px;font-weight:500;margin-top:6px}
+.hub-bulletin-notes{font-size:12px;color:#5b616b;margin-top:4px;line-height:1.5}
+.hub-upcoming-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #e3e6ea}
+.hub-upcoming-item:last-child{border-bottom:none}
+
 .hub-stake-wrap{background:#f2f3f5;border-radius:24px;overflow:hidden}
 .hub-stake-scroll{overflow-x:auto}
-.hub-stake-row{display:grid;grid-template-columns:1.3fr 1.3fr 1fr .8fr 1fr;gap:12px;align-items:center;padding:16px 26px;border-bottom:1px solid #e3e6ea;min-width:620px}
+.hub-stake-row{display:grid;grid-template-columns:1.3fr 1.3fr 1fr .8fr 1fr;gap:12px;align-items:center;padding:16px 26px;border-bottom:1px solid #e3e6ea;min-width:560px}
 .hub-stake-row:last-child{border-bottom:none}
 a.hub-stake-row{text-decoration:none;color:inherit;cursor:pointer}
 a.hub-stake-row:hover{background:#e9ebee}
@@ -102,6 +122,7 @@ a.hub-stake-row:hover{background:#e9ebee}
   .hub-tile-feedback{grid-column:2;grid-row:2}
   .hub-tile-codesign{grid-column:1;grid-row:3}
   .hub-tile-questions{grid-column:2;grid-row:3}
+  .hub-activity-grid{grid-template-columns:1fr}
 }
 @media(max-width:560px){
   .hub-grid{grid-template-columns:1fr}
@@ -113,83 +134,106 @@ a.hub-stake-row:hover{background:#e9ebee}
 <body>
 <header>
   <div class="hub-title">Consultation Hub</div>
-  <div class="hub-sub">Project Overview</div>
+  <div class="hub-sub">A new neighbourhood for Manchester</div>
 </header>
 
-<div class="hub-grid">
-  <div class="hub-card hub-tile-sentiment" id="hub-sentiment-card">
-    <button class="hub-info-btn" data-info="Share of Have Your Say feedback pins marked as positive, based on category (Support = positive, Object = negative, Question/General = neutral).">i</button>
-    <div class="hub-card-label">Overall Sentiment</div>
-    <div class="hub-sentiment-row"><div class="hub-card-big" id="hub-sentiment-score">&mdash;</div><div class="hub-sentiment-tag" id="hub-sentiment-tag"></div></div>
-    <svg class="hub-radial" viewBox="0 0 200 200" id="hub-radial-svg"></svg>
-    <div class="hub-radial-legend" id="hub-radial-legend"></div>
-    <div class="hub-card-sub" id="hub-sentiment-msg">From <span id="hub-sentiment-total">0</span> Have Your Say responses</div>
-  </div>
-  <div class="hub-card hub-tile-visitors">
-    <button class="hub-info-btn" data-info="Total unique visits over the selected period. Placeholder data for now &#8212; connect a Google Analytics relay to make this live.">i</button>
-    <div class="hub-card-label">Site Visitors</div>
-    <div class="hub-range-group" id="hub-ga-range">
-      <button class="hub-range-btn on" type="button" data-range="months">Months</button>
-      <button class="hub-range-btn" type="button" data-range="days">Days</button>
-    </div>
-    <div class="hub-card-big" id="hub-ga-total">&mdash;</div>
-    <div id="hub-ga-pill"></div>
-    <svg id="hub-ga-spark" viewBox="0 0 200 50" preserveAspectRatio="none"></svg>
-  </div>
-  <div class="hub-card hub-tile-feedback">
-    <button class="hub-info-btn" data-info="Total pins dropped on the Have Your Say map, split by sentiment category.">i</button>
-    <div class="hub-card-label">Feedback Responses</div>
-    <div class="hub-card-big" id="hub-fb-total">&mdash;</div>
-    <div id="hub-fb-pill"></div>
-    <div class="hub-sentiment" id="hub-fb-sentiment"></div>
-  </div>
-  <div class="hub-card hub-tile-codesign">
-    <button class="hub-info-btn" data-info="How visitors would use the plots marked for Co-Design, ranked by total picks across all zones.">i</button>
-    <div class="hub-card-label">Co-Design Picks</div>
-    <div class="hub-card-big" id="hub-cd-total">&mdash;</div>
-    <div class="hub-card-sub" id="hub-cd-sub">Total picks submitted</div>
-    <div class="hub-cd-list" id="hub-cd-list"></div>
-    <div class="hub-card-sub" id="hub-cd-status"></div>
-  </div>
-  <div class="hub-tile-questions hub-stack">
-    <div class="hub-card hub-card-short">
-      <button class="hub-info-btn" data-info="Total answers submitted across all scene questions on the site.">i</button>
-      <div class="hub-card-label">Scene Questions</div>
-      <div class="hub-card-big" id="hub-sq-total">&mdash;</div>
-      <div id="hub-sq-pill"></div>
-    </div>
-    <div class="hub-card hub-card-short">
-      <button class="hub-info-btn" data-info="How many distinct visitors dropped at least one pin, versus the total number of pins submitted.">i</button>
-      <div class="hub-card-label">Unique Participants</div>
-      <div class="hub-card-big" id="hub-fb-unique">&mdash;</div>
-      <div class="hub-card-sub" id="hub-fb-unique-sub">Have Your Say visitors</div>
-    </div>
-  </div>
+<div class="hub-tabs">
+  <button class="hub-tab on" type="button" data-panel="panel-overview">Project Overview</button>
+  <button class="hub-tab" type="button" data-panel="panel-activity">Stakeholders &amp; Activity</button>
+</div>
 
-  <div class="hub-card hub-tile-gether" id="hub-gether-card">
-    <button class="hub-info-btn" data-info="Letters of support sent via Gether, and Meta ad reach/spend for this project&#8217;s promoted posts. Demo data for now &#8212; will connect to Gether&#8217;s SharePoint list and Meta reporting once wired up.">i</button>
-    <div class="hub-gether-head">
-      <div class="hub-card-label" style="margin-bottom:0">Gether Engagement</div>
-      <span class="hub-gether-badge" id="hub-gether-badge">Demo data</span>
+<div class="hub-panel on hub-grid-pad" id="panel-overview">
+  <div class="hub-grid">
+    <div class="hub-card hub-tile-sentiment" id="hub-sentiment-card">
+      <button class="hub-info-btn" data-info="Share of Have Your Say feedback pins marked as positive, based on category (Support = positive, Object = negative, Question/General = neutral).">i</button>
+      <div class="hub-card-label">Overall Sentiment</div>
+      <div class="hub-sentiment-row"><div class="hub-card-big" id="hub-sentiment-score">&mdash;</div><div class="hub-sentiment-tag" id="hub-sentiment-tag"></div></div>
+      <svg class="hub-radial" viewBox="0 0 200 200" id="hub-radial-svg"></svg>
+      <div class="hub-radial-legend" id="hub-radial-legend"></div>
+      <div class="hub-card-sub" id="hub-sentiment-msg">From <span id="hub-sentiment-total">0</span> Have Your Say responses</div>
     </div>
-    <div class="hub-gether-row" id="hub-gether-row">
-      <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-letters">&mdash;</div><div class="hub-gether-lbl">Letters Sent</div></div>
-      <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-reach">&mdash;</div><div class="hub-gether-lbl">Meta Reach</div></div>
-      <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-spend">&mdash;</div><div class="hub-gether-lbl">Meta Spend</div></div>
+    <div class="hub-card hub-tile-visitors">
+      <button class="hub-info-btn" data-info="Total unique visits over the selected period. Placeholder data for now &#8212; connect a Google Analytics relay to make this live.">i</button>
+      <div class="hub-card-label">Site Visitors</div>
+      <div class="hub-range-group" id="hub-ga-range">
+        <button class="hub-range-btn on" type="button" data-range="months">Months</button>
+        <button class="hub-range-btn" type="button" data-range="days">Days</button>
+      </div>
+      <div class="hub-card-big" id="hub-ga-total">&mdash;</div>
+      <div id="hub-ga-pill"></div>
+      <svg id="hub-ga-spark" viewBox="0 0 200 50" preserveAspectRatio="none"></svg>
     </div>
-    <div class="hub-card-sub" id="hub-gether-note">Connect Gether&#8217;s SharePoint list to make this live</div>
+    <div class="hub-card hub-tile-feedback">
+      <button class="hub-info-btn" data-info="Total pins dropped on the Have Your Say map, split by sentiment category.">i</button>
+      <div class="hub-card-label">Feedback Responses</div>
+      <div class="hub-card-big" id="hub-fb-total">&mdash;</div>
+      <div id="hub-fb-pill"></div>
+      <div class="hub-sentiment" id="hub-fb-sentiment"></div>
+    </div>
+    <div class="hub-card hub-tile-codesign">
+      <button class="hub-info-btn" data-info="How visitors would use the plots marked for Co-Design, ranked by total picks across all zones.">i</button>
+      <div class="hub-card-label">Co-Design Picks</div>
+      <div class="hub-card-big" id="hub-cd-total">&mdash;</div>
+      <div class="hub-card-sub" id="hub-cd-sub">Total picks submitted</div>
+      <div class="hub-cd-list" id="hub-cd-list"></div>
+      <div class="hub-card-sub" id="hub-cd-status"></div>
+    </div>
+    <div class="hub-tile-questions hub-stack">
+      <div class="hub-card hub-card-short">
+        <button class="hub-info-btn" data-info="Total answers submitted across all scene questions on the site.">i</button>
+        <div class="hub-card-label">Scene Questions</div>
+        <div class="hub-card-big" id="hub-sq-total">&mdash;</div>
+        <div id="hub-sq-pill"></div>
+      </div>
+      <div class="hub-card hub-card-short">
+        <button class="hub-info-btn" data-info="How many distinct visitors dropped at least one pin, versus the total number of pins submitted.">i</button>
+        <div class="hub-card-label">Unique Participants</div>
+        <div class="hub-card-big" id="hub-fb-unique">&mdash;</div>
+        <div class="hub-card-sub" id="hub-fb-unique-sub">Have Your Say visitors</div>
+      </div>
+    </div>
+
+    <div class="hub-card hub-tile-gether" id="hub-gether-card">
+      <button class="hub-info-btn" data-info="Letters of support sent via Gether, and Meta ad reach/spend for this project&#8217;s promoted posts. Demo data for now &#8212; will connect to Gether&#8217;s SharePoint list and Meta reporting once wired up.">i</button>
+      <div class="hub-gether-head">
+        <div class="hub-card-label" style="margin-bottom:0">Gether Engagement</div>
+        <span class="hub-gether-badge" id="hub-gether-badge">Demo data</span>
+      </div>
+      <div class="hub-gether-row" id="hub-gether-row">
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-letters">&mdash;</div><div class="hub-gether-lbl">Letters Sent</div></div>
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-reach">&mdash;</div><div class="hub-gether-lbl">Meta Reach</div></div>
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-spend">&mdash;</div><div class="hub-gether-lbl">Meta Spend</div></div>
+      </div>
+      <div class="hub-card-sub" id="hub-gether-note">Connect Gether&#8217;s SharePoint list to make this live</div>
+    </div>
   </div>
 </div>
 
-<div class="hub-section">
-  <div class="hub-section-head">
-    <div class="hub-section-title">Stakeholders</div>
-    <div class="hub-stake-count" id="hub-stake-count"></div>
-  </div>
-  <div class="hub-stake-wrap">
-    <div class="hub-stake-scroll">
-      <div class="hub-stake-row head"><div>Name</div><div>Organisation</div><div>Type</div><div>Priority</div><div>Owner</div></div>
-      <div id="hub-stake-list"></div>
+<div class="hub-panel" id="panel-activity">
+  <div class="hub-activity-grid">
+    <div class="hub-col">
+      <div class="hub-card">
+        <div class="hub-section-head"><div class="hub-section-title">Recent Activity</div></div>
+        <div class="hub-bulletin-list" id="hub-bulletin-list"></div>
+      </div>
+      <div class="hub-card">
+        <div class="hub-section-head"><div class="hub-section-title">Upcoming</div></div>
+        <div class="hub-upcoming-list" id="hub-upcoming-list"></div>
+      </div>
+    </div>
+    <div class="hub-col">
+      <div>
+        <div class="hub-section-head">
+          <div class="hub-section-title">Stakeholders</div>
+          <div class="hub-stake-count" id="hub-stake-count"></div>
+        </div>
+        <div class="hub-stake-wrap">
+          <div class="hub-stake-scroll">
+            <div class="hub-stake-row head"><div>Name</div><div>Organisation</div><div>Type</div><div>Priority</div><div>Owner</div></div>
+            <div id="hub-stake-list"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -197,6 +241,15 @@ a.hub-stake-row:hover{background:#e9ebee}
 <div id="hub-tooltip" class="hub-tooltip"></div>
 
 <script>
+document.querySelectorAll(".hub-tab").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    document.querySelectorAll(".hub-tab").forEach(function(b){ b.classList.remove("on"); });
+    document.querySelectorAll(".hub-panel").forEach(function(p){ p.classList.remove("on"); });
+    btn.classList.add("on");
+    document.getElementById(btn.getAttribute("data-panel")).classList.add("on");
+  });
+});
+
 // Reuse the same Power Automate flow URLs already wired up in dash.html
 // (Have Your Say feedback, Co-Design, Scene Questions) so this hub reads
 // the same underlying SharePoint lists. Leave blank to show demo data.
@@ -214,6 +267,12 @@ var GETHER_URL = "";
 // step) — it's what links each row through to their profile page.
 var STAKEHOLDERS_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/02/workflows/5c3e2957a6bd4a5ea5e380fce761041c/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=8OyE0iTBE2SIvXdYmSsTQC9nGN-BWLUfu7QNFurs61E";
 
+// Same EngagementLog read flow used on stakeholder.html, called here with
+// no stakeholderId so it returns every entry across the whole project for
+// the Recent Activity / Upcoming widgets. Requires the flow's Filter_array
+// condition to pass everything through when stakeholderId is blank.
+var ENGAGEMENTLOG_URL = "";
+
 function daysAgo(n){ return Date.now() - n*86400000; }
 function parseTs(s){
   if(!s) return NaN;
@@ -230,6 +289,27 @@ function renderPill(id, n, label){
   if(!el) return;
   el.innerHTML = n>0 ? "<span class=\"hub-pill\">+"+n+" "+label+"</span>" : "";
 }
+function fmtDate(s){
+  if(!s) return "";
+  var d = new Date(s);
+  if(isNaN(d.getTime())) return s;
+  return d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
+}
+// SharePoint returns Lookup columns as {..., Value:"X"} and Person
+// columns as {..., DisplayName:"X"} rather than plain text — unwrap both.
+function pickValue(v){
+  if(v && typeof v === "object"){
+    if("Value" in v) return v.Value;
+    if("DisplayName" in v) return v.DisplayName;
+  }
+  return v;
+}
+function stripHtml(html){
+  var div = document.createElement("div");
+  div.innerHTML = html || "";
+  return (div.textContent || "").trim();
+}
+function truncate(s, n){ return s.length > n ? s.slice(0,n).trim()+"…" : s; }
 
 function renderRadial(pos, neu, neg, total){
   var svg = document.getElementById("hub-radial-svg");
@@ -456,8 +536,59 @@ function renderStakeholders(rows, isDemo){
   }).join("");
 }
 
+var ENGAGEMENT_DEMO = [
+  {enType:{Value:"Meeting"}, Date:"2026-07-20", Notes:"<p>Introductory meeting with residents group, walked through the emerging masterplan.</p>", loggedBy:{DisplayName:"J. Davison"}, Follow_x002d_upDate:"2026-08-05", Stakeholders:[{Value:"Sarah Whitfield"}]},
+  {enType:{Value:"Call"}, Date:"2026-07-18", Notes:"<p>Follow-up call regarding parking concerns raised at the last drop-in.</p>", loggedBy:{DisplayName:"C. Hemsley"}, Follow_x002d_upDate:null, Stakeholders:[{Value:"Cllr. Tom Reid"}]},
+  {enType:{Value:"Leaflet Drop"}, Date:"2026-07-15", Notes:"<p>200 leaflets dropped across Oak Street and surrounding roads.</p>", loggedBy:{DisplayName:"J. Davison"}, Follow_x002d_upDate:null, Stakeholders:[]},
+  {enType:{Value:"Letter"}, Date:"2026-07-10", Notes:"<p>Sent letter of support template to the local business association.</p>", loggedBy:{DisplayName:"C. Hemsley"}, Follow_x002d_upDate:"2026-07-30", Stakeholders:[{Value:"Greater Manchester Chamber"}]}
+];
+function renderBulletin(rows){
+  var el = document.getElementById("hub-bulletin-list");
+  var recent = rows.slice().sort(function(a,b){ return new Date(b.Date) - new Date(a.Date); }).slice(0,5);
+  if(!recent.length){ el.innerHTML = "<div class=\"hub-stake-empty\">No activity logged yet.</div>"; return; }
+  el.innerHTML = recent.map(function(r){
+    var enType = pickValue(r.enType);
+    var who = (r.Stakeholders && r.Stakeholders[0]) ? pickValue(r.Stakeholders[0]) : "";
+    var notes = truncate(stripHtml(r.Notes||""), 90);
+    return "<div class=\"hub-bulletin-item\">"
+      + "<div class=\"hub-bulletin-head\"><span class=\"hub-bulletin-type\">"+(enType||"")+"</span><span class=\"hub-bulletin-date\">"+fmtDate(r.Date)+"</span></div>"
+      + (who ? "<div class=\"hub-bulletin-who\">"+who+"</div>" : "")
+      + (notes ? "<div class=\"hub-bulletin-notes\">"+notes+"</div>" : "")
+      + "</div>";
+  }).join("");
+}
+function renderUpcoming(rows){
+  var el = document.getElementById("hub-upcoming-list");
+  var today = new Date(); today.setHours(0,0,0,0);
+  var upcoming = rows.filter(function(r){
+    var f = r.Follow_x002d_upDate;
+    if(!f) return false;
+    var d = new Date(f);
+    return !isNaN(d.getTime()) && d>=today;
+  }).sort(function(a,b){ return new Date(a.Follow_x002d_upDate) - new Date(b.Follow_x002d_upDate); }).slice(0,5);
+  if(!upcoming.length){ el.innerHTML = "<div class=\"hub-stake-empty\">Nothing scheduled.</div>"; return; }
+  el.innerHTML = upcoming.map(function(r){
+    var enType = pickValue(r.enType);
+    var who = (r.Stakeholders && r.Stakeholders[0]) ? pickValue(r.Stakeholders[0]) : "";
+    return "<div class=\"hub-upcoming-item\">"
+      + "<div><div class=\"hub-bulletin-who\">"+(who||"Project-wide")+"</div><span class=\"hub-bulletin-type\">"+(enType||"")+"</span></div>"
+      + "<div class=\"hub-bulletin-date\">"+fmtDate(r.Follow_x002d_upDate)+"</div>"
+      + "</div>";
+  }).join("");
+}
+function loadActivityFeed(){
+  if(!ENGAGEMENTLOG_URL){ renderBulletin(ENGAGEMENT_DEMO); renderUpcoming(ENGAGEMENT_DEMO); return; }
+  fetch(ENGAGEMENTLOG_URL).then(function(r){return r.json();}).then(function(rows){
+    if(!Array.isArray(rows)) throw new Error();
+    renderBulletin(rows); renderUpcoming(rows);
+  }).catch(function(){
+    document.getElementById("hub-bulletin-list").innerHTML = "<div class=\"hub-stake-empty\">Could not load activity.</div>";
+    document.getElementById("hub-upcoming-list").innerHTML = "<div class=\"hub-stake-empty\">Could not load.</div>";
+  });
+}
+
 function loadAll(){
-  loadGA(); loadFeedback(); loadCodesign(); loadQuestions(); loadGether(); loadStakeholders();
+  loadGA(); loadFeedback(); loadCodesign(); loadQuestions(); loadGether(); loadStakeholders(); loadActivityFeed();
 }
 loadAll();
 
