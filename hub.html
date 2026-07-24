@@ -207,7 +207,7 @@ var SQ_URL = "";
 var GETHER_URL = "";
 
 // Set once the Stakeholders SharePoint list + read flow is live: returns
-// an array of {name, organisation, type, priority, owner}
+// an array of {name, organisation, shType, priority, owner}
 var STAKEHOLDERS_URL = "";
 
 function daysAgo(n){ return Date.now() - n*86400000; }
@@ -412,11 +412,11 @@ function loadGether(){
 }
 
 var STAKE_DEMO = [
-  {name:"Sarah Whitfield", organisation:"Riverside Residents Association", type:"Community Group", priority:"High", owner:"J. Davison"},
-  {name:"Cllr. Tom Reid", organisation:"Manchester City Council", type:"Councillor", priority:"High", owner:"C. Hemsley"},
-  {name:"Amina Yusuf", organisation:"Resident, Oak Street", type:"Resident", priority:"Medium", owner:"J. Davison"},
-  {name:"Greater Manchester Chamber", organisation:"Business", type:"Business", priority:"Low", owner:"C. Hemsley"},
-  {name:"Historic England", organisation:"Statutory Consultee", type:"Statutory Consultee", priority:"High", owner:"J. Davison"}
+  {name:"Sarah Whitfield", organisation:"Riverside Residents Association", shType:"Community Group", priority:"High", owner:"J. Davison"},
+  {name:"Cllr. Tom Reid", organisation:"Manchester City Council", shType:"Councillor", priority:"High", owner:"C. Hemsley"},
+  {name:"Amina Yusuf", organisation:"Resident, Oak Street", shType:"Resident", priority:"Medium", owner:"J. Davison"},
+  {name:"Greater Manchester Chamber", organisation:"Business", shType:"Business", priority:"Low", owner:"C. Hemsley"},
+  {name:"Historic England", organisation:"Statutory Consultee", shType:"Statutory Consultee", priority:"High", owner:"J. Davison"}
 ];
 function loadStakeholders(){
   if(!STAKEHOLDERS_URL){ renderStakeholders(STAKE_DEMO, true); return; }
@@ -437,7 +437,7 @@ function renderStakeholders(rows, isDemo){
     return "<div class=\"hub-stake-row\">"
       + "<div class=\"hub-stake-name\">"+(r.name||"")+"</div>"
       + "<div class=\"hub-stake-org\">"+(r.organisation||"")+"</div>"
-      + "<div><span class=\"hub-stake-type\">"+(r.type||"")+"</span></div>"
+      + "<div><span class=\"hub-stake-type\">"+(r.shType||"")+"</span></div>"
       + "<div class=\"hub-stake-priority "+pr+"\">"+(r.priority||"")+"</div>"
       + "<div class=\"hub-stake-owner\">"+(r.owner||"")+"</div>"
       + "</div>";
