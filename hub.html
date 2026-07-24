@@ -97,7 +97,9 @@ header{max-width:1080px;margin:0 auto;padding:44px 24px 0}
 
 .hub-stake-wrap{background:#f2f3f5;border-radius:24px;overflow:hidden}
 .hub-stake-scroll{overflow-x:auto}
-.hub-stake-row{display:grid;grid-template-columns:1.3fr 1.3fr 1fr .8fr 1fr;gap:12px;align-items:center;padding:16px 26px;border-bottom:1px solid #e3e6ea;min-width:560px}
+.hub-stake-row{display:grid;grid-template-columns:36px 1.3fr 1.3fr 1fr .8fr 1fr;gap:12px;align-items:center;padding:16px 26px;border-bottom:1px solid #e3e6ea;min-width:600px}
+.hub-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;background:#dcdfe3;flex-shrink:0}
+.hub-avatar-fallback{width:32px;height:32px;border-radius:50%;background:#3a8f6f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
 .hub-stake-row:last-child{border-bottom:none}
 a.hub-stake-row{text-decoration:none;color:inherit;cursor:pointer}
 a.hub-stake-row:hover{background:#e9ebee}
@@ -229,7 +231,7 @@ a.hub-stake-row:hover{background:#e9ebee}
         </div>
         <div class="hub-stake-wrap">
           <div class="hub-stake-scroll">
-            <div class="hub-stake-row head"><div>Name</div><div>Organisation</div><div>Type</div><div>Priority</div><div>Owner</div></div>
+            <div class="hub-stake-row head"><div></div><div>Name</div><div>Organisation</div><div>Type</div><div>Priority</div><div>Owner</div></div>
             <div id="hub-stake-list"></div>
           </div>
         </div>
@@ -308,6 +310,32 @@ function stripHtml(html){
   var div = document.createElement("div");
   div.innerHTML = html || "";
   return (div.textContent || "").trim();
+}
+
+// SharePoint's Image column can come back as a plain URL, a JSON string,
+// or an already-parsed object depending on how the flow's Select maps it
+// — try each shape and pull out a serverRelativeUrl/url if present.
+var SP_ORIGIN = "https://turley365.sharepoint.com";
+function pickPhotoUrl(v){
+  if(!v) return "";
+  if(typeof v === "string"){
+    if(v.indexOf("http") === 0) return v;
+    try{ v = JSON.parse(v); }catch(e){ return ""; }
+  }
+  if(typeof v === "object"){
+    var rel = v.serverRelativeUrl || v.ServerRelativeUrl || v.url || v.Url;
+    if(rel) return rel.indexOf("http") === 0 ? rel : SP_ORIGIN + rel;
+  }
+  return "";
+}
+function initials(name){
+  var parts = (name||"").trim().split(/\s+/);
+  return ((parts[0]||"")[0]||"") + ((parts[1]||"")[0]||"");
+}
+function avatarHtml(photo, name){
+  var url = pickPhotoUrl(photo);
+  if(url) return "<img class=\"hub-avatar\" src=\""+url+"\" alt=\"\"/>";
+  return "<div class=\"hub-avatar-fallback\">"+initials(name).toUpperCase()+"</div>";
 }
 function truncate(s, n){ return s.length > n ? s.slice(0,n).trim()+"…" : s; }
 
@@ -518,7 +546,9 @@ function renderStakeholders(rows, isDemo){
   if(!rows.length){ list.innerHTML = "<div class=\"hub-stake-empty\">No stakeholders logged yet.</div>"; return; }
   list.innerHTML = rows.map(function(r){
     var pr = (r.priority||"").toLowerCase();
-    var cells = "<div class=\"hub-stake-name\">"+(r.name||"")+"</div>"
+    var photoUrl = pickPhotoUrl(r.photo);
+    var cells = "<div>"+avatarHtml(r.photo, r.name)+"</div>"
+      + "<div class=\"hub-stake-name\">"+(r.name||"")+"</div>"
       + "<div class=\"hub-stake-org\">"+(r.organisation||"")+"</div>"
       + "<div><span class=\"hub-stake-type\">"+(r.shType||"")+"</span></div>"
       + "<div class=\"hub-stake-priority "+pr+"\">"+(r.priority||"")+"</div>"
@@ -529,7 +559,8 @@ function renderStakeholders(rows, isDemo){
         +"&organisation="+encodeURIComponent(r.organisation||"")
         +"&shType="+encodeURIComponent(r.shType||"")
         +"&priority="+encodeURIComponent(r.priority||"")
-        +"&owner="+encodeURIComponent(r.owner||"");
+        +"&owner="+encodeURIComponent(r.owner||"")
+        +"&photo="+encodeURIComponent(photoUrl);
       return "<a class=\"hub-stake-row\" href=\"stakeholder.html?"+qs+"\">"+cells+"</a>";
     }
     return "<div class=\"hub-stake-row\">"+cells+"</div>";
