@@ -81,6 +81,16 @@ function loadProfile(){
   document.getElementById("sh-owner").textContent = owner ? "Owned by " + owner : "";
 }
 
+// SharePoint returns Lookup columns as {..., Value:"X"} and Person
+// columns as {..., DisplayName:"X"} rather than plain text — unwrap both.
+function pickValue(v){
+  if(v && typeof v === "object"){
+    if("Value" in v) return v.Value;
+    if("DisplayName" in v) return v.DisplayName;
+  }
+  return v;
+}
+
 function fmtDate(s){
   var d = new Date(s);
   if(isNaN(d.getTime())) return s || "";
@@ -98,12 +108,15 @@ function loadActivity(){
     .then(function(rows){
       if(!Array.isArray(rows)) throw new Error();
       if(!rows.length){ feedEl.innerHTML = "<div class=\"sh-empty\">No activity logged yet.</div>"; return; }
-      rows.sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
+      rows.sort(function(a,b){ return new Date(b.Date) - new Date(a.Date); });
       feedEl.innerHTML = rows.map(function(r){
+        var enType = pickValue(r.enType);
+        var loggedBy = pickValue(r.loggedBy);
+        var followUp = r.Follow_x002d_upDate;
         return "<div class=\"sh-entry\">"
-          + "<div class=\"sh-entry-head\"><span class=\"sh-entry-type\">"+(r.enType||"")+"</span><span class=\"sh-entry-date\">"+fmtDate(r.date)+"</span></div>"
-          + (r.notes ? "<div class=\"sh-entry-notes\">"+r.notes+"</div>" : "")
-          + "<div class=\"sh-entry-foot\">Logged by "+(r.loggedBy||"—")+(r.followUp ? " · Follow up "+fmtDate(r.followUp) : "")+"</div>"
+          + "<div class=\"sh-entry-head\"><span class=\"sh-entry-type\">"+(enType||"")+"</span><span class=\"sh-entry-date\">"+fmtDate(r.Date)+"</span></div>"
+          + (r.Notes ? "<div class=\"sh-entry-notes\">"+r.Notes+"</div>" : "")
+          + "<div class=\"sh-entry-foot\">Logged by "+(loggedBy||"—")+(followUp ? " · Follow up "+fmtDate(followUp) : "")+"</div>"
           + "</div>";
       }).join("");
     })
