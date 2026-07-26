@@ -3,19 +3,62 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Stakeholder · Consultation Hub</title>
+<title>TheySED</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;background:#fff;color:#20242b;min-height:100vh;-webkit-font-smoothing:antialiased}
-header{max-width:820px;margin:0 auto;padding:44px 24px 12px}
-.sh-back{font-size:12px;font-weight:500;color:#8b909b;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;background:linear-gradient(135deg,#eef6ec,#e6f0e9 55%,#dcecdf);color:#20242b;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+.app-bg{min-height:100vh;padding:28px;display:flex;justify-content:center}
+.app-shell{display:flex;width:100%;max-width:1400px;background:#fff;border-radius:28px;box-shadow:0 20px 60px rgba(20,40,30,.12);overflow:hidden;align-items:stretch}
+.app-sidebar{width:250px;flex-shrink:0;background:#f7f8f6;padding:28px 20px;display:flex;flex-direction:column;border-right:1px solid #e8ebe6}
+.app-brand{font-size:20px;font-weight:600;color:#20242b;letter-spacing:-.01em}
+.app-project{font-size:11px;color:#8b909b;margin-top:6px;margin-bottom:28px;text-transform:uppercase;letter-spacing:.06em;line-height:1.5}
+.app-nav{display:flex;flex-direction:column;gap:4px}
+.app-nav-item{display:flex;align-items:center;gap:10px;border:none;background:transparent;text-align:left;font-family:inherit;font-size:13px;font-weight:500;color:#5b616b;padding:11px 14px;border-radius:12px;cursor:pointer;width:100%;text-decoration:none}
+.app-nav-item:hover{background:#eef1ee}
+.app-nav-item.on{background:#dcefe3;color:#1f5c45;font-weight:600}
+.app-sidebar-bottom{margin-top:auto;padding-top:18px;border-top:1px solid #e8ebe6;display:flex;flex-direction:column;gap:2px}
+.app-nav-item-ghost{color:#8b909b}
+.app-main{flex:1;min-width:0}
+.app-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 32px 0}
+.app-search{display:flex;align-items:center;gap:8px;background:#f2f3f5;border-radius:12px;padding:10px 14px;flex:1;max-width:320px}
+.app-search svg{flex-shrink:0;color:#8b909b}
+.app-search input{border:none;background:transparent;font-family:inherit;font-size:13px;color:#20242b;flex:1;outline:none;min-width:0}
+.app-search input::placeholder{color:#8b909b}
+.app-search-kbd{font-size:11px;color:#8b909b;background:#e7e9ec;padding:2px 6px;border-radius:6px;flex-shrink:0}
+.app-topbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.app-icon-btn{width:36px;height:36px;border-radius:50%;border:none;background:#f2f3f5;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#5b616b;flex-shrink:0}
+.app-avatar-btn{width:36px;height:36px;border-radius:50%;background:#3a8f6f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;border:none;cursor:pointer;font-family:inherit}
+.app-content{padding:8px 32px 40px}
+.app-page-head{margin:20px 0 20px}
+.app-page-title{font-size:26px;font-weight:600;letter-spacing:-.01em;color:#20242b}
+.app-page-sub{font-size:13px;color:#8b909b;margin-top:6px}
+.app-modal-backdrop{position:fixed;inset:0;background:rgba(20,30,25,.4);display:none;align-items:center;justify-content:center;z-index:200}
+.app-modal-backdrop.show{display:flex}
+.app-modal{background:#fff;border-radius:20px;padding:28px 30px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.app-modal-title{font-size:16px;font-weight:600;margin-bottom:10px}
+.app-modal-body{font-size:13px;color:#5b616b;line-height:1.6;margin-bottom:20px}
+.app-modal-close{border:none;background:#20242b;color:#fff;font-family:inherit;font-size:13px;font-weight:500;padding:10px 20px;border-radius:100px;cursor:pointer}
+@media(max-width:900px){
+  .app-bg{padding:0}
+  .app-shell{border-radius:0;flex-direction:column;min-height:100vh}
+  .app-sidebar{width:100%;flex-direction:row;align-items:center;padding:16px 20px;border-right:none;border-bottom:1px solid #e8ebe6}
+  .app-brand{margin-right:16px}
+  .app-project{display:none}
+  .app-nav{flex-direction:row;overflow-x:auto;flex:1}
+  .app-nav-item{white-space:nowrap}
+  .app-sidebar-bottom{margin-top:0;margin-left:12px;padding-top:0;border-top:none;flex-direction:row}
+  .app-sidebar-bottom .app-nav-item{white-space:nowrap}
+  .app-content{padding:8px 16px 40px}
+}
+
+.sh-back{font-size:12px;font-weight:500;color:#8b909b;text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:16px}
 .sh-back:hover{color:#5b616b}
 
-.sh-profile{max-width:820px;margin:0 auto;padding:16px 24px 0}
-.sh-card{background:#f2f3f5;border-radius:24px;padding:30px 32px;display:flex;gap:20px;align-items:flex-start}
+.sh-card{background:#f2f3f5;border-radius:24px;padding:30px 32px;display:flex;gap:20px;align-items:flex-start;max-width:820px}
 .sh-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#dcdfe3;flex-shrink:0}
 .sh-avatar-fallback{width:64px;height:64px;border-radius:50%;background:#3a8f6f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;flex-shrink:0}
 .sh-name{font-size:24px;font-weight:500;letter-spacing:-.01em}
@@ -27,8 +70,8 @@ header{max-width:820px;margin:0 auto;padding:44px 24px 12px}
 .sh-tag-priority.low{color:#5b616b}
 .sh-owner{font-size:12px;color:#8b909b;margin-top:14px}
 
-.sh-section{max-width:820px;margin:0 auto;padding:32px 24px 0}
-.sh-section:last-child{padding-bottom:56px}
+.sh-section{max-width:820px;margin-top:32px}
+.sh-section:last-child{padding-bottom:16px}
 .sh-section-title{font-size:16px;font-weight:500;margin-bottom:14px}
 .sh-feed{display:flex;flex-direction:column;gap:10px}
 .sh-entry{background:#f2f3f5;border-radius:16px;padding:18px 22px;cursor:pointer}
@@ -71,22 +114,52 @@ header{max-width:820px;margin:0 auto;padding:44px 24px 12px}
 </style>
 </head>
 <body>
-<header>
-  <a class="sh-back" href="hub.html">&larr; Back to hub</a>
-</header>
-
-<div class="sh-profile">
-  <div class="sh-card">
-    <div id="sh-avatar"></div>
-    <div>
-      <div class="sh-name" id="sh-name">&mdash;</div>
-      <div class="sh-org" id="sh-org"></div>
-      <div class="sh-meta">
-        <span class="sh-tag" id="sh-type"></span>
-        <span class="sh-tag sh-tag-priority" id="sh-priority"></span>
-      </div>
-      <div class="sh-owner" id="sh-owner"></div>
+<div class="app-bg">
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div class="app-brand">TheySED</div>
+    <div class="app-project">A new neighbourhood for Manchester</div>
+    <nav class="app-nav">
+      <a class="app-nav-item" href="hub.html">Project Health</a>
+      <a class="app-nav-item" href="hub.html">Consultation Activity</a>
+      <a class="app-nav-item on" href="hub.html">Stakeholder Activity</a>
+    </nav>
+    <div class="app-sidebar-bottom">
+      <button class="app-nav-item app-nav-item-ghost" type="button" id="app-about-btn">About</button>
+      <button class="app-nav-item app-nav-item-ghost" type="button" id="app-signout-btn">Sign out</button>
     </div>
+  </aside>
+  <main class="app-main">
+  <div class="app-topbar">
+    <div class="app-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Search" readonly/>
+      <span class="app-search-kbd">&#8984; K</span>
+    </div>
+    <div class="app-topbar-right">
+      <button class="app-icon-btn" type="button" title="Notifications">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <button class="app-avatar-btn" type="button" title="Account">?</button>
+    </div>
+  </div>
+  <div class="app-content">
+
+<a class="sh-back" href="hub.html">&larr; Back to hub</a>
+
+<div class="app-page-head">
+  <div class="app-page-title" id="sh-name">&mdash;</div>
+  <div class="app-page-sub" id="sh-org"></div>
+</div>
+
+<div class="sh-card">
+  <div id="sh-avatar"></div>
+  <div>
+    <div class="sh-meta">
+      <span class="sh-tag" id="sh-type"></span>
+      <span class="sh-tag sh-tag-priority" id="sh-priority"></span>
+    </div>
+    <div class="sh-owner" id="sh-owner"></div>
   </div>
 </div>
 
@@ -140,7 +213,43 @@ header{max-width:820px;margin:0 auto;padding:44px 24px 12px}
   <div class="sh-feed" id="sh-feed"><div class="sh-empty">Loading…</div></div>
 </div>
 
+  </div>
+  </main>
+</div>
+</div>
+
+<div class="app-modal-backdrop" id="app-modal-backdrop">
+  <div class="app-modal">
+    <div class="app-modal-title" id="app-modal-title"></div>
+    <div class="app-modal-body" id="app-modal-body"></div>
+    <button class="app-modal-close" id="app-modal-close">Close</button>
+  </div>
+</div>
+
 <script>
+var APP_MODAL_CONTENT = {
+  about: {
+    title: "About TheySED",
+    body: "TheySED is Turley's consultation dashboard — a live view of project health, consultation activity, and stakeholder engagement in one place, powered by SharePoint and Power Automate."
+  },
+  signout: {
+    title: "Sign out",
+    body: "There's no login system set up for this hub yet, so there's nothing to sign out of. This is a placeholder for when authentication is added."
+  }
+};
+function openAppModal(key){
+  var c = APP_MODAL_CONTENT[key];
+  document.getElementById("app-modal-title").textContent = c.title;
+  document.getElementById("app-modal-body").textContent = c.body;
+  document.getElementById("app-modal-backdrop").classList.add("show");
+}
+document.getElementById("app-about-btn").addEventListener("click", function(){ openAppModal("about"); });
+document.getElementById("app-signout-btn").addEventListener("click", function(){ openAppModal("signout"); });
+document.getElementById("app-modal-close").addEventListener("click", function(){ document.getElementById("app-modal-backdrop").classList.remove("show"); });
+document.getElementById("app-modal-backdrop").addEventListener("click", function(e){
+  if(e.target.id === "app-modal-backdrop") e.target.classList.remove("show");
+});
+
 // Same EngagementLog read flow used across the hub. Expects stakeholderId
 // in the query string, returns SharePoint's raw item shape per entry.
 var ENGAGEMENTLOG_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/07/workflows/25d74467bf0146499edf231cbf72f8aa/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=f57Z8mWPQJdyfTU3y7kRNiLlJBvKirrBJ9DCt_6QdXI";
