@@ -36,10 +36,12 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 .app-page-head{margin:20px 0 20px}
 .app-page-title{font-size:26px;font-weight:600;letter-spacing:-.01em;color:#20242b}
 .app-page-sub{font-size:13px;color:#8b909b;margin-top:6px}
-.app-hero{margin:20px 0 28px}
+.app-hero{margin:20px 0 8px}
 .app-hero-title{font-size:44px;font-weight:600;letter-spacing:-.02em;color:#20242b;line-height:1.05}
 .app-hero-sub{font-size:16px;color:#5b616b;margin-top:12px;max-width:540px}
-.app-hero-pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#3a3f47;background:#f2f3f5;padding:8px 16px;border-radius:100px;margin-top:20px}
+.app-hero-pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.app-hero-pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#3a3f47;background:#f2f3f5;padding:8px 16px;border-radius:100px}
+.app-hero-pill.warn{background:rgba(192,57,43,.1);color:#c0392b}
 @media(max-width:560px){.app-hero-title{font-size:32px}.app-topbar{flex-wrap:wrap}}
 .app-modal-backdrop{position:fixed;inset:0;background:rgba(20,30,25,.4);display:none;align-items:center;justify-content:center;z-index:200}
 .app-modal-backdrop.show{display:flex}
@@ -62,7 +64,7 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 .hub-panel{display:none}
 .hub-panel.on{display:block}
 
-.hub-grid{max-width:1080px;margin:0 auto;padding:16px 24px 0;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:min-content;gap:18px}
+.hub-grid{max-width:1080px;padding:16px 0 0;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:min-content;gap:18px}
 .hub-card{position:relative;background:#f2f3f5;border-radius:24px;padding:30px 32px;display:flex;flex-direction:column}
 .hub-card-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8b909b;font-weight:600;margin-bottom:16px}
 .hub-card-big{font-size:52px;font-weight:300;line-height:1;letter-spacing:-.02em}
@@ -113,7 +115,7 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 
 .hub-tile-gether{grid-column:1/-1}
 
-.hub-health-grid{max-width:1080px;margin:0 auto;padding:16px 24px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.hub-health-grid{max-width:1080px;padding:16px 0 0;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .hub-tile-roadmap{grid-column:1/-1}
 .hub-roadmap{display:flex;align-items:flex-start;justify-content:space-between;margin-top:28px;position:relative;padding:0 6px}
 .hub-roadmap::before{content:"";position:absolute;top:9px;left:6%;right:6%;height:2px;background:#dcdfe3;z-index:0}
@@ -135,7 +137,7 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 
 .hub-grid-pad{padding-bottom:56px}
 
-.hub-activity-grid{max-width:1080px;margin:0 auto;padding:16px 24px 56px;display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start}
+.hub-activity-grid{max-width:1080px;padding:16px 0 56px;display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start}
 .hub-col{display:flex;flex-direction:column;gap:20px}
 .hub-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .hub-section-title{font-size:16px;font-weight:500}
@@ -223,9 +225,13 @@ a.hub-stake-row:hover{background:#e9ebee}
 
 <div class="hub-panel on hub-grid-pad" id="panel-health">
   <div class="app-hero">
-    <div class="app-hero-title">Project Health</div>
-    <div class="app-hero-sub">A snapshot of sentiment and momentum across the consultation site and stakeholder activity.</div>
-    <div class="app-hero-pill" id="app-hero-pill" style="display:none"></div>
+    <div class="app-hero-title">Hi there,</div>
+    <div class="app-hero-sub">Let's see what's new with your project.</div>
+    <div class="app-hero-pills" id="app-hero-pills"></div>
+  </div>
+  <div class="app-page-head">
+    <div class="app-page-title">Project Health</div>
+    <div class="app-page-sub">A snapshot of sentiment and momentum across the consultation site and stakeholder activity.</div>
   </div>
   <div class="hub-health-grid">
     <div class="hub-card">
@@ -487,14 +493,12 @@ function renderHealthStakeholders(rows){
     var d = new Date(r.Date);
     return !isNaN(d.getTime()) && d.getTime()>=cutoff;
   }).length;
-  var pillEl = document.getElementById("app-hero-pill");
-  if(pillEl){
-    if(recentCount>0){
-      pillEl.textContent = recentCount+" engagement "+(recentCount===1?"entry":"entries")+" logged this week";
-      pillEl.style.display = "inline-flex";
-    } else {
-      pillEl.style.display = "none";
-    }
+  var pillsEl = document.getElementById("app-hero-pills");
+  if(pillsEl){
+    var pills = "";
+    if(recentCount>0) pills += "<span class=\"app-hero-pill\">"+recentCount+" engagement "+(recentCount===1?"entry":"entries")+" logged this week</span>";
+    if(neg>0) pills += "<span class=\"app-hero-pill warn\">"+neg+" "+(neg===1?"entry":"entries")+" flagged Negative sentiment</span>";
+    pillsEl.innerHTML = pills;
   }
 }
 
