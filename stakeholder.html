@@ -59,33 +59,37 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 .sh-back{font-size:12px;font-weight:500;color:#8b909b;text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:16px}
 .sh-back:hover{color:#5b616b}
 
-.sh-card{background:#f2f3f5;border-radius:24px;padding:30px 32px;display:flex;gap:20px;align-items:flex-start;max-width:820px}
+.sh-layout{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;align-items:start;max-width:1200px}
+.sh-col-main{display:flex;flex-direction:column;gap:24px;min-width:0}
+.sh-col-side{position:sticky;top:24px;min-width:0}
+@media(max-width:900px){.sh-layout{grid-template-columns:1fr}.sh-col-side{position:static}}
+
+.sh-card{background:#f2f3f5;border-radius:24px;padding:30px 32px;display:flex;gap:20px;align-items:flex-start}
 .sh-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#dcdfe3;flex-shrink:0}
 .sh-avatar-fallback{width:64px;height:64px;border-radius:50%;background:#3a8f6f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;flex-shrink:0}
-.sh-name{font-size:24px;font-weight:500;letter-spacing:-.01em}
-.sh-org{font-size:14px;font-weight:400;color:#5b616b;margin-top:4px}
-.sh-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.sh-meta{display:flex;gap:10px;flex-wrap:wrap}
 .sh-tag{font-size:11px;font-weight:600;padding:5px 12px;border-radius:100px;background:#fff;color:#3a3f47}
 .sh-tag-priority.high{color:#c0392b}
 .sh-tag-priority.medium{color:#b8860b}
 .sh-tag-priority.low{color:#5b616b}
 .sh-owner{font-size:12px;color:#8b909b;margin-top:14px}
 
-.sh-section{max-width:820px;margin-top:32px}
-.sh-section:last-child{padding-bottom:16px}
 .sh-section-title{font-size:16px;font-weight:500;margin-bottom:14px}
+.sh-field-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8b909b;display:block;margin-bottom:4px}
 .sh-feed{display:flex;flex-direction:column;gap:10px}
 .sh-entry{background:#f2f3f5;border-radius:16px;padding:18px 22px;cursor:pointer}
-.sh-entry-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.sh-entry-type{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:#fff;color:#3a3f47}
-.sh-entry-date{font-size:12px;color:#8b909b}
-.sh-entry-summary{font-size:13px;font-weight:400;color:#3a3f47;margin-top:10px;line-height:1.5}
+.sh-entry-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.sh-entry-field{display:flex;flex-direction:column;gap:5px}
+.sh-entry-field-date{margin-left:auto;align-items:flex-end;text-align:right}
+.sh-entry-type{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:#fff;color:#3a3f47;width:max-content}
+.sh-entry-date{font-size:12px;color:#3a3f47;font-weight:500}
+.sh-entry-summary{font-size:13px;font-weight:400;color:#3a3f47;margin-top:6px;line-height:1.5}
 .sh-entry-notes{font-size:13px;font-weight:400;color:#3a3f47;margin-top:10px;line-height:1.6;display:none}
 .sh-entry-notes.open{display:block}
 .sh-entry-notes p{margin-bottom:8px}
 .sh-entry-notes ul,.sh-entry-notes ol{margin:0 0 8px 20px}
 .sh-entry-toggle{font-size:11px;font-weight:600;color:#3a8f6f;margin-top:10px;display:inline-block}
-.sh-entry-sentiment{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px}
+.sh-entry-sentiment{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;width:max-content}
 .sh-entry-sentiment.positive{background:rgba(58,143,111,.12);color:#2f6f52}
 .sh-entry-sentiment.neutral{background:#e7e9ec;color:#5b616b}
 .sh-entry-sentiment.negative{background:rgba(192,57,43,.1);color:#c0392b}
@@ -98,20 +102,20 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 .sh-empty{font-size:13px;color:#8b909b;background:#f2f3f5;border-radius:16px;padding:22px;text-align:center}
 
 .sh-form{background:#f2f3f5;border-radius:24px;padding:28px 30px}
-.sh-form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.sh-field{margin-bottom:14px}
+.sh-field > .sh-field-label{margin-bottom:6px}
 .sh-form input,.sh-form select,.sh-form textarea{font-family:inherit;font-size:13px;padding:10px 12px;border:1px solid #dcdfe3;border-radius:10px;background:#fff;color:#20242b;width:100%}
-.sh-form textarea{min-height:70px;resize:vertical;margin-bottom:14px}
+.sh-form textarea{min-height:60px;resize:vertical}
 .sh-rte-toolbar{display:flex;gap:6px;margin-bottom:6px}
 .sh-rte-btn{border:1px solid #dcdfe3;background:#fff;border-radius:8px;width:30px;height:30px;font-size:13px;font-weight:600;cursor:pointer;color:#3a3f47}
 .sh-rte-btn:hover{background:#e9ebee}
-.sh-rte-input{min-height:110px;background:#fff;border:1px solid #dcdfe3;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.6;margin-bottom:14px}
+.sh-rte-input{min-height:110px;background:#fff;border:1px solid #dcdfe3;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.6}
 .sh-rte-input:empty:before{content:attr(data-placeholder);color:#8b909b}
-.sh-form-submit{border:none;background:#20242b;color:#fff;font-family:inherit;font-size:13px;font-weight:500;padding:11px 22px;border-radius:100px;cursor:pointer}
+.sh-form-submit{border:none;background:#20242b;color:#fff;font-family:inherit;font-size:13px;font-weight:500;padding:11px 22px;border-radius:100px;cursor:pointer;width:100%}
 .sh-form-submit:hover{background:#3a3f47}
 .sh-form-status{font-size:12px;color:#8b909b;margin-top:10px}
 .sh-form-status.err{color:#c0392b}
 .sh-form-status.ok{color:#2f6f52}
-@media(max-width:560px){.sh-form-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -153,65 +157,90 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
   <div class="app-page-sub" id="sh-org"></div>
 </div>
 
-<div class="sh-card">
-  <div id="sh-avatar"></div>
-  <div>
-    <div class="sh-meta">
-      <span class="sh-tag" id="sh-type"></span>
-      <span class="sh-tag sh-tag-priority" id="sh-priority"></span>
+<div class="sh-layout">
+  <div class="sh-col-main">
+    <div class="sh-card">
+      <div id="sh-avatar"></div>
+      <div>
+        <div class="sh-meta">
+          <span class="sh-tag" id="sh-type"></span>
+          <span class="sh-tag sh-tag-priority" id="sh-priority"></span>
+        </div>
+        <div class="sh-owner" id="sh-owner"></div>
+      </div>
     </div>
-    <div class="sh-owner" id="sh-owner"></div>
-  </div>
-</div>
 
-<div class="sh-section">
-  <div class="sh-section-title">Add entry</div>
-  <div class="sh-form">
-    <form id="sh-add-form">
-      <div class="sh-form-row">
-        <select id="entry-type" required>
-          <option value="">Type…</option>
-          <option>Meeting</option>
-          <option>Call</option>
-          <option>Email</option>
-          <option>Letter</option>
-          <option>Leaflet Drop</option>
-          <option>Site Visit</option>
-          <option>Event</option>
-          <option>Other</option>
-        </select>
-        <input type="date" id="entry-date" required/>
-        <input type="date" id="entry-followup"/>
-      </div>
-      <div class="sh-form-row">
-        <input type="email" id="entry-loggedby" placeholder="Logged by (email)" required/>
-        <input type="text" id="entry-attendees" placeholder="Attendees"/>
-        <select id="entry-sentiment">
-          <option value="">Sentiment…</option>
-          <option>Positive</option>
-          <option>Neutral</option>
-          <option>Negative</option>
-        </select>
-      </div>
-      <div class="sh-rte-toolbar">
-        <button type="button" class="sh-rte-btn" data-cmd="bold"><b>B</b></button>
-        <button type="button" class="sh-rte-btn" data-cmd="italic"><i>I</i></button>
-        <button type="button" class="sh-rte-btn" data-cmd="insertUnorderedList">&#8226;</button>
-      </div>
-      <div class="sh-rte-input" id="entry-notes" contenteditable="true" data-placeholder="Notes…"></div>
-      <div class="sh-form-row" style="grid-template-columns:1fr 1fr">
-        <textarea id="entry-actions" placeholder="Actions / next steps — one per line"></textarea>
-        <textarea id="entry-attachments" placeholder="Attachment links — one per line"></textarea>
-      </div>
-      <button class="sh-form-submit" type="submit">Add entry</button>
-      <div class="sh-form-status" id="sh-form-status"></div>
-    </form>
+    <div>
+      <div class="sh-section-title">Activity</div>
+      <div class="sh-feed" id="sh-feed"><div class="sh-empty">Loading…</div></div>
+    </div>
   </div>
-</div>
 
-<div class="sh-section">
-  <div class="sh-section-title">Activity</div>
-  <div class="sh-feed" id="sh-feed"><div class="sh-empty">Loading…</div></div>
+  <div class="sh-col-side">
+    <div class="sh-section-title">Add entry</div>
+    <div class="sh-form">
+      <form id="sh-add-form">
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-type">Type</label>
+          <select id="entry-type" required>
+            <option value="">Select type…</option>
+            <option>Meeting</option>
+            <option>Call</option>
+            <option>Email</option>
+            <option>Letter</option>
+            <option>Leaflet Drop</option>
+            <option>Site Visit</option>
+            <option>Event</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-date">Date</label>
+          <input type="date" id="entry-date" required/>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-followup">Follow-up date</label>
+          <input type="date" id="entry-followup"/>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-loggedby">Logged by (email)</label>
+          <input type="email" id="entry-loggedby" placeholder="name@example.com" required/>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-attendees">Attendees</label>
+          <input type="text" id="entry-attendees" placeholder="Names, comma separated"/>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-sentiment">Sentiment</label>
+          <select id="entry-sentiment">
+            <option value="">Select sentiment…</option>
+            <option>Positive</option>
+            <option>Neutral</option>
+            <option>Negative</option>
+          </select>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label">Notes</label>
+          <div class="sh-rte-toolbar">
+            <button type="button" class="sh-rte-btn" data-cmd="bold"><b>B</b></button>
+            <button type="button" class="sh-rte-btn" data-cmd="italic"><i>I</i></button>
+            <button type="button" class="sh-rte-btn" data-cmd="insertUnorderedList">&#8226;</button>
+          </div>
+          <div class="sh-rte-input" id="entry-notes" contenteditable="true" data-placeholder="Write your notes…"></div>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-actions">Actions / next steps</label>
+          <textarea id="entry-actions" placeholder="One per line"></textarea>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-attachments">Attachment links</label>
+          <textarea id="entry-attachments" placeholder="One per line"></textarea>
+        </div>
+        <button class="sh-form-submit" type="submit">Add entry</button>
+        <div class="sh-form-status" id="sh-form-status"></div>
+      </form>
+    </div>
+  </div>
 </div>
 
   </div>
@@ -370,11 +399,13 @@ function loadActivity(){
         if(actions.length) extra += "<div class=\"sh-entry-extra\"><strong>Actions:</strong><ul>"+actions.map(function(a){return "<li>"+a+"</li>";}).join("")+"</ul></div>";
         if(links.length) extra += "<div class=\"sh-entry-extra sh-entry-links\"><strong>Attachments:</strong>"+links.map(function(l){return "<a href=\""+l+"\" target=\"_blank\" rel=\"noopener\">"+l+"</a>";}).join("")+"</div>";
         return "<div class=\"sh-entry\" data-entry=\""+i+"\">"
-          + "<div class=\"sh-entry-head\"><span class=\"sh-entry-type\">"+(enType||"")+"</span>"
-          + (sentiment ? "<span class=\"sh-entry-sentiment "+sentiment.toLowerCase()+"\">"+sentiment+"</span>" : "")
-          + "<span class=\"sh-entry-date\">"+fmtDate(r.Date)+"</span></div>"
-          + (summary ? "<div class=\"sh-entry-summary\">"+summary+"</div>" : "")
-          + "<div class=\"sh-entry-notes\" id=\"sh-entry-notes-"+i+"\">"+notesHtml+extra+"</div>"
+          + "<div class=\"sh-entry-head\">"
+          + "<div class=\"sh-entry-field\"><span class=\"sh-field-label\">Type</span><span class=\"sh-entry-type\">"+(enType||"")+"</span></div>"
+          + (sentiment ? "<div class=\"sh-entry-field\"><span class=\"sh-field-label\">Sentiment</span><span class=\"sh-entry-sentiment "+sentiment.toLowerCase()+"\">"+sentiment+"</span></div>" : "")
+          + "<div class=\"sh-entry-field sh-entry-field-date\"><span class=\"sh-field-label\">Date</span><span class=\"sh-entry-date\">"+fmtDate(r.Date)+"</span></div>"
+          + "</div>"
+          + (summary ? "<span class=\"sh-field-label\">Summary</span><div class=\"sh-entry-summary\">"+summary+"</div>" : "")
+          + "<div class=\"sh-entry-notes\" id=\"sh-entry-notes-"+i+"\">"+(plainNotes ? "<span class=\"sh-field-label\">Notes</span>" : "")+notesHtml+extra+"</div>"
           + (needsToggle ? "<span class=\"sh-entry-toggle\" id=\"sh-entry-toggle-"+i+"\">View full notes</span>" : "")
           + "<div class=\"sh-entry-foot\">Logged by "+(loggedBy||"—")+(followUp ? " · Follow up "+fmtDate(followUp) : "")+"</div>"
           + "</div>";
