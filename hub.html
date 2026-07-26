@@ -150,6 +150,8 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 .hub-bulletin-type{font-size:10px;font-weight:600;padding:3px 9px;border-radius:100px;background:#e7e9ec;color:#3a3f47;white-space:nowrap}
 .hub-bulletin-date{font-size:11px;color:#8b909b;white-space:nowrap}
 .hub-bulletin-who{font-size:12px;font-weight:500;margin-top:6px}
+.hub-bulletin-who a{color:#20242b;text-decoration:none}
+.hub-bulletin-who a:hover{color:#3a8f6f;text-decoration:underline}
 .hub-bulletin-notes{font-size:12px;color:#5b616b;margin-top:4px;line-height:1.5}
 .hub-upcoming-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #e3e6ea}
 .hub-upcoming-item:last-child{border-bottom:none}
@@ -325,6 +327,20 @@ a.hub-stake-row:hover{background:#e9ebee}
         <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-spend">&mdash;</div><div class="hub-gether-lbl">Meta Spend</div></div>
       </div>
       <div class="hub-card-sub" id="hub-gether-note">Connect Gether&#8217;s SharePoint list to make this live</div>
+    </div>
+    <div class="hub-card hub-tile-gether" id="hub-muckrack-card">
+      <button class="hub-info-btn" data-info="Press/media coverage tracked via Muck Rack — mentions, estimated reach, and coverage sentiment. Demo data for now — will connect to Muck Rack's API once wired up.">i</button>
+      <div class="hub-gether-head">
+        <div class="hub-card-label" style="margin-bottom:0">Media Coverage (Muck Rack)</div>
+        <span class="hub-gether-badge" id="hub-muckrack-badge">Demo data</span>
+      </div>
+      <div class="hub-gether-row" id="hub-muckrack-row">
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-muckrack-mentions">&mdash;</div><div class="hub-gether-lbl">Mentions</div></div>
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-muckrack-reach">&mdash;</div><div class="hub-gether-lbl">Est. Reach</div></div>
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-muckrack-positive">&mdash;</div><div class="hub-gether-lbl">Positive Coverage</div></div>
+      </div>
+      <div class="hub-bulletin-list" id="hub-muckrack-list" style="margin-top:18px"></div>
+      <div class="hub-card-sub" id="hub-muckrack-note">Connect the Muck Rack API to make this live</div>
     </div>
   </div>
 </div>
@@ -759,6 +775,45 @@ function loadGether(){
   });
 }
 
+// Set once a Muck Rack API relay/flow is connected — their coverage API
+// returns results shaped roughly like MUCKRACK_DEMO below (headline, outlet,
+// published_at, url, sentiment, plus aggregate mentions/reach). Adjust field
+// names here once you see the real payload from the API.
+var MUCKRACK_URL = "";
+var MUCKRACK_DEMO = {
+  mentions: 14,
+  reach: 182000,
+  results: [
+    {headline:"Manchester unveils plans for new riverside neighbourhood", outlet:"Manchester Evening News", published_at:"2026-07-18", url:"https://example.com/article-1", sentiment:"positive"},
+    {headline:"Residents raise concerns over new development at drop-in event", outlet:"BBC Manchester", published_at:"2026-07-12", url:"https://example.com/article-2", sentiment:"neutral"},
+    {headline:"Local business association backs riverside masterplan", outlet:"Place North West", published_at:"2026-07-08", url:"https://example.com/article-3", sentiment:"positive"}
+  ]
+};
+function loadMuckRack(){
+  if(!MUCKRACK_URL){ renderMuckRack(MUCKRACK_DEMO); return; }
+  document.getElementById("hub-muckrack-badge").style.display = "none";
+  document.getElementById("hub-muckrack-note").textContent = "";
+  fetch(MUCKRACK_URL).then(function(r){ return r.json(); }).then(renderMuckRack).catch(function(){
+    document.getElementById("hub-muckrack-mentions").textContent = "Could not load";
+    document.getElementById("hub-muckrack-reach").textContent = "Could not load";
+    document.getElementById("hub-muckrack-positive").textContent = "Could not load";
+  });
+}
+function renderMuckRack(d){
+  var results = d.results || [];
+  var pos = results.filter(function(r){ return (r.sentiment||"").toLowerCase()==="positive"; }).length;
+  document.getElementById("hub-muckrack-mentions").textContent = d.mentions!=null ? d.mentions.toLocaleString() : results.length;
+  document.getElementById("hub-muckrack-reach").textContent = d.reach!=null ? (d.reach>=1000 ? Math.round(d.reach/1000)+"k" : d.reach) : "—";
+  document.getElementById("hub-muckrack-positive").textContent = pos;
+  document.getElementById("hub-muckrack-list").innerHTML = results.slice(0,3).map(function(r){
+    return "<div class=\"hub-bulletin-item\">"
+      + "<div class=\"hub-bulletin-head\"><span class=\"hub-bulletin-type\">"+(r.sentiment ? r.sentiment.charAt(0).toUpperCase()+r.sentiment.slice(1) : "")+"</span><span class=\"hub-bulletin-date\">"+fmtDate(r.published_at)+"</span></div>"
+      + "<div class=\"hub-bulletin-who\"><a href=\""+r.url+"\" target=\"_blank\" rel=\"noopener\">"+r.headline+"</a></div>"
+      + "<div class=\"hub-bulletin-notes\">"+r.outlet+"</div>"
+      + "</div>";
+  }).join("");
+}
+
 var STAKE_DEMO = [
   {id:1, name:"Sarah Whitfield", organisation:"Riverside Residents Association", shType:"Community Group", priority:"High", owner:"J. Davison"},
   {id:2, name:"Cllr. Tom Reid", organisation:"Manchester City Council", shType:"Councillor", priority:"High", owner:"C. Hemsley"},
@@ -855,7 +910,7 @@ function loadActivityFeed(){
 }
 
 function loadAll(){
-  loadGA(); loadFeedback(); loadCodesign(); loadQuestions(); loadGether(); loadStakeholders(); loadActivityFeed();
+  loadGA(); loadFeedback(); loadCodesign(); loadQuestions(); loadGether(); loadMuckRack(); loadStakeholders(); loadActivityFeed();
   renderRoadmap();
 }
 loadAll();
