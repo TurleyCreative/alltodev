@@ -78,7 +78,8 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 .sh-field-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8b909b;display:block;margin-bottom:4px}
 .sh-feed{display:flex;flex-direction:column;gap:10px}
 .sh-entry{background:#f2f3f5;border-radius:16px;padding:18px 22px;cursor:pointer}
-.sh-entry-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.sh-entry-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.sh-entry-attendees{font-size:13px;color:#3a3f47;margin-bottom:14px}
 .sh-entry-field{display:flex;flex-direction:column;gap:5px}
 .sh-entry-field-date{margin-left:auto;align-items:flex-end;text-align:right}
 .sh-entry-type{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:#fff;color:#3a3f47;width:max-content}
@@ -368,6 +369,20 @@ function sanitizeHtml(html){
   return container.innerHTML;
 }
 
+// Notes written directly in SharePoint (rather than via the rich-text
+// editor here) often come through as plain text with real newline
+// characters, which HTML collapses into one run-on paragraph. Detect
+// that case and wrap it into proper <p> blocks before sanitizing.
+function plainTextToHtml(text){
+  return text.split(/\n{2,}/).map(function(para){
+    return "<p>"+para.split(/\n/).join("<br>")+"</p>";
+  }).join("");
+}
+function notesToHtml(raw){
+  var looksLikeHtml = /<[a-z][\s\S]*>/i.test(raw || "");
+  return sanitizeHtml(looksLikeHtml ? raw : plainTextToHtml(raw || ""));
+}
+
 function loadActivity(){
   var id = qparam("id");
   var feedEl = document.getElementById("sh-feed");
@@ -385,7 +400,7 @@ function loadActivity(){
         var loggedBy = pickValue(r.loggedBy);
         var sentiment = pickValue(r.Sentiment);
         var followUp = r.Follow_x002d_upDate;
-        var notesHtml = sanitizeHtml(r.Notes || "");
+        var notesHtml = notesToHtml(r.Notes);
         var plainNotes = stripHtml(notesHtml);
         // Prefer the AI Builder-generated summary; fall back to a plain
         // truncation of the notes if it hasn't been generated yet.
@@ -395,7 +410,6 @@ function loadActivity(){
         var actions = (r.Actions || "").split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
         var links = (r.AttachmentLinks || "").split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
         var extra = "";
-        if(r.Attendees) extra += "<div class=\"sh-entry-extra\"><strong>Attendees:</strong> "+r.Attendees+"</div>";
         if(actions.length) extra += "<div class=\"sh-entry-extra\"><strong>Actions:</strong><ul>"+actions.map(function(a){return "<li>"+a+"</li>";}).join("")+"</ul></div>";
         if(links.length) extra += "<div class=\"sh-entry-extra sh-entry-links\"><strong>Attachments:</strong>"+links.map(function(l){return "<a href=\""+l+"\" target=\"_blank\" rel=\"noopener\">"+l+"</a>";}).join("")+"</div>";
         return "<div class=\"sh-entry\" data-entry=\""+i+"\">"
@@ -404,6 +418,7 @@ function loadActivity(){
           + (sentiment ? "<div class=\"sh-entry-field\"><span class=\"sh-field-label\">Sentiment</span><span class=\"sh-entry-sentiment "+sentiment.toLowerCase()+"\">"+sentiment+"</span></div>" : "")
           + "<div class=\"sh-entry-field sh-entry-field-date\"><span class=\"sh-field-label\">Date</span><span class=\"sh-entry-date\">"+fmtDate(r.Date)+"</span></div>"
           + "</div>"
+          + (r.Attendees ? "<span class=\"sh-field-label\">Attendees</span><div class=\"sh-entry-attendees\">"+r.Attendees+"</div>" : "")
           + (summary ? "<span class=\"sh-field-label\">Summary</span><div class=\"sh-entry-summary\">"+summary+"</div>" : "")
           + "<div class=\"sh-entry-notes\" id=\"sh-entry-notes-"+i+"\">"+(plainNotes ? "<span class=\"sh-field-label\">Notes</span>" : "")+notesHtml+extra+"</div>"
           + (needsToggle ? "<span class=\"sh-entry-toggle\" id=\"sh-entry-toggle-"+i+"\">View full notes</span>" : "")
