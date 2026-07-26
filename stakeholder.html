@@ -85,6 +85,8 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 .sh-entry-type{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:#fff;color:#3a3f47;width:max-content}
 .sh-entry-date{font-size:12px;color:#3a3f47;font-weight:500}
 .sh-entry-summary{font-size:13px;font-weight:400;color:#3a3f47;margin-top:6px;line-height:1.5}
+.sh-entry-summary p{margin-bottom:8px}
+.sh-entry-summary p:last-child{margin-bottom:0}
 .sh-entry-notes{font-size:13px;font-weight:400;color:#3a3f47;margin-top:10px;line-height:1.6;display:none}
 .sh-entry-notes.open{display:block}
 .sh-entry-notes p{margin-bottom:8px}
@@ -405,7 +407,7 @@ function loadActivity(){
         // Prefer the AI Builder-generated summary; fall back to a plain
         // truncation of the notes if it hasn't been generated yet.
         var aiSummary = (r.Summary || "").trim();
-        var summary = aiSummary || truncate(plainNotes, 120);
+        var summary = aiSummary ? sanitizeHtml(plainTextToHtml(aiSummary)) : truncate(plainNotes, 120);
         var needsToggle = plainNotes.length > 0 && (aiSummary || plainNotes.length > 120);
         var actions = (r.Actions || "").split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
         var links = (r.AttachmentLinks || "").split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
