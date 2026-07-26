@@ -3,20 +3,45 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Consultation Hub</title>
+<title>TheySED</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;background:#fff;color:#20242b;min-height:100vh;-webkit-font-smoothing:antialiased}
-header{max-width:1080px;margin:0 auto;padding:44px 24px 0}
-.hub-title{font-size:26px;font-weight:500;letter-spacing:-.01em}
-.hub-sub{font-size:12px;font-weight:500;color:#8b909b;margin-top:6px;text-transform:uppercase;letter-spacing:.08em}
+body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;background:linear-gradient(135deg,#eef6ec,#e6f0e9 55%,#dcecdf);color:#20242b;min-height:100vh;-webkit-font-smoothing:antialiased}
 
-.hub-tabs{max-width:1080px;margin:24px auto 0;padding:0 24px;display:flex;gap:0;border-bottom:1px solid #e3e6ea}
-.hub-tab{border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:500;color:#8b909b;padding:0 0 12px;margin-right:28px;cursor:pointer;border-bottom:2px solid transparent}
-.hub-tab.on{color:#20242b;border-bottom-color:#20242b}
+.app-bg{min-height:100vh;padding:28px;display:flex;justify-content:center}
+.app-shell{display:flex;width:100%;max-width:1400px;background:#fff;border-radius:28px;box-shadow:0 20px 60px rgba(20,40,30,.12);overflow:hidden;align-items:stretch}
+.app-sidebar{width:250px;flex-shrink:0;background:#f7f8f6;padding:28px 20px;display:flex;flex-direction:column;border-right:1px solid #e8ebe6}
+.app-brand{font-size:20px;font-weight:600;color:#20242b;letter-spacing:-.01em}
+.app-project{font-size:11px;color:#8b909b;margin-top:6px;margin-bottom:28px;text-transform:uppercase;letter-spacing:.06em;line-height:1.5}
+.app-nav{display:flex;flex-direction:column;gap:4px}
+.app-nav-item{display:flex;align-items:center;gap:10px;border:none;background:transparent;text-align:left;font-family:inherit;font-size:13px;font-weight:500;color:#5b616b;padding:11px 14px;border-radius:12px;cursor:pointer;width:100%}
+.app-nav-item:hover{background:#eef1ee}
+.app-nav-item.on{background:#dcefe3;color:#1f5c45;font-weight:600}
+.app-sidebar-bottom{margin-top:auto;padding-top:18px;border-top:1px solid #e8ebe6;display:flex;flex-direction:column;gap:2px}
+.app-nav-item-ghost{color:#8b909b}
+.app-main{flex:1;min-width:0}
+.app-content{padding:8px 32px 40px}
+.app-modal-backdrop{position:fixed;inset:0;background:rgba(20,30,25,.4);display:none;align-items:center;justify-content:center;z-index:200}
+.app-modal-backdrop.show{display:flex}
+.app-modal{background:#fff;border-radius:20px;padding:28px 30px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.app-modal-title{font-size:16px;font-weight:600;margin-bottom:10px}
+.app-modal-body{font-size:13px;color:#5b616b;line-height:1.6;margin-bottom:20px}
+.app-modal-close{border:none;background:#20242b;color:#fff;font-family:inherit;font-size:13px;font-weight:500;padding:10px 20px;border-radius:100px;cursor:pointer}
+@media(max-width:900px){
+  .app-bg{padding:0}
+  .app-shell{border-radius:0;flex-direction:column;min-height:100vh}
+  .app-sidebar{width:100%;flex-direction:row;align-items:center;padding:16px 20px;border-right:none;border-bottom:1px solid #e8ebe6}
+  .app-brand{margin-right:16px}
+  .app-project{display:none}
+  .app-nav{flex-direction:row;overflow-x:auto;flex:1}
+  .app-nav-item{white-space:nowrap}
+  .app-sidebar-bottom .app-nav-item{white-space:nowrap}
+  .app-sidebar-bottom{margin-top:0;margin-left:12px;padding-top:0;border-top:none;flex-direction:row}
+  .app-content{padding:8px 16px 40px}
+}
 .hub-panel{display:none}
 .hub-panel.on{display:block}
 
@@ -149,16 +174,23 @@ a.hub-stake-row:hover{background:#e9ebee}
 </style>
 </head>
 <body>
-<header>
-  <div class="hub-title">Consultation Hub</div>
-  <div class="hub-sub">A new neighbourhood for Manchester</div>
-</header>
-
-<div class="hub-tabs">
-  <button class="hub-tab on" type="button" data-panel="panel-health">Project Health</button>
-  <button class="hub-tab" type="button" data-panel="panel-overview">Consultation Activity</button>
-  <button class="hub-tab" type="button" data-panel="panel-activity">Stakeholder Activity</button>
-</div>
+<div class="app-bg">
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div class="app-brand">TheySED</div>
+    <div class="app-project">A new neighbourhood for Manchester</div>
+    <nav class="app-nav">
+      <button class="app-nav-item on" type="button" data-panel="panel-health">Project Health</button>
+      <button class="app-nav-item" type="button" data-panel="panel-overview">Consultation Activity</button>
+      <button class="app-nav-item" type="button" data-panel="panel-activity">Stakeholder Activity</button>
+    </nav>
+    <div class="app-sidebar-bottom">
+      <button class="app-nav-item app-nav-item-ghost" type="button" id="app-about-btn">About</button>
+      <button class="app-nav-item app-nav-item-ghost" type="button" id="app-signout-btn">Sign out</button>
+    </div>
+  </aside>
+  <main class="app-main">
+  <div class="app-content">
 
 <div class="hub-panel on hub-grid-pad" id="panel-health">
   <div class="hub-health-grid">
@@ -286,16 +318,52 @@ a.hub-stake-row:hover{background:#e9ebee}
   </div>
 </div>
 
+  </div>
+  </main>
+</div>
+</div>
+
 <div id="hub-tooltip" class="hub-tooltip"></div>
 
+<div class="app-modal-backdrop" id="app-modal-backdrop">
+  <div class="app-modal">
+    <div class="app-modal-title" id="app-modal-title"></div>
+    <div class="app-modal-body" id="app-modal-body"></div>
+    <button class="app-modal-close" id="app-modal-close">Close</button>
+  </div>
+</div>
+
 <script>
-document.querySelectorAll(".hub-tab").forEach(function(btn){
+document.querySelectorAll(".app-nav-item[data-panel]").forEach(function(btn){
   btn.addEventListener("click", function(){
-    document.querySelectorAll(".hub-tab").forEach(function(b){ b.classList.remove("on"); });
+    document.querySelectorAll(".app-nav-item[data-panel]").forEach(function(b){ b.classList.remove("on"); });
     document.querySelectorAll(".hub-panel").forEach(function(p){ p.classList.remove("on"); });
     btn.classList.add("on");
     document.getElementById(btn.getAttribute("data-panel")).classList.add("on");
   });
+});
+
+var APP_MODAL_CONTENT = {
+  about: {
+    title: "About TheySED",
+    body: "TheySED is Turley's consultation dashboard — a live view of project health, consultation activity, and stakeholder engagement in one place, powered by SharePoint and Power Automate."
+  },
+  signout: {
+    title: "Sign out",
+    body: "There's no login system set up for this hub yet, so there's nothing to sign out of. This is a placeholder for when authentication is added."
+  }
+};
+function openAppModal(key){
+  var c = APP_MODAL_CONTENT[key];
+  document.getElementById("app-modal-title").textContent = c.title;
+  document.getElementById("app-modal-body").textContent = c.body;
+  document.getElementById("app-modal-backdrop").classList.add("show");
+}
+document.getElementById("app-about-btn").addEventListener("click", function(){ openAppModal("about"); });
+document.getElementById("app-signout-btn").addEventListener("click", function(){ openAppModal("signout"); });
+document.getElementById("app-modal-close").addEventListener("click", function(){ document.getElementById("app-modal-backdrop").classList.remove("show"); });
+document.getElementById("app-modal-backdrop").addEventListener("click", function(e){
+  if(e.target.id === "app-modal-backdrop") e.target.classList.remove("show");
 });
 
 // Reuse the same Power Automate flow URLs already wired up in dash.html
