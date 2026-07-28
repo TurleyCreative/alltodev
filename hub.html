@@ -31,7 +31,18 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 .app-search input::placeholder{color:#8b909b}
 .app-search-kbd{font-size:11px;color:#8b909b;background:#e7e9ec;padding:2px 6px;border-radius:6px;flex-shrink:0}
 .app-topbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.app-icon-btn{width:36px;height:36px;border-radius:50%;border:none;background:#f2f3f5;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#5b616b;flex-shrink:0}
+.app-icon-btn{width:36px;height:36px;border-radius:50%;border:none;background:#f2f3f5;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#5b616b;flex-shrink:0;position:relative}
+.app-notif-wrap{position:relative}
+.app-notif-badge{position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:100px;background:#c0392b;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1}
+.app-notif-panel{display:none;position:absolute;top:44px;right:0;width:300px;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(20,30,25,.18);padding:16px;z-index:150}
+.app-notif-panel.show{display:block}
+.app-notif-title{font-size:13px;font-weight:600;color:#20242b;margin-bottom:10px}
+.app-notif-list{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto}
+.app-notif-item{background:#f2f3f5;border-radius:12px;padding:10px 12px;text-decoration:none;display:block;color:inherit}
+.app-notif-item:hover{background:#e9ebee}
+.app-notif-item-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.app-notif-who{font-size:12px;font-weight:600;color:#20242b;margin-top:4px}
+.app-notif-empty{font-size:12px;color:#8b909b;text-align:center;padding:16px 0}
 .app-avatar-btn{width:36px;height:36px;border-radius:50%;background:#3a8f6f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;border:none;cursor:pointer;font-family:inherit}
 .app-content{padding:24px 32px 40px}
 .app-page-head{margin:20px 0 20px}
@@ -158,7 +169,7 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 
 .hub-stake-wrap{background:#f2f3f5;border-radius:24px;overflow:hidden}
 .hub-stake-scroll{overflow-x:auto}
-.hub-stake-row{display:grid;grid-template-columns:36px 1.3fr 1.3fr 1fr .8fr 1fr;gap:12px;align-items:center;padding:16px 26px;border-bottom:1px solid #e3e6ea;min-width:600px}
+.hub-stake-row{display:grid;grid-template-columns:36px 1.4fr 1.6fr 1.1fr .9fr;gap:12px;align-items:center;padding:16px 26px;border-bottom:1px solid #e3e6ea;min-width:520px}
 .hub-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;background:#dcdfe3;flex-shrink:0}
 .hub-avatar-fallback{width:32px;height:32px;border-radius:50%;background:#3a8f6f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
 .hub-stake-row:last-child{border-bottom:none}
@@ -219,9 +230,16 @@ a.hub-stake-row:hover{background:#e9ebee}
       <span class="app-search-kbd">&#8984; K</span>
     </div>
     <div class="app-topbar-right">
-      <button class="app-icon-btn" type="button" title="Notifications">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      </button>
+      <div class="app-notif-wrap">
+        <button class="app-icon-btn" type="button" title="Notifications" id="app-notif-btn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="app-notif-badge" id="app-notif-badge" style="display:none">0</span>
+        </button>
+        <div class="app-notif-panel" id="app-notif-panel">
+          <div class="app-notif-title">Recent activity</div>
+          <div class="app-notif-list" id="app-notif-list"><div class="app-notif-empty">Loading…</div></div>
+        </div>
+      </div>
       <button class="app-avatar-btn" type="button" title="Account">?</button>
     </div>
   </div>
@@ -356,7 +374,7 @@ a.hub-stake-row:hover{background:#e9ebee}
         </div>
         <div class="hub-stake-wrap">
           <div class="hub-stake-scroll">
-            <div class="hub-stake-row head"><div></div><div>Name</div><div>Organisation</div><div>Type</div><div>Priority</div><div>Owner</div></div>
+            <div class="hub-stake-row head"><div></div><div>Name</div><div>Organisation</div><div>Type</div><div>Priority</div></div>
             <div id="hub-stake-list"></div>
           </div>
         </div>
@@ -855,8 +873,7 @@ function renderStakeholders(rows, isDemo){
       + "<div class=\"hub-stake-name\">"+(r.name||"")+"</div>"
       + "<div class=\"hub-stake-org\">"+(r.organisation||"")+"</div>"
       + "<div><span class=\"hub-stake-type\">"+(r.shType||"")+"</span></div>"
-      + "<div class=\"hub-stake-priority "+pr+"\">"+(r.priority||"")+"</div>"
-      + "<div class=\"hub-stake-owner\">"+(r.owner||"")+"</div>";
+      + "<div class=\"hub-stake-priority "+pr+"\">"+(r.priority||"")+"</div>";
     if(r.id!=null){
       var qs = "id="+encodeURIComponent(r.id)
         +"&name="+encodeURIComponent(r.name||"")
@@ -912,15 +929,49 @@ function renderUpcoming(rows){
   }).join("");
 }
 function loadActivityFeed(){
-  if(!ENGAGEMENTLOG_URL){ renderBulletin(ENGAGEMENT_DEMO); renderUpcoming(ENGAGEMENT_DEMO); renderHealthStakeholders(ENGAGEMENT_DEMO); return; }
+  if(!ENGAGEMENTLOG_URL){
+    renderBulletin(ENGAGEMENT_DEMO); renderUpcoming(ENGAGEMENT_DEMO); renderHealthStakeholders(ENGAGEMENT_DEMO); renderNotifications(ENGAGEMENT_DEMO);
+    return;
+  }
   fetch(ENGAGEMENTLOG_URL).then(function(r){return r.json();}).then(function(rows){
     if(!Array.isArray(rows)) throw new Error();
-    renderBulletin(rows); renderUpcoming(rows); renderHealthStakeholders(rows);
+    renderBulletin(rows); renderUpcoming(rows); renderHealthStakeholders(rows); renderNotifications(rows);
   }).catch(function(){
     document.getElementById("hub-bulletin-list").innerHTML = "<div class=\"hub-stake-empty\">Could not load activity.</div>";
     document.getElementById("hub-upcoming-list").innerHTML = "<div class=\"hub-stake-empty\">Could not load.</div>";
+    document.getElementById("app-notif-list").innerHTML = "<div class=\"app-notif-empty\">Could not load activity.</div>";
   });
 }
+
+function renderNotifications(rows){
+  var listEl = document.getElementById("app-notif-list");
+  var badgeEl = document.getElementById("app-notif-badge");
+  if(!rows.length){ listEl.innerHTML = "<div class=\"app-notif-empty\">No recent activity.</div>"; badgeEl.style.display = "none"; return; }
+  var recent = rows.slice().sort(function(a,b){ return new Date(b.Date) - new Date(a.Date); }).slice(0,6);
+  listEl.innerHTML = recent.map(function(r){
+    var enType = pickValue(r.enType);
+    var who = (r.Stakeholders && r.Stakeholders[0]) ? pickValue(r.Stakeholders[0]) : "Project-wide";
+    return "<div class=\"app-notif-item\">"
+      + "<div class=\"app-notif-item-head\"><span class=\"hub-bulletin-type\">"+(enType||"")+"</span><span class=\"hub-bulletin-date\">"+fmtDate(r.Date)+"</span></div>"
+      + "<div class=\"app-notif-who\">"+who+"</div>"
+      + "</div>";
+  }).join("");
+  var cutoff = daysAgo(7);
+  var recentCount = rows.filter(function(r){ var d = new Date(r.Date); return !isNaN(d.getTime()) && d.getTime()>=cutoff; }).length;
+  if(recentCount>0){ badgeEl.textContent = recentCount>9 ? "9+" : recentCount; badgeEl.style.display = "flex"; }
+  else { badgeEl.style.display = "none"; }
+}
+
+document.getElementById("app-notif-btn").addEventListener("click", function(e){
+  e.stopPropagation();
+  document.getElementById("app-notif-panel").classList.toggle("show");
+});
+document.addEventListener("click", function(e){
+  var panel = document.getElementById("app-notif-panel");
+  if(panel.classList.contains("show") && !panel.contains(e.target) && e.target.id!=="app-notif-btn"){
+    panel.classList.remove("show");
+  }
+});
 
 function loadAll(){
   loadGA(); loadFeedback(); loadCodesign(); loadQuestions(); loadGether(); loadMuckRack(); loadStakeholders(); loadActivityFeed();
