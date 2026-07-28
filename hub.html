@@ -82,7 +82,7 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 .hub-card-short .hub-card-label{margin-bottom:10px}
 
 .hub-sentiment-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.hub-sentiment-tag{font-size:13px;font-weight:500;padding:6px 14px;border-radius:100px;background:#fff}
+.hub-sentiment-tag{font-size:13px;font-weight:500;padding:6px 14px;border-radius:100px;background:#fff;white-space:nowrap}
 .tone-positive .hub-sentiment-tag{color:#2f6f52}
 .tone-mixed .hub-sentiment-tag{color:#6b7280}
 .tone-attention .hub-sentiment-tag{color:#5b616b}
@@ -97,7 +97,7 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 .hub-range-btn.on{background:#fff;color:#20242b;box-shadow:0 1px 3px rgba(28,40,64,.12)}
 #hub-ga-spark{width:100%;height:52px;margin-top:auto}
 #hub-ga-spark polyline{stroke:#3a8f6f;fill:none;stroke-width:2}
-.hub-pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:100px;background:rgba(58,143,111,.12);color:#2f6f52;margin-top:12px}
+.hub-pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:100px;background:rgba(58,143,111,.12);color:#2f6f52;margin-top:12px;white-space:nowrap}
 
 .hub-sentiment{display:flex;gap:16px;margin-top:auto;padding-top:20px}
 .hub-sentiment-item{flex:1;text-align:center}
@@ -130,7 +130,7 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
 @media(max-width:820px){.hub-health-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.hub-health-grid{grid-template-columns:1fr}.hub-roadmap{flex-direction:column;gap:16px}.hub-roadmap::before{display:none}}
 .hub-gether-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.hub-gether-badge{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#8b6d1f;background:rgba(227,178,60,.16);padding:4px 10px;border-radius:100px}
+.hub-gether-badge{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#8b6d1f;background:rgba(227,178,60,.16);padding:4px 10px;border-radius:100px;white-space:nowrap}
 .hub-gether-row{display:flex;gap:28px;flex-wrap:wrap;margin-top:18px}
 .hub-gether-item{flex:1;min-width:130px;text-align:center;padding:16px 10px;background:#fff;border-radius:16px}
 .hub-gether-num{font-size:30px;font-weight:300;letter-spacing:-.01em}
@@ -167,8 +167,8 @@ a.hub-stake-row:hover{background:#e9ebee}
 .hub-stake-row.head{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#8b909b;font-weight:600;padding:14px 26px}
 .hub-stake-name{font-size:13px;font-weight:500}
 .hub-stake-org{font-size:12px;color:#5b616b}
-.hub-stake-type{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:#e7e9ec;color:#3a3f47;width:max-content}
-.hub-stake-priority{font-size:11px;font-weight:600}
+.hub-stake-type{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:#e7e9ec;color:#3a3f47;width:max-content;white-space:nowrap}
+.hub-stake-priority{font-size:11px;font-weight:600;white-space:nowrap}
 .hub-stake-priority.high{color:#c0392b}
 .hub-stake-priority.medium{color:#b8860b}
 .hub-stake-priority.low{color:#5b616b}
