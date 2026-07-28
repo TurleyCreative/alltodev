@@ -204,6 +204,7 @@ a.hub-stake-row:hover{background:#e9ebee}
       <button class="app-nav-item on" type="button" data-panel="panel-health">Project Health</button>
       <button class="app-nav-item" type="button" data-panel="panel-overview">Consultation Activity</button>
       <button class="app-nav-item" type="button" data-panel="panel-activity">Stakeholder Activity</button>
+      <button class="app-nav-item" type="button" data-panel="panel-media">Media Coverage</button>
     </nav>
     <div class="app-sidebar-bottom">
       <button class="app-nav-item app-nav-item-ghost" type="button" id="app-about-btn">About</button>
@@ -328,20 +329,6 @@ a.hub-stake-row:hover{background:#e9ebee}
       </div>
       <div class="hub-card-sub" id="hub-gether-note">Connect Gether&#8217;s SharePoint list to make this live</div>
     </div>
-    <div class="hub-card hub-tile-gether" id="hub-muckrack-card">
-      <button class="hub-info-btn" data-info="Press/media coverage tracked via Muck Rack — mentions, estimated reach, and coverage sentiment. Demo data for now — will connect to Muck Rack's API once wired up.">i</button>
-      <div class="hub-gether-head">
-        <div class="hub-card-label" style="margin-bottom:0">Media Coverage (Muck Rack)</div>
-        <span class="hub-gether-badge" id="hub-muckrack-badge">Demo data</span>
-      </div>
-      <div class="hub-gether-row" id="hub-muckrack-row">
-        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-muckrack-mentions">&mdash;</div><div class="hub-gether-lbl">Mentions</div></div>
-        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-muckrack-reach">&mdash;</div><div class="hub-gether-lbl">Est. Reach</div></div>
-        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-muckrack-positive">&mdash;</div><div class="hub-gether-lbl">Positive Coverage</div></div>
-      </div>
-      <div class="hub-bulletin-list" id="hub-muckrack-list" style="margin-top:18px"></div>
-      <div class="hub-card-sub" id="hub-muckrack-note">Connect the Muck Rack API to make this live</div>
-    </div>
   </div>
 </div>
 
@@ -374,6 +361,29 @@ a.hub-stake-row:hover{background:#e9ebee}
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="hub-panel hub-grid-pad" id="panel-media">
+  <div class="app-page-head">
+    <div class="app-page-title">Media Coverage</div>
+    <div class="app-page-sub">Press and social mentions tracked via Muck Rack.</div>
+  </div>
+  <div class="hub-grid">
+    <div class="hub-card hub-tile-gether" id="hub-muckrack-card">
+      <button class="hub-info-btn" data-info="Press/media coverage tracked via Muck Rack — mentions, estimated reach, and coverage sentiment. Demo data for now — will connect to Muck Rack's API once wired up.">i</button>
+      <div class="hub-gether-head">
+        <div class="hub-card-label" style="margin-bottom:0">Media Coverage (Muck Rack)</div>
+        <span class="hub-gether-badge" id="hub-muckrack-badge">Demo data</span>
+      </div>
+      <div class="hub-gether-row" id="hub-muckrack-row">
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-muckrack-mentions">&mdash;</div><div class="hub-gether-lbl">Mentions</div></div>
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-muckrack-reach">&mdash;</div><div class="hub-gether-lbl">Est. Reach</div></div>
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-muckrack-positive">&mdash;</div><div class="hub-gether-lbl">Positive Coverage</div></div>
+      </div>
+      <div class="hub-bulletin-list" id="hub-muckrack-list" style="margin-top:18px"></div>
+      <div class="hub-card-sub" id="hub-muckrack-note">Connect the Muck Rack API to make this live</div>
     </div>
   </div>
 </div>
@@ -786,7 +796,10 @@ var MUCKRACK_DEMO = {
   results: [
     {headline:"Manchester unveils plans for new riverside neighbourhood", outlet:"Manchester Evening News", published_at:"2026-07-18", url:"https://example.com/article-1", sentiment:"positive"},
     {headline:"Residents raise concerns over new development at drop-in event", outlet:"BBC Manchester", published_at:"2026-07-12", url:"https://example.com/article-2", sentiment:"neutral"},
-    {headline:"Local business association backs riverside masterplan", outlet:"Place North West", published_at:"2026-07-08", url:"https://example.com/article-3", sentiment:"positive"}
+    {headline:"Local business association backs riverside masterplan", outlet:"Place North West", published_at:"2026-07-08", url:"https://example.com/article-3", sentiment:"positive"},
+    {headline:"Councillor welcomes riverside regeneration proposals", outlet:"ITV Granada", published_at:"2026-07-05", url:"https://example.com/article-4", sentiment:"positive"},
+    {headline:"What the new neighbourhood means for traffic on the A56", outlet:"Manchester Evening News", published_at:"2026-06-29", url:"https://example.com/article-5", sentiment:"neutral"},
+    {headline:"Community group calls for more green space in riverside plan", outlet:"The Meteor", published_at:"2026-06-21", url:"https://example.com/article-6", sentiment:"negative"}
   ]
 };
 function loadMuckRack(){
@@ -805,7 +818,7 @@ function renderMuckRack(d){
   document.getElementById("hub-muckrack-mentions").textContent = d.mentions!=null ? d.mentions.toLocaleString() : results.length;
   document.getElementById("hub-muckrack-reach").textContent = d.reach!=null ? (d.reach>=1000 ? Math.round(d.reach/1000)+"k" : d.reach) : "—";
   document.getElementById("hub-muckrack-positive").textContent = pos;
-  document.getElementById("hub-muckrack-list").innerHTML = results.slice(0,3).map(function(r){
+  document.getElementById("hub-muckrack-list").innerHTML = results.slice(0,6).map(function(r){
     return "<div class=\"hub-bulletin-item\">"
       + "<div class=\"hub-bulletin-head\"><span class=\"hub-bulletin-type\">"+(r.sentiment ? r.sentiment.charAt(0).toUpperCase()+r.sentiment.slice(1) : "")+"</span><span class=\"hub-bulletin-date\">"+fmtDate(r.published_at)+"</span></div>"
       + "<div class=\"hub-bulletin-who\"><a href=\""+r.url+"\" target=\"_blank\" rel=\"noopener\">"+r.headline+"</a></div>"
