@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TheySED</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{overflow-y:scroll;scrollbar-gutter:stable}
+body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;background:linear-gradient(135deg,#eef6ec,#e6f0e9 55%,#dcecdf);color:#20242b;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+.app-bg{min-height:100vh;padding:28px;display:flex;justify-content:center}
+.app-shell{display:flex;width:100%;max-width:1400px;background:#fff;border-radius:28px;box-shadow:0 20px 60px rgba(20,40,30,.12);overflow:hidden;align-items:stretch}
+.app-sidebar{width:250px;flex-shrink:0;background:#f7f8f6;padding:28px 20px;display:flex;flex-direction:column;border-right:1px solid #e8ebe6}
+.app-brand{font-size:20px;font-weight:600;color:#20242b;letter-spacing:-.01em}
+.app-project{font-size:11px;color:#8b909b;margin-top:6px;margin-bottom:28px;text-transform:uppercase;letter-spacing:.06em;line-height:1.5}
+.app-nav{display:flex;flex-direction:column;gap:4px}
+.app-nav-item{display:flex;align-items:center;gap:10px;border:none;background:transparent;text-align:left;font-family:inherit;font-size:13px;font-weight:500;color:#5b616b;padding:11px 14px;border-radius:12px;cursor:pointer;width:100%;text-decoration:none}
+.app-nav-item:hover{background:#eef1ee}
+.app-nav-item.on{background:#dcefe3;color:#1f5c45;font-weight:600}
+.app-sidebar-bottom{margin-top:auto;padding-top:18px;border-top:1px solid #e8ebe6;display:flex;flex-direction:column;gap:2px}
+.app-nav-item-ghost{color:#8b909b}
+.app-main{flex:1;min-width:0}
+.app-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 32px 0}
+.app-search{display:flex;align-items:center;gap:8px;background:#f2f3f5;border-radius:12px;padding:10px 14px;flex:1;max-width:320px}
+.app-search svg{flex-shrink:0;color:#8b909b}
+.app-search input{border:none;background:transparent;font-family:inherit;font-size:13px;color:#20242b;flex:1;outline:none;min-width:0}
+.app-search input::placeholder{color:#8b909b}
+.app-search-kbd{font-size:11px;color:#8b909b;background:#e7e9ec;padding:2px 6px;border-radius:6px;flex-shrink:0}
+.app-topbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.app-icon-btn{width:36px;height:36px;border-radius:50%;border:none;background:#f2f3f5;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#5b616b;flex-shrink:0}
+.app-avatar-btn{width:36px;height:36px;border-radius:50%;background:#3a8f6f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;border:none;cursor:pointer;font-family:inherit}
+.app-content{padding:8px 32px 40px}
+.app-page-head{margin:20px 0 20px}
+.app-page-title{font-size:26px;font-weight:600;letter-spacing:-.01em;color:#20242b}
+.app-page-sub{font-size:13px;color:#8b909b;margin-top:6px}
+.app-modal-backdrop{position:fixed;inset:0;background:rgba(20,30,25,.4);display:none;align-items:center;justify-content:center;z-index:200}
+.app-modal-backdrop.show{display:flex}
+.app-modal{background:#fff;border-radius:20px;padding:28px 30px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.app-modal-title{font-size:16px;font-weight:600;margin-bottom:10px}
+.app-modal-body{font-size:13px;color:#5b616b;line-height:1.6;margin-bottom:20px}
+.app-modal-close{border:none;background:#20242b;color:#fff;font-family:inherit;font-size:13px;font-weight:500;padding:10px 20px;border-radius:100px;cursor:pointer}
+@media(max-width:900px){
+  .app-bg{padding:0}
+  .app-shell{border-radius:0;flex-direction:column;min-height:100vh}
+  .app-sidebar{width:100%;flex-direction:row;align-items:center;padding:16px 20px;border-right:none;border-bottom:1px solid #e8ebe6}
+  .app-brand{margin-right:16px}
+  .app-project{display:none}
+  .app-nav{flex-direction:row;overflow-x:auto;flex:1}
+  .app-nav-item{white-space:nowrap}
+  .app-sidebar-bottom{margin-top:0;margin-left:12px;padding-top:0;border-top:none;flex-direction:row}
+  .app-sidebar-bottom .app-nav-item{white-space:nowrap}
+  .app-content{padding:8px 16px 40px}
+}
+
+.sh-back{font-size:12px;font-weight:500;color:#8b909b;text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:16px}
+.sh-back:hover{color:#5b616b}
+
+.sh-layout{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;align-items:start;max-width:1200px}
+.sh-col-main{display:flex;flex-direction:column;gap:24px;min-width:0}
+.sh-col-side{position:sticky;top:24px;min-width:0}
+@media(max-width:900px){.sh-layout{grid-template-columns:1fr}.sh-col-side{position:static}}
+
+.sh-card{background:#f2f3f5;border-radius:24px;padding:30px 32px;display:flex;gap:20px;align-items:flex-start}
+.sh-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#dcdfe3;flex-shrink:0}
+.sh-avatar-fallback{width:64px;height:64px;border-radius:50%;background:#3a8f6f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;flex-shrink:0}
+.sh-meta{display:flex;gap:10px;flex-wrap:wrap}
+.sh-tag{font-size:11px;font-weight:600;padding:5px 12px;border-radius:100px;background:#fff;color:#3a3f47;white-space:nowrap}
+.sh-tag-priority.high{color:#c0392b}
+.sh-tag-priority.medium{color:#b8860b}
+.sh-tag-priority.low{color:#5b616b}
+.sh-owner{font-size:12px;color:#8b909b;margin-top:14px}
+
+.sh-section-title{font-size:16px;font-weight:500;margin-bottom:14px}
+.sh-field-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8b909b;display:block;margin-bottom:4px}
+.sh-feed{display:flex;flex-direction:column;gap:10px}
+.sh-entry{background:#f2f3f5;border-radius:16px;padding:18px 22px;cursor:pointer}
+.sh-entry-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.sh-entry-attendees{font-size:13px;color:#3a3f47;margin-bottom:14px}
+.sh-entry-field{display:flex;flex-direction:column;gap:5px}
+.sh-entry-field-date{margin-left:auto;align-items:flex-end;text-align:right}
+.sh-entry-type{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:#fff;color:#3a3f47;width:max-content;white-space:nowrap}
+.sh-entry-date{font-size:12px;color:#3a3f47;font-weight:500}
+.sh-entry-summary{font-size:13px;font-weight:400;color:#3a3f47;margin-top:6px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.sh-entry-summary p{margin-bottom:8px}
+.sh-entry-summary p:last-child{margin-bottom:0}
+.sh-entry-notes{font-size:13px;font-weight:400;color:#3a3f47;margin-top:10px;line-height:1.6;display:none}
+.sh-entry-notes.open{display:block}
+.sh-entry-notes p{margin-bottom:8px}
+.sh-entry-notes ul,.sh-entry-notes ol{margin:0 0 8px 20px}
+.sh-entry-toggle{font-size:11px;font-weight:600;color:#3a8f6f;margin-top:10px;display:inline-block}
+.sh-entry-sentiment{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;width:max-content;white-space:nowrap}
+.sh-entry-sentiment.positive{background:rgba(58,143,111,.12);color:#2f6f52}
+.sh-entry-sentiment.neutral{background:#e7e9ec;color:#5b616b}
+.sh-entry-sentiment.negative{background:rgba(192,57,43,.1);color:#c0392b}
+.sh-entry-extra{font-size:12px;color:#5b616b;margin-top:10px;line-height:1.6}
+.sh-entry-extra strong{color:#3a3f47;font-weight:600}
+.sh-entry-extra ul{margin:4px 0 0 18px}
+.sh-entry-links a{color:#3a8f6f;text-decoration:none;display:block;word-break:break-all}
+.sh-entry-links a:hover{text-decoration:underline}
+.sh-entry-foot{font-size:11px;color:#8b909b;margin-top:10px}
+.sh-empty{font-size:13px;color:#8b909b;background:#f2f3f5;border-radius:16px;padding:22px;text-align:center}
+
+.sh-form{background:#f2f3f5;border-radius:24px;padding:28px 30px}
+.sh-field{margin-bottom:14px}
+.sh-field > .sh-field-label{margin-bottom:6px}
+.sh-form input,.sh-form select,.sh-form textarea{font-family:inherit;font-size:13px;padding:10px 12px;border:1px solid #dcdfe3;border-radius:10px;background:#fff;color:#20242b;width:100%}
+.sh-form textarea{min-height:60px;resize:vertical}
+.sh-rte-toolbar{display:flex;gap:6px;margin-bottom:6px}
+.sh-rte-btn{border:1px solid #dcdfe3;background:#fff;border-radius:8px;width:30px;height:30px;font-size:13px;font-weight:600;cursor:pointer;color:#3a3f47}
+.sh-rte-btn:hover{background:#e9ebee}
+.sh-rte-input{min-height:110px;background:#fff;border:1px solid #dcdfe3;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.6}
+.sh-rte-input:empty:before{content:attr(data-placeholder);color:#8b909b}
+.sh-form-submit{border:none;background:#20242b;color:#fff;font-family:inherit;font-size:13px;font-weight:500;padding:11px 22px;border-radius:100px;cursor:pointer;width:100%}
+.sh-form-submit:hover{background:#3a3f47}
+.sh-form-status{font-size:12px;color:#8b909b;margin-top:10px}
+.sh-form-status.err{color:#c0392b}
+.sh-form-status.ok{color:#2f6f52}
+</style>
+</head>
+<body>
+<div class="app-bg">
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div class="app-brand">TheySED</div>
+    <div class="app-project">A new neighbourhood for Manchester</div>
+    <nav class="app-nav">
+      <a class="app-nav-item" href="hub.html">Project Health</a>
+      <a class="app-nav-item" href="hub.html">Consultation Activity</a>
+      <a class="app-nav-item on" href="hub.html">Stakeholder Activity</a>
+    </nav>
+    <div class="app-sidebar-bottom">
+      <button class="app-nav-item app-nav-item-ghost" type="button" id="app-about-btn">About</button>
+      <button class="app-nav-item app-nav-item-ghost" type="button" id="app-signout-btn">Sign out</button>
+    </div>
+  </aside>
+  <main class="app-main">
+  <div class="app-topbar">
+    <div class="app-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Search" readonly/>
+      <span class="app-search-kbd">&#8984; K</span>
+    </div>
+    <div class="app-topbar-right">
+      <button class="app-icon-btn" type="button" title="Notifications">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <button class="app-avatar-btn" type="button" title="Account">?</button>
+    </div>
+  </div>
+  <div class="app-content">
+
+<a class="sh-back" href="hub.html">&larr; Back to hub</a>
+
+<div class="app-page-head">
+  <div class="app-page-title" id="sh-name">&mdash;</div>
+  <div class="app-page-sub" id="sh-org"></div>
+</div>
+
+<div class="sh-layout">
+  <div class="sh-col-main">
+    <div class="sh-card">
+      <div id="sh-avatar"></div>
+      <div>
+        <div class="sh-meta">
+          <span class="sh-tag" id="sh-type"></span>
+          <span class="sh-tag sh-tag-priority" id="sh-priority"></span>
+        </div>
+        <div class="sh-owner" id="sh-owner"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sh-section-title">Activity</div>
+      <div class="sh-feed" id="sh-feed"><div class="sh-empty">Loading…</div></div>
+    </div>
+  </div>
+
+  <div class="sh-col-side">
+    <div class="sh-section-title">Add entry</div>
+    <div class="sh-form">
+      <form id="sh-add-form">
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-type">Type</label>
+          <select id="entry-type" required>
+            <option value="">Select type…</option>
+            <option>Meeting</option>
+            <option>Call</option>
+            <option>Email</option>
+            <option>Letter</option>
+            <option>Leaflet Drop</option>
+            <option>Site Visit</option>
+            <option>Event</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-date">Date</label>
+          <input type="date" id="entry-date" required/>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-followup">Follow-up date</label>
+          <input type="date" id="entry-followup"/>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-loggedby">Logged by (email)</label>
+          <input type="email" id="entry-loggedby" placeholder="name@example.com" required/>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-attendees">Attendees</label>
+          <input type="text" id="entry-attendees" placeholder="Names, comma separated"/>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-sentiment">Sentiment</label>
+          <select id="entry-sentiment">
+            <option value="">Select sentiment…</option>
+            <option>Positive</option>
+            <option>Neutral</option>
+            <option>Negative</option>
+          </select>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label">Notes</label>
+          <div class="sh-rte-toolbar">
+            <button type="button" class="sh-rte-btn" data-cmd="bold"><b>B</b></button>
+            <button type="button" class="sh-rte-btn" data-cmd="italic"><i>I</i></button>
+            <button type="button" class="sh-rte-btn" data-cmd="insertUnorderedList">&#8226;</button>
+          </div>
+          <div class="sh-rte-input" id="entry-notes" contenteditable="true" data-placeholder="Write your notes…"></div>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-actions">Actions / next steps</label>
+          <textarea id="entry-actions" placeholder="One per line"></textarea>
+        </div>
+        <div class="sh-field">
+          <label class="sh-field-label" for="entry-attachments">Attachment links</label>
+          <textarea id="entry-attachments" placeholder="One per line"></textarea>
+        </div>
+        <button class="sh-form-submit" type="submit">Add entry</button>
+        <div class="sh-form-status" id="sh-form-status"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+  </div>
+  </main>
+</div>
+</div>
+
+<div class="app-modal-backdrop" id="app-modal-backdrop">
+  <div class="app-modal">
+    <div class="app-modal-title" id="app-modal-title"></div>
+    <div class="app-modal-body" id="app-modal-body"></div>
+    <button class="app-modal-close" id="app-modal-close">Close</button>
+  </div>
+</div>
+
+<script>
+var APP_MODAL_CONTENT = {
+  about: {
+    title: "About TheySED",
+    body: "TheySED is Turley's consultation dashboard — a live view of project health, consultation activity, and stakeholder engagement in one place, powered by SharePoint and Power Automate."
+  },
+  signout: {
+    title: "Sign out",
+    body: "There's no login system set up for this hub yet, so there's nothing to sign out of. This is a placeholder for when authentication is added."
+  }
+};
+function openAppModal(key){
+  var c = APP_MODAL_CONTENT[key];
+  document.getElementById("app-modal-title").textContent = c.title;
+  document.getElementById("app-modal-body").textContent = c.body;
+  document.getElementById("app-modal-backdrop").classList.add("show");
+}
+document.getElementById("app-about-btn").addEventListener("click", function(){ openAppModal("about"); });
+document.getElementById("app-signout-btn").addEventListener("click", function(){ openAppModal("signout"); });
+document.getElementById("app-modal-close").addEventListener("click", function(){ document.getElementById("app-modal-backdrop").classList.remove("show"); });
+document.getElementById("app-modal-backdrop").addEventListener("click", function(e){
+  if(e.target.id === "app-modal-backdrop") e.target.classList.remove("show");
+});
+
+// Same EngagementLog read flow used across the hub. Expects stakeholderId
+// in the query string, returns SharePoint's raw item shape per entry.
+var ENGAGEMENTLOG_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/07/workflows/25d74467bf0146499edf231cbf72f8aa/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=f57Z8mWPQJdyfTU3y7kRNiLlJBvKirrBJ9DCt_6QdXI";
+
+// Set once the EngagementLog write flow is built: accepts a POST with
+// {stakeholderId, enType, date, followUp, loggedBy(email), notes(html)}.
+// loggedBy must be an email address — the flow builds the SharePoint
+// Claims value from it (i:0#.f|membership|<email>) to populate the
+// Person field, so a plain display name won't resolve to an account.
+var ENGAGEMENTLOG_WRITE_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/29/workflows/5808b419ed4e4ad593fd32d579e787e6/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=mdbB3NzRpnLg-Z1R6VKsUhl0mqAjEY6X4fJeQnd87lc";
+
+function qparam(name){
+  return new URLSearchParams(window.location.search).get(name) || "";
+}
+
+function initials(name){
+  var parts = (name||"").trim().split(/\s+/);
+  return ((parts[0]||"")[0]||"") + ((parts[1]||"")[0]||"");
+}
+
+function loadProfile(){
+  var name = qparam("name");
+  var photo = qparam("photo");
+  var fallback = "<div class=\"sh-avatar-fallback\">"+initials(name).toUpperCase()+"</div>";
+  document.getElementById("sh-avatar").innerHTML = photo
+    ? "<img class=\"sh-avatar\" src=\""+photo+"\" alt=\"\" onerror=\"this.outerHTML='"+fallback.replace(/'/g, "\\'").replace(/"/g, "&quot;")+"'\"/>"
+    : fallback;
+  document.getElementById("sh-name").textContent = name || "Unnamed stakeholder";
+  document.getElementById("sh-org").textContent = qparam("organisation");
+  document.getElementById("sh-type").textContent = qparam("shType");
+  var priority = qparam("priority");
+  var prEl = document.getElementById("sh-priority");
+  prEl.textContent = priority;
+  prEl.className = "sh-tag sh-tag-priority " + priority.toLowerCase();
+  var owner = qparam("owner");
+  document.getElementById("sh-owner").textContent = owner ? "Owned by " + owner : "";
+  var dateEl = document.getElementById("entry-date");
+  if(dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0,10);
+}
+
+// SharePoint returns Lookup columns as {..., Value:"X"} and Person
+// columns as {..., DisplayName:"X"} rather than plain text — unwrap both.
+function pickValue(v){
+  if(v && typeof v === "object"){
+    if("Value" in v) return v.Value;
+    if("DisplayName" in v) return v.DisplayName;
+  }
+  return v;
+}
+
+function fmtDate(s){
+  if(!s) return "";
+  var d = new Date(s);
+  if(isNaN(d.getTime())) return s;
+  return d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
+}
+
+function stripHtml(html){
+  var div = document.createElement("div");
+  div.innerHTML = html || "";
+  return (div.textContent || "").trim();
+}
+function truncate(s, n){ return s.length > n ? s.slice(0,n).trim()+"…" : s; }
+
+// Only allow a small set of formatting tags through, with no attributes —
+// strips anything else (scripts, images, links, inline styles/handlers)
+// whether it came from our own editor or was written directly in SharePoint.
+var RTE_ALLOWED_TAGS = {B:1,STRONG:1,I:1,EM:1,U:1,UL:1,OL:1,LI:1,BR:1,P:1,DIV:1};
+function sanitizeHtml(html){
+  var container = document.createElement("div");
+  container.innerHTML = html || "";
+  (function clean(node){
+    Array.prototype.slice.call(node.childNodes).forEach(function(child){
+      if(child.nodeType === 1){
+        if(!RTE_ALLOWED_TAGS[child.tagName]){
+          node.replaceChild(document.createTextNode(child.textContent), child);
+        } else {
+          Array.prototype.slice.call(child.attributes).forEach(function(attr){ child.removeAttribute(attr.name); });
+          clean(child);
+        }
+      } else if(child.nodeType !== 3){
+        node.removeChild(child);
+      }
+    });
+  })(container);
+  return container.innerHTML;
+}
+
+// Notes written directly in SharePoint (rather than via the rich-text
+// editor here) often come through as plain text with real newline
+// characters, which HTML collapses into one run-on paragraph. Detect
+// that case and wrap it into proper <p> blocks before sanitizing.
+function plainTextToHtml(text){
+  return text.split(/\n{2,}/).map(function(para){
+    return "<p>"+para.split(/\n/).join("<br>")+"</p>";
+  }).join("");
+}
+function notesToHtml(raw){
+  var looksLikeHtml = /<[a-z][\s\S]*>/i.test(raw || "");
+  return sanitizeHtml(looksLikeHtml ? raw : plainTextToHtml(raw || ""));
+}
+
+function loadActivity(){
+  var id = qparam("id");
+  var feedEl = document.getElementById("sh-feed");
+  if(!id){ feedEl.innerHTML = "<div class=\"sh-empty\">No stakeholder selected.</div>"; return; }
+  if(!ENGAGEMENTLOG_URL){ feedEl.innerHTML = "<div class=\"sh-empty\">Connect the EngagementLog read flow to show activity here.</div>"; return; }
+  var sep = ENGAGEMENTLOG_URL.indexOf("?")===-1 ? "?" : "&";
+  fetch(ENGAGEMENTLOG_URL + sep + "stakeholderId=" + encodeURIComponent(id))
+    .then(function(r){ return r.json(); })
+    .then(function(rows){
+      if(!Array.isArray(rows)) throw new Error();
+      if(!rows.length){ feedEl.innerHTML = "<div class=\"sh-empty\">No activity logged yet.</div>"; return; }
+      rows.sort(function(a,b){ return new Date(b.Date) - new Date(a.Date); });
+      feedEl.innerHTML = rows.map(function(r, i){
+        var enType = pickValue(r.enType);
+        var loggedBy = pickValue(r.loggedBy);
+        var sentiment = pickValue(r.Sentiment);
+        var followUp = r.Follow_x002d_upDate;
+        var notesHtml = notesToHtml(r.Notes);
+        var plainNotes = stripHtml(notesHtml);
+        // Prefer the AI Builder-generated summary; fall back to a plain
+        // truncation of the notes if it hasn't been generated yet.
+        var aiSummary = (r.Summary || "").trim();
+        var summary = aiSummary ? sanitizeHtml(plainTextToHtml(aiSummary)) : truncate(plainNotes, 120);
+        var needsToggle = plainNotes.length > 0 && (aiSummary || plainNotes.length > 120);
+        var actions = (r.Actions || "").split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
+        var links = (r.AttachmentLinks || "").split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
+        var extra = "";
+        if(actions.length) extra += "<div class=\"sh-entry-extra\"><strong>Actions:</strong><ul>"+actions.map(function(a){return "<li>"+a+"</li>";}).join("")+"</ul></div>";
+        if(links.length) extra += "<div class=\"sh-entry-extra sh-entry-links\"><strong>Attachments:</strong>"+links.map(function(l){return "<a href=\""+l+"\" target=\"_blank\" rel=\"noopener\">"+l+"</a>";}).join("")+"</div>";
+        return "<div class=\"sh-entry\" data-entry=\""+i+"\">"
+          + "<div class=\"sh-entry-head\">"
+          + "<div class=\"sh-entry-field\"><span class=\"sh-field-label\">Type</span><span class=\"sh-entry-type\">"+(enType||"")+"</span></div>"
+          + (sentiment ? "<div class=\"sh-entry-field\"><span class=\"sh-field-label\">Sentiment</span><span class=\"sh-entry-sentiment "+sentiment.toLowerCase()+"\">"+sentiment+"</span></div>" : "")
+          + "<div class=\"sh-entry-field sh-entry-field-date\"><span class=\"sh-field-label\">Date</span><span class=\"sh-entry-date\">"+fmtDate(r.Date)+"</span></div>"
+          + "</div>"
+          + (r.Attendees ? "<span class=\"sh-field-label\">Attendees</span><div class=\"sh-entry-attendees\">"+r.Attendees+"</div>" : "")
+          + (summary ? "<span class=\"sh-field-label\">Summary</span><div class=\"sh-entry-summary\">"+summary+"</div>" : "")
+          + "<div class=\"sh-entry-notes\" id=\"sh-entry-notes-"+i+"\">"+(plainNotes ? "<span class=\"sh-field-label\">Notes</span>" : "")+notesHtml+extra+"</div>"
+          + (needsToggle ? "<span class=\"sh-entry-toggle\" id=\"sh-entry-toggle-"+i+"\">View full notes</span>" : "")
+          + "<div class=\"sh-entry-foot\">Logged by "+(loggedBy||"—")+(followUp ? " · Follow up "+fmtDate(followUp) : "")+"</div>"
+          + "</div>";
+      }).join("");
+      feedEl.querySelectorAll(".sh-entry").forEach(function(entryEl){
+        entryEl.addEventListener("click", function(){
+          var i = entryEl.getAttribute("data-entry");
+          var notesEl = document.getElementById("sh-entry-notes-"+i);
+          var toggleEl = document.getElementById("sh-entry-toggle-"+i);
+          if(!notesEl || !toggleEl) return;
+          var open = notesEl.classList.toggle("open");
+          toggleEl.textContent = open ? "Hide full notes" : "View full notes";
+        });
+      });
+    })
+    .catch(function(){ feedEl.innerHTML = "<div class=\"sh-empty\">Could not load activity.</div>"; });
+}
+
+document.querySelectorAll(".sh-rte-btn").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    document.execCommand(btn.getAttribute("data-cmd"), false, null);
+    document.getElementById("entry-notes").focus();
+  });
+});
+
+document.getElementById("sh-add-form").addEventListener("submit", function(e){
+  e.preventDefault();
+  var statusEl = document.getElementById("sh-form-status");
+  var id = qparam("id");
+  var payload = {
+    stakeholderId: id,
+    enType: document.getElementById("entry-type").value,
+    date: document.getElementById("entry-date").value,
+    followUp: document.getElementById("entry-followup").value || null,
+    loggedBy: document.getElementById("entry-loggedby").value,
+    attendees: document.getElementById("entry-attendees").value,
+    sentiment: document.getElementById("entry-sentiment").value,
+    actions: document.getElementById("entry-actions").value,
+    attachments: document.getElementById("entry-attachments").value,
+    notes: sanitizeHtml(document.getElementById("entry-notes").innerHTML)
+  };
+  if(!payload.enType || !payload.date || !payload.loggedBy){
+    statusEl.textContent = "Fill in type, date and logged by first.";
+    statusEl.className = "sh-form-status err";
+    return;
+  }
+  if(!ENGAGEMENTLOG_WRITE_URL){
+    statusEl.textContent = "Write flow isn’t connected yet — nothing saved.";
+    statusEl.className = "sh-form-status err";
+    return;
+  }
+  statusEl.textContent = "Saving…";
+  statusEl.className = "sh-form-status";
+  fetch(ENGAGEMENTLOG_WRITE_URL, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  }).then(function(r){
+    if(!r.ok) throw new Error();
+    statusEl.textContent = "Entry added.";
+    statusEl.className = "sh-form-status ok";
+    document.getElementById("sh-add-form").reset();
+    document.getElementById("entry-notes").innerHTML = "";
+    loadProfile();
+    loadActivity();
+  }).catch(function(){
+    statusEl.textContent = "Could not save — try again.";
+    statusEl.className = "sh-form-status err";
+  });
+});
+
+loadProfile();
+loadActivity();
+</script>
+</body>
+</html>
