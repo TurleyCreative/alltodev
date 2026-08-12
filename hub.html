@@ -3,59 +3,785 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Consultation Hub</title>
+<title>TheySED</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;background:#fff;color:#20242b;min-height:100vh;-webkit-font-smoothing:antialiased}
-header{max-width:1080px;margin:0 auto;padding:44px 24px 12px}
-.hub-title{font-size:26px;font-weight:500;letter-spacing:-.01em}
-.hub-sub{font-size:12px;font-weight:500;color:#8b909b;margin-top:6px;text-transform:uppercase;letter-spacing:.08em}
-.hub-grid{max-width:1080px;margin:0 auto;padding:16px 24px 56px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+html{overflow-y:scroll;scrollbar-gutter:stable}
+body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;background:linear-gradient(135deg,#eef6ec,#e6f0e9 55%,#dcecdf);color:#20242b;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+.app-bg{min-height:100vh;padding:28px;display:flex;justify-content:center}
+.app-shell{display:flex;width:100%;max-width:1400px;background:#fff;border-radius:28px;box-shadow:0 20px 60px rgba(20,40,30,.12);overflow:hidden;align-items:stretch}
+.app-sidebar{width:250px;flex-shrink:0;background:#f7f8f6;padding:28px 20px;display:flex;flex-direction:column;border-right:1px solid #e8ebe6}
+.app-brand{font-size:20px;font-weight:600;color:#20242b;letter-spacing:-.01em}
+.app-project{font-size:11px;color:#8b909b;margin-top:6px;margin-bottom:28px;text-transform:uppercase;letter-spacing:.06em;line-height:1.5}
+.app-nav{display:flex;flex-direction:column;gap:4px}
+.app-nav-item{display:flex;align-items:center;gap:10px;border:none;background:transparent;text-align:left;font-family:inherit;font-size:13px;font-weight:500;color:#5b616b;padding:11px 14px;border-radius:12px;cursor:pointer;width:100%}
+.app-nav-item:hover{background:#eef1ee}
+.app-nav-item.on{background:#dcefe3;color:#1f5c45;font-weight:600}
+.app-sidebar-bottom{margin-top:auto;padding-top:18px;border-top:1px solid #e8ebe6;display:flex;flex-direction:column;gap:2px}
+.app-nav-item-ghost{color:#8b909b}
+.app-main{flex:1;min-width:0}
+.app-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 32px 20px;border-bottom:1px solid #e8ebe6}
+.app-search{display:flex;align-items:center;gap:8px;background:#f2f3f5;border-radius:12px;padding:10px 14px;flex:1;max-width:320px}
+.app-search svg{flex-shrink:0;color:#8b909b}
+.app-search input{border:none;background:transparent;font-family:inherit;font-size:13px;color:#20242b;flex:1;outline:none;min-width:0}
+.app-search input::placeholder{color:#8b909b}
+.app-search-kbd{font-size:11px;color:#8b909b;background:#e7e9ec;padding:2px 6px;border-radius:6px;flex-shrink:0}
+.app-topbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.app-icon-btn{width:36px;height:36px;border-radius:50%;border:none;background:#f2f3f5;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#5b616b;flex-shrink:0;position:relative}
+.app-notif-wrap{position:relative}
+.app-notif-badge{position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:100px;background:#c0392b;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1}
+.app-notif-panel{display:none;position:absolute;top:44px;right:0;width:300px;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(20,30,25,.18);padding:16px;z-index:150}
+.app-notif-panel.show{display:block}
+.app-notif-title{font-size:13px;font-weight:600;color:#20242b;margin-bottom:10px}
+.app-notif-list{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto}
+.app-notif-item{background:#f2f3f5;border-radius:12px;padding:10px 12px;text-decoration:none;display:block;color:inherit}
+.app-notif-item:hover{background:#e9ebee}
+.app-notif-item-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.app-notif-who{font-size:12px;font-weight:600;color:#20242b;margin-top:4px}
+.app-notif-empty{font-size:12px;color:#8b909b;text-align:center;padding:16px 0}
+.app-avatar-btn{width:36px;height:36px;border-radius:50%;background:#3a8f6f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;border:none;cursor:pointer;font-family:inherit}
+.app-content{padding:24px 32px 40px}
+.app-page-head{margin:20px 0 20px}
+.app-page-title{font-size:26px;font-weight:600;letter-spacing:-.01em;color:#20242b}
+.app-page-sub{font-size:13px;color:#8b909b;margin-top:6px}
+.app-hero{margin:20px 0 8px}
+.app-hero-title{font-size:88px;font-weight:600;letter-spacing:-.03em;color:#20242b;line-height:1}
+.app-hero-sub{font-size:20px;color:#5b616b;margin-top:14px;max-width:540px}
+.app-hero-pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.app-hero-pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#3a3f47;background:#f2f3f5;padding:8px 16px;border-radius:100px}
+.app-hero-pill.warn{background:rgba(192,57,43,.1);color:#c0392b}
+@media(max-width:560px){.app-hero-title{font-size:48px}.app-topbar{flex-wrap:wrap}}
+.app-modal-backdrop{position:fixed;inset:0;background:rgba(20,30,25,.4);display:none;align-items:center;justify-content:center;z-index:200}
+.app-modal-backdrop.show{display:flex}
+.app-modal{background:#fff;border-radius:20px;padding:28px 30px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.app-modal-title{font-size:16px;font-weight:600;margin-bottom:10px}
+.app-modal-body{font-size:13px;color:#5b616b;line-height:1.6;margin-bottom:20px}
+.app-modal-close{border:none;background:#20242b;color:#fff;font-family:inherit;font-size:13px;font-weight:500;padding:10px 20px;border-radius:100px;cursor:pointer}
+@media(max-width:900px){
+  .app-bg{padding:0}
+  .app-shell{border-radius:0;flex-direction:column;min-height:100vh}
+  .app-sidebar{width:100%;flex-direction:row;align-items:center;padding:16px 20px;border-right:none;border-bottom:1px solid #e8ebe6}
+  .app-brand{margin-right:16px}
+  .app-project{display:none}
+  .app-nav{flex-direction:row;overflow-x:auto;flex:1}
+  .app-nav-item{white-space:nowrap}
+  .app-sidebar-bottom .app-nav-item{white-space:nowrap}
+  .app-sidebar-bottom{margin-top:0;margin-left:12px;padding-top:0;border-top:none;flex-direction:row}
+  .app-content{padding:20px 16px 40px}
+}
+.hub-panel{display:none}
+.hub-panel.on{display:block}
+
+.hub-grid{max-width:1080px;padding:16px 0 0;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:min-content;gap:18px}
 .hub-card{position:relative;background:#f2f3f5;border-radius:24px;padding:30px 32px;display:flex;flex-direction:column}
-.hub-card-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8b909b;font-weight:600}
+.hub-card-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8b909b;font-weight:600;margin-bottom:16px}
+.hub-card-big{font-size:52px;font-weight:300;line-height:1;letter-spacing:-.02em}
+.hub-card-sub{font-size:12px;font-weight:400;color:#8b909b;margin-top:12px}
 .hub-info-btn{position:absolute;top:22px;right:22px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(18,40,64,.08);color:#5b616b;font-size:11px;font-weight:700;font-style:italic;font-family:Georgia,"Times New Roman",serif;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0}
+
+.hub-tile-sentiment{grid-column:1;grid-row:1/span 2}
+.hub-tile-visitors{grid-column:2;grid-row:1;min-height:200px}
+.hub-tile-feedback{grid-column:3;grid-row:1}
+.hub-tile-codesign{grid-column:2;grid-row:2}
+.hub-tile-questions{grid-column:3;grid-row:2}
+.hub-stack{display:flex;flex-direction:column;gap:18px}
+.hub-card-short{flex:1;padding:22px 26px;min-height:0}
+.hub-card-short .hub-card-label{margin-bottom:10px}
+
+.hub-sentiment-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hub-sentiment-tag{font-size:13px;font-weight:500;padding:6px 14px;border-radius:100px;background:#fff;white-space:nowrap}
+.tone-positive .hub-sentiment-tag{color:#2f6f52}
+.tone-mixed .hub-sentiment-tag{color:#6b7280}
+.tone-attention .hub-sentiment-tag{color:#5b616b}
+.hub-radial{display:block;width:100%;max-width:210px;margin:8px auto 0;flex:1;min-height:0}
+.hub-radial-legend{display:flex;flex-wrap:wrap;gap:14px 22px;margin-top:8px;justify-content:center}
+.hub-radial-legend-item{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:#3a3f47}
+.hub-radial-legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.hub-radial-legend-count{color:#8b909b;font-weight:400}
+
+.hub-range-group{display:flex;gap:3px;margin:-6px 0 14px;background:#e7e9ec;border-radius:100px;padding:3px;width:max-content;max-width:100%}
+.hub-range-btn{border:none;background:transparent;font-family:inherit;font-size:10.5px;font-weight:600;color:#6b7078;padding:5px 10px;border-radius:100px;cursor:pointer;white-space:nowrap}
+.hub-range-btn.on{background:#fff;color:#20242b;box-shadow:0 1px 3px rgba(28,40,64,.12)}
+#hub-ga-spark{width:100%;height:52px;margin-top:auto}
+#hub-ga-spark polyline{stroke:#3a8f6f;fill:none;stroke-width:2}
+.hub-pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:100px;background:rgba(58,143,111,.12);color:#2f6f52;margin-top:12px;white-space:nowrap}
+
+.hub-sentiment{display:flex;gap:16px;margin-top:auto;padding-top:20px}
+.hub-sentiment-item{flex:1;text-align:center}
+.hub-sentiment-num{font-size:26px;font-weight:500}
+.hub-sentiment-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8b909b;margin-top:4px;font-weight:500}
+.hub-sentiment-pos .hub-sentiment-num{color:#3a8f6f}
+.hub-sentiment-neg .hub-sentiment-num{color:#5b616b}
+.hub-sentiment-neu .hub-sentiment-num{color:#a7abb3}
+
+.hub-cd-list{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.hub-cd-row{display:grid;grid-template-columns:88px 1fr 34px;align-items:center;gap:10px}
+.hub-cd-row-label{font-size:12px;font-weight:500;color:#3a3f47;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hub-cd-row-track{height:8px;border-radius:100px;background:#dcdfe3;overflow:hidden}
+.hub-cd-row-fill{height:100%;border-radius:100px}
+.hub-cd-row-count{font-size:12px;font-weight:600;color:#5b616b;text-align:right}
+
 .hub-tile-gether{grid-column:1/-1}
+
+.hub-health-grid{max-width:1080px;padding:16px 0 0;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.hub-tile-roadmap{grid-column:1/-1}
+.hub-roadmap{display:flex;align-items:flex-start;justify-content:space-between;margin-top:28px;position:relative;padding:0 6px}
+.hub-roadmap::before{content:"";position:absolute;top:9px;left:6%;right:6%;height:2px;background:#dcdfe3;z-index:0}
+.hub-roadmap-step{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;flex:1;text-align:center}
+.hub-roadmap-dot{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid #dcdfe3}
+.hub-roadmap-step.done .hub-roadmap-dot{background:#3a8f6f;border-color:#3a8f6f}
+.hub-roadmap-step.current .hub-roadmap-dot{border-color:#3a8f6f;box-shadow:0 0 0 4px rgba(58,143,111,.15)}
+.hub-roadmap-label{font-size:12px;font-weight:500;margin-top:10px;color:#5b616b}
+.hub-roadmap-step.current .hub-roadmap-label{color:#20242b;font-weight:600}
+.hub-roadmap-date{font-size:10px;color:#8b909b;margin-top:2px}
+@media(max-width:820px){.hub-health-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.hub-health-grid{grid-template-columns:1fr}.hub-roadmap{flex-direction:column;gap:16px}.hub-roadmap::before{display:none}}
 .hub-gether-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.hub-gether-badge{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#8b6d1f;background:rgba(227,178,60,.16);padding:4px 10px;border-radius:100px}
+.hub-gether-badge{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#8b6d1f;background:rgba(227,178,60,.16);padding:4px 10px;border-radius:100px;white-space:nowrap}
 .hub-gether-row{display:flex;gap:28px;flex-wrap:wrap;margin-top:18px}
 .hub-gether-item{flex:1;min-width:130px;text-align:center;padding:16px 10px;background:#fff;border-radius:16px}
 .hub-gether-num{font-size:30px;font-weight:300;letter-spacing:-.01em}
 .hub-gether-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8b909b;margin-top:6px;font-weight:500}
-.hub-card-sub{font-size:12px;font-weight:400;color:#8b909b;margin-top:14px}
+
+.hub-grid-pad{padding-bottom:56px}
+
+.hub-activity-grid{max-width:1080px;padding:16px 0 56px;display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start}
+.hub-col{display:flex;flex-direction:column;gap:20px}
+.hub-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.hub-section-title{font-size:16px;font-weight:500}
+.hub-stake-count{font-size:12px;color:#8b909b;font-weight:500}
+
+.hub-bulletin-list,.hub-upcoming-list{display:flex;flex-direction:column;gap:10px}
+.hub-bulletin-item{background:#fff;border-radius:14px;padding:14px 16px}
+.hub-bulletin-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.hub-bulletin-type{font-size:10px;font-weight:600;padding:3px 9px;border-radius:100px;background:#e7e9ec;color:#3a3f47;white-space:nowrap}
+.hub-bulletin-date{font-size:11px;color:#8b909b;white-space:nowrap}
+.hub-bulletin-who{font-size:12px;font-weight:500;margin-top:6px}
+.hub-bulletin-who a{color:#20242b;text-decoration:none}
+.hub-bulletin-who a:hover{color:#3a8f6f;text-decoration:underline}
+.hub-bulletin-notes{font-size:12px;color:#5b616b;margin-top:4px;line-height:1.5}
+.hub-upcoming-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #e3e6ea}
+.hub-upcoming-item:last-child{border-bottom:none}
+
+.hub-stake-wrap{background:#f2f3f5;border-radius:24px;overflow:hidden}
+.hub-stake-scroll{overflow-x:auto}
+.hub-stake-row{display:grid;grid-template-columns:36px 1.4fr 1.6fr 1.1fr .9fr;gap:12px;align-items:center;padding:16px 26px;border-bottom:1px solid #e3e6ea;min-width:520px}
+.hub-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;background:#dcdfe3;flex-shrink:0}
+.hub-avatar-fallback{width:32px;height:32px;border-radius:50%;background:#3a8f6f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.hub-stake-row:last-child{border-bottom:none}
+a.hub-stake-row{text-decoration:none;color:inherit;cursor:pointer}
+a.hub-stake-row:hover{background:#e9ebee}
+.hub-stake-row.head{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#8b909b;font-weight:600;padding:14px 26px}
+.hub-stake-name{font-size:13px;font-weight:500}
+.hub-stake-org{font-size:12px;color:#5b616b}
+.hub-stake-type{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:#e7e9ec;color:#3a3f47;width:max-content;white-space:nowrap}
+.hub-stake-priority{font-size:11px;font-weight:600;white-space:nowrap}
+.hub-stake-priority.high{color:#c0392b}
+.hub-stake-priority.medium{color:#b8860b}
+.hub-stake-priority.low{color:#5b616b}
+.hub-stake-owner{font-size:12px;color:#5b616b}
+.hub-stake-empty{padding:26px;font-size:13px;color:#8b909b}
+
 .hub-tooltip{position:fixed;max-width:240px;background:#20242b;color:#fff;font-size:12px;font-weight:400;line-height:1.5;padding:12px 15px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:80;display:none}
 .hub-tooltip.show{display:block}
-@media(max-width:820px){.hub-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:560px){.hub-grid{grid-template-columns:1fr}.hub-gether-item{min-width:100%}}
+
+@media(max-width:820px){
+  .hub-grid{grid-template-columns:repeat(2,1fr)}
+  .hub-tile-sentiment{grid-column:1;grid-row:1/span 2}
+  .hub-tile-visitors{grid-column:2;grid-row:1}
+  .hub-tile-feedback{grid-column:2;grid-row:2}
+  .hub-tile-codesign{grid-column:1;grid-row:3}
+  .hub-tile-questions{grid-column:2;grid-row:3}
+  .hub-activity-grid{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .hub-grid{grid-template-columns:1fr}
+  .hub-tile-sentiment,.hub-tile-visitors,.hub-tile-feedback,.hub-tile-codesign,.hub-tile-questions{grid-column:1;grid-row:auto}
+  .hub-gether-item{min-width:100%}
+}
 </style>
 </head>
 <body>
-<header>
-  <div class="hub-title">Consultation Hub</div>
-  <div class="hub-sub">Project Overview</div>
-</header>
-<div class="hub-grid">
-  <div class="hub-card hub-tile-gether" id="hub-gether-card">
-    <button class="hub-info-btn" data-info="Letters of support sent via Gether, and Meta ad reach/spend for this project&#8217;s promoted posts. Demo data for now &#8212; will connect to Gether&#8217;s SharePoint list and Meta reporting once wired up.">i</button>
-    <div class="hub-gether-head">
-      <div class="hub-card-label">Gether Engagement</div>
-      <span class="hub-gether-badge" id="hub-gether-badge">Demo data</span>
+<div class="app-bg">
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div class="app-brand">TheySED</div>
+    <div class="app-project">A new neighbourhood for Manchester</div>
+    <nav class="app-nav">
+      <button class="app-nav-item on" type="button" data-panel="panel-health">Project Health</button>
+      <button class="app-nav-item" type="button" data-panel="panel-overview">Consultation Activity</button>
+      <button class="app-nav-item" type="button" data-panel="panel-activity">Stakeholder Activity</button>
+      <button class="app-nav-item" type="button" data-panel="panel-media">Media Coverage</button>
+    </nav>
+    <div class="app-sidebar-bottom">
+      <button class="app-nav-item app-nav-item-ghost" type="button" id="app-about-btn">About</button>
+      <button class="app-nav-item app-nav-item-ghost" type="button" id="app-signout-btn">Sign out</button>
     </div>
-    <div class="hub-gether-row" id="hub-gether-row">
-      <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-letters">&mdash;</div><div class="hub-gether-lbl">Letters Sent</div></div>
-      <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-reach">&mdash;</div><div class="hub-gether-lbl">Meta Reach</div></div>
-      <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-spend">&mdash;</div><div class="hub-gether-lbl">Meta Spend</div></div>
+  </aside>
+  <main class="app-main">
+  <div class="app-topbar">
+    <div class="app-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Search" readonly/>
+      <span class="app-search-kbd">&#8984; K</span>
     </div>
-    <div class="hub-card-sub" id="hub-gether-note">Connect Gether&#8217;s SharePoint list to make this live</div>
+    <div class="app-topbar-right">
+      <div class="app-notif-wrap">
+        <button class="app-icon-btn" type="button" title="Notifications" id="app-notif-btn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="app-notif-badge" id="app-notif-badge" style="display:none">0</span>
+        </button>
+        <div class="app-notif-panel" id="app-notif-panel">
+          <div class="app-notif-title">Recent activity</div>
+          <div class="app-notif-list" id="app-notif-list"><div class="app-notif-empty">Loading…</div></div>
+        </div>
+      </div>
+      <button class="app-avatar-btn" type="button" title="Account">?</button>
+    </div>
+  </div>
+  <div class="app-content">
+
+<div class="hub-panel on hub-grid-pad" id="panel-health">
+  <div class="app-hero">
+    <div class="app-hero-title">Hi John,</div>
+    <div class="app-hero-sub">Let's see what's new with your project.</div>
+    <div class="app-hero-pills" id="app-hero-pills"></div>
+  </div>
+  <div class="app-page-head">
+    <div class="app-page-title">Project Health</div>
+    <div class="app-page-sub">A snapshot of sentiment and momentum across the consultation site and stakeholder activity.</div>
+  </div>
+  <div class="hub-health-grid">
+    <div class="hub-card">
+      <button class="hub-info-btn" data-info="Blended from Have Your Say feedback sentiment on the consultation site and the Sentiment field logged on stakeholder engagement entries.">i</button>
+      <div class="hub-card-label">Overall Sentiment</div>
+      <div class="hub-sentiment-row"><div class="hub-card-big" id="hub-health-score">&mdash;</div><div class="hub-sentiment-tag" id="hub-health-tag"></div></div>
+      <div class="hub-card-sub">Blended across the consultation site and stakeholder activity</div>
+    </div>
+    <div class="hub-card">
+      <div class="hub-card-label">Consultation Site Sentiment</div>
+      <div class="hub-sentiment" id="hub-health-consult-sentiment"></div>
+      <div class="hub-card-sub" id="hub-health-consult-sub"></div>
+    </div>
+    <div class="hub-card">
+      <div class="hub-card-label">Stakeholder Sentiment</div>
+      <div class="hub-sentiment" id="hub-health-stake-sentiment"></div>
+      <div class="hub-card-sub" id="hub-health-stake-sub"></div>
+    </div>
+    <div class="hub-card hub-tile-roadmap">
+      <div class="hub-gether-head"><div class="hub-card-label" style="margin-bottom:0">Project Roadmap</div><span class="hub-gether-badge">Placeholder</span></div>
+      <div class="hub-roadmap" id="hub-roadmap"></div>
+    </div>
   </div>
 </div>
+
+<div class="hub-panel hub-grid-pad" id="panel-overview">
+  <div class="app-page-head">
+    <div class="app-page-title">Consultation Activity</div>
+    <div class="app-page-sub">Live metrics from the allto consultation site and Gether.</div>
+  </div>
+  <div class="hub-grid">
+    <div class="hub-card hub-tile-sentiment" id="hub-sentiment-card">
+      <button class="hub-info-btn" data-info="Share of Have Your Say feedback pins marked as positive, based on category (Support = positive, Object = negative, Question/General = neutral).">i</button>
+      <div class="hub-card-label">Overall Sentiment</div>
+      <div class="hub-sentiment-row"><div class="hub-card-big" id="hub-sentiment-score">&mdash;</div><div class="hub-sentiment-tag" id="hub-sentiment-tag"></div></div>
+      <svg class="hub-radial" viewBox="0 0 200 200" id="hub-radial-svg"></svg>
+      <div class="hub-radial-legend" id="hub-radial-legend"></div>
+      <div class="hub-card-sub" id="hub-sentiment-msg">From <span id="hub-sentiment-total">0</span> Have Your Say responses</div>
+    </div>
+    <div class="hub-card hub-tile-visitors">
+      <button class="hub-info-btn" data-info="Total unique visits over the selected period. Placeholder data for now &#8212; connect a Google Analytics relay to make this live.">i</button>
+      <div class="hub-card-label">Site Visitors</div>
+      <div class="hub-range-group" id="hub-ga-range">
+        <button class="hub-range-btn on" type="button" data-range="months">Months</button>
+        <button class="hub-range-btn" type="button" data-range="days">Days</button>
+      </div>
+      <div class="hub-card-big" id="hub-ga-total">&mdash;</div>
+      <div id="hub-ga-pill"></div>
+      <svg id="hub-ga-spark" viewBox="0 0 200 50" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="hub-card hub-tile-feedback">
+      <button class="hub-info-btn" data-info="Total pins dropped on the Have Your Say map, split by sentiment category.">i</button>
+      <div class="hub-card-label">Feedback Responses</div>
+      <div class="hub-card-big" id="hub-fb-total">&mdash;</div>
+      <div id="hub-fb-pill"></div>
+      <div class="hub-sentiment" id="hub-fb-sentiment"></div>
+    </div>
+    <div class="hub-card hub-tile-codesign">
+      <button class="hub-info-btn" data-info="How visitors would use the plots marked for Co-Design, ranked by total picks across all zones.">i</button>
+      <div class="hub-card-label">Co-Design Picks</div>
+      <div class="hub-card-big" id="hub-cd-total">&mdash;</div>
+      <div class="hub-card-sub" id="hub-cd-sub">Total picks submitted</div>
+      <div class="hub-cd-list" id="hub-cd-list"></div>
+      <div class="hub-card-sub" id="hub-cd-status"></div>
+    </div>
+    <div class="hub-tile-questions hub-stack">
+      <div class="hub-card hub-card-short">
+        <button class="hub-info-btn" data-info="Total answers submitted across all scene questions on the site.">i</button>
+        <div class="hub-card-label">Scene Questions</div>
+        <div class="hub-card-big" id="hub-sq-total">&mdash;</div>
+        <div id="hub-sq-pill"></div>
+      </div>
+      <div class="hub-card hub-card-short">
+        <button class="hub-info-btn" data-info="How many distinct visitors dropped at least one pin, versus the total number of pins submitted.">i</button>
+        <div class="hub-card-label">Unique Participants</div>
+        <div class="hub-card-big" id="hub-fb-unique">&mdash;</div>
+        <div class="hub-card-sub" id="hub-fb-unique-sub">Have Your Say visitors</div>
+      </div>
+    </div>
+
+    <div class="hub-card hub-tile-gether" id="hub-gether-card">
+      <button class="hub-info-btn" data-info="Letters of support sent via Gether, and Meta ad reach/spend for this project&#8217;s promoted posts. Demo data for now &#8212; will connect to Gether&#8217;s SharePoint list and Meta reporting once wired up.">i</button>
+      <div class="hub-gether-head">
+        <div class="hub-card-label" style="margin-bottom:0">Gether Engagement</div>
+        <span class="hub-gether-badge" id="hub-gether-badge">Demo data</span>
+      </div>
+      <div class="hub-gether-row" id="hub-gether-row">
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-letters">&mdash;</div><div class="hub-gether-lbl">Letters Sent</div></div>
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-reach">&mdash;</div><div class="hub-gether-lbl">Meta Reach</div></div>
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-gether-spend">&mdash;</div><div class="hub-gether-lbl">Meta Spend</div></div>
+      </div>
+      <div class="hub-card-sub" id="hub-gether-note">Connect Gether&#8217;s SharePoint list to make this live</div>
+    </div>
+  </div>
+</div>
+
+<div class="hub-panel" id="panel-activity">
+  <div class="app-page-head">
+    <div class="app-page-title">Stakeholder Activity</div>
+    <div class="app-page-sub">Stakeholders, recent engagement, and what's coming up.</div>
+  </div>
+  <div class="hub-activity-grid">
+    <div class="hub-col">
+      <div>
+        <div class="hub-section-head"><div class="hub-section-title">Recent Activity</div></div>
+        <div class="hub-card"><div class="hub-bulletin-list" id="hub-bulletin-list"></div></div>
+      </div>
+      <div>
+        <div class="hub-section-head"><div class="hub-section-title">Upcoming</div></div>
+        <div class="hub-card"><div class="hub-upcoming-list" id="hub-upcoming-list"></div></div>
+      </div>
+    </div>
+    <div class="hub-col">
+      <div>
+        <div class="hub-section-head">
+          <div class="hub-section-title">Stakeholders</div>
+          <div class="hub-stake-count" id="hub-stake-count"></div>
+        </div>
+        <div class="hub-stake-wrap">
+          <div class="hub-stake-scroll">
+            <div class="hub-stake-row head"><div></div><div>Name</div><div>Organisation</div><div>Type</div><div>Priority</div></div>
+            <div id="hub-stake-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="hub-panel hub-grid-pad" id="panel-media">
+  <div class="app-page-head">
+    <div class="app-page-title">Media Coverage</div>
+    <div class="app-page-sub">Press and social mentions tracked via Muck Rack.</div>
+  </div>
+  <div class="hub-grid">
+    <div class="hub-card hub-tile-gether" id="hub-muckrack-card">
+      <button class="hub-info-btn" data-info="Press/media coverage tracked via Muck Rack — mentions, estimated reach, and coverage sentiment. Demo data for now — will connect to Muck Rack's API once wired up.">i</button>
+      <div class="hub-gether-head">
+        <div class="hub-card-label" style="margin-bottom:0">Media Coverage (Muck Rack)</div>
+        <span class="hub-gether-badge" id="hub-muckrack-badge">Demo data</span>
+      </div>
+      <div class="hub-gether-row" id="hub-muckrack-row">
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-muckrack-mentions">&mdash;</div><div class="hub-gether-lbl">Mentions</div></div>
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-muckrack-reach">&mdash;</div><div class="hub-gether-lbl">Est. Reach</div></div>
+        <div class="hub-gether-item"><div class="hub-gether-num" id="hub-muckrack-positive">&mdash;</div><div class="hub-gether-lbl">Positive Coverage</div></div>
+      </div>
+      <div class="hub-bulletin-list" id="hub-muckrack-list" style="margin-top:18px"></div>
+      <div class="hub-card-sub" id="hub-muckrack-note">Connect the Muck Rack API to make this live</div>
+    </div>
+  </div>
+</div>
+
+  </div>
+  </main>
+</div>
+</div>
+
 <div id="hub-tooltip" class="hub-tooltip"></div>
+
+<div class="app-modal-backdrop" id="app-modal-backdrop">
+  <div class="app-modal">
+    <div class="app-modal-title" id="app-modal-title"></div>
+    <div class="app-modal-body" id="app-modal-body"></div>
+    <button class="app-modal-close" id="app-modal-close">Close</button>
+  </div>
+</div>
+
 <script>
-// Set to a Power Automate HTTP-trigger flow URL returning
-// {"lettersSent":0,"metaReach":0,"metaSpend":0} once Gether's SharePoint list is connected.
+document.querySelectorAll(".app-nav-item[data-panel]").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    document.querySelectorAll(".app-nav-item[data-panel]").forEach(function(b){ b.classList.remove("on"); });
+    document.querySelectorAll(".hub-panel").forEach(function(p){ p.classList.remove("on"); });
+    btn.classList.add("on");
+    document.getElementById(btn.getAttribute("data-panel")).classList.add("on");
+  });
+});
+
+var APP_MODAL_CONTENT = {
+  about: {
+    title: "About TheySED",
+    body: "TheySED is Turley's consultation dashboard — a live view of project health, consultation activity, and stakeholder engagement in one place, powered by SharePoint and Power Automate."
+  },
+  signout: {
+    title: "Sign out",
+    body: "There's no login system set up for this hub yet, so there's nothing to sign out of. This is a placeholder for when authentication is added."
+  }
+};
+function openAppModal(key){
+  var c = APP_MODAL_CONTENT[key];
+  document.getElementById("app-modal-title").textContent = c.title;
+  document.getElementById("app-modal-body").textContent = c.body;
+  document.getElementById("app-modal-backdrop").classList.add("show");
+}
+document.getElementById("app-about-btn").addEventListener("click", function(){ openAppModal("about"); });
+document.getElementById("app-signout-btn").addEventListener("click", function(){ openAppModal("signout"); });
+document.getElementById("app-modal-close").addEventListener("click", function(){ document.getElementById("app-modal-backdrop").classList.remove("show"); });
+document.getElementById("app-modal-backdrop").addEventListener("click", function(e){
+  if(e.target.id === "app-modal-backdrop") e.target.classList.remove("show");
+});
+
+// Reuse the same Power Automate flow URLs already wired up in dash.html
+// (Have Your Say feedback, Co-Design, Scene Questions) so this hub reads
+// the same underlying SharePoint lists. Leave blank to show demo data.
+var FB_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/16/workflows/26807660fcee4c739fa5548a503e6c98/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=p0uFHvfLb2ct9ujjxilkJFuRkFE3oXWJo2OxyNlo06w";
+var CD_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/31/workflows/c180228f8e1f42129d4aeecd7b7bb7ee/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=-HMW1n44Gu6b5-JdhI62zQy925VEHzPaG3EezMebHl4";
+var SQ_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/29/workflows/5413b636ee8d4cbe916f05ecf4077325/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=OKZNa7kgaGc_IBJvKXj53Q9tXuEFBlALjKr8f77CfZs";
+
+// Set once Gether's SharePoint list is connected: returns
+// {"lettersSent":0,"metaReach":0,"metaSpend":0}
 var GETHER_URL = "";
+
+// Set once the Stakeholders SharePoint list + read flow is live: returns
+// an array of {id, name, organisation, shType, priority, owner, profilePicture}
+// id must be the SharePoint item ID (add "id: ID" to the flow's Select
+// step) — it's what links each row through to their profile page.
+var STAKEHOLDERS_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/02/workflows/5c3e2957a6bd4a5ea5e380fce761041c/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=8OyE0iTBE2SIvXdYmSsTQC9nGN-BWLUfu7QNFurs61E";
+
+// Same EngagementLog read flow used on stakeholder.html, called here with
+// no stakeholderId so it returns every entry across the whole project for
+// the Recent Activity / Upcoming widgets. Requires the flow's Filter_array
+// condition to pass everything through when stakeholderId is blank.
+var ENGAGEMENTLOG_URL = "https://default8f1dd42696094019b47568f7400a1c.8a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/07/workflows/25d74467bf0146499edf231cbf72f8aa/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=f57Z8mWPQJdyfTU3y7kRNiLlJBvKirrBJ9DCt_6QdXI";
+
+function daysAgo(n){ return Date.now() - n*86400000; }
+function parseTs(s){
+  if(!s) return NaN;
+  var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})/.exec(s);
+  if(m) return new Date(+m[3], +m[1]-1, +m[2], +m[4], +m[5], +m[6]).getTime();
+  return Date.parse(s);
+}
+function countRecent(rows, days){
+  var cutoff = daysAgo(days);
+  return rows.filter(function(r){ var t = r && r.timestamp ? parseTs(r.timestamp) : NaN; return !isNaN(t) && t>=cutoff; }).length;
+}
+function renderPill(id, n, label){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.innerHTML = n>0 ? "<span class=\"hub-pill\">+"+n+" "+label+"</span>" : "";
+}
+
+// Project Health tab pulls sentiment from the same data already fetched
+// for the Consultation Activity and Stakeholder Activity tabs — no extra
+// requests, just rendered into a second set of elements.
+var healthState = { consultPct: null, stakePct: null };
+function renderSentimentBlock(elId, subId, pos, neu, neg, subText){
+  var el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = "<div class=\"hub-sentiment-item hub-sentiment-pos\"><div class=\"hub-sentiment-num\">"+pos+"</div><div class=\"hub-sentiment-lbl\">Positive</div></div>"
+    +"<div class=\"hub-sentiment-item hub-sentiment-neu\"><div class=\"hub-sentiment-num\">"+neu+"</div><div class=\"hub-sentiment-lbl\">Neutral</div></div>"
+    +"<div class=\"hub-sentiment-item hub-sentiment-neg\"><div class=\"hub-sentiment-num\">"+neg+"</div><div class=\"hub-sentiment-lbl\">Negative</div></div>";
+  var subEl = document.getElementById(subId);
+  if(subEl) subEl.textContent = subText;
+}
+function updateOverallHealth(){
+  var vals = [healthState.consultPct, healthState.stakePct].filter(function(v){ return v!=null; });
+  var scoreEl = document.getElementById("hub-health-score");
+  var tagEl = document.getElementById("hub-health-tag");
+  if(!scoreEl || !vals.length) return;
+  var avg = Math.round(vals.reduce(function(a,b){return a+b;},0) / vals.length);
+  scoreEl.textContent = avg+"%";
+  var tag = avg>=55 ? "Mostly Positive" : avg<35 ? "Needs Attention" : "Mixed";
+  tagEl.textContent = tag;
+}
+function renderHealthConsultation(pos, neu, neg, total){
+  renderSentimentBlock("hub-health-consult-sentiment", "hub-health-consult-sub", pos, neu, neg, total ? "From "+total+" Have Your Say responses" : "No data yet");
+  healthState.consultPct = total>0 ? Math.round((pos/total)*100) : null;
+  updateOverallHealth();
+}
+function renderHealthStakeholders(rows){
+  var pos=0,neu=0,neg=0;
+  rows.forEach(function(r){
+    var s = (pickValue(r.Sentiment)||"").toLowerCase();
+    if(s==="positive") pos++; else if(s==="negative") neg++; else if(s==="neutral") neu++;
+  });
+  var total = pos+neu+neg;
+  renderSentimentBlock("hub-health-stake-sentiment", "hub-health-stake-sub", pos, neu, neg, total ? "From "+total+" tagged engagement entries" : "No sentiment tagged yet");
+  healthState.stakePct = total>0 ? Math.round((pos/total)*100) : null;
+  updateOverallHealth();
+
+  var cutoff = daysAgo(7);
+  var recentCount = rows.filter(function(r){
+    var d = new Date(r.Date);
+    return !isNaN(d.getTime()) && d.getTime()>=cutoff;
+  }).length;
+  var pillsEl = document.getElementById("app-hero-pills");
+  if(pillsEl){
+    var pills = "";
+    if(recentCount>0) pills += "<span class=\"app-hero-pill\">"+recentCount+" engagement "+(recentCount===1?"entry":"entries")+" logged this week</span>";
+    if(neg>0) pills += "<span class=\"app-hero-pill warn\">"+neg+" "+(neg===1?"entry":"entries")+" flagged Negative sentiment</span>";
+    pillsEl.innerHTML = pills;
+  }
+}
+
+var ROADMAP_DEMO = [
+  {label:"Community Engagement", date:"Jun 2026", status:"done"},
+  {label:"Design Review", date:"Aug 2026", status:"current"},
+  {label:"Planning Submission", date:"Oct 2026", status:"upcoming"},
+  {label:"Decision", date:"Jan 2027", status:"upcoming"}
+];
+function renderRoadmap(){
+  var el = document.getElementById("hub-roadmap");
+  if(!el) return;
+  el.innerHTML = ROADMAP_DEMO.map(function(s){
+    return "<div class=\"hub-roadmap-step "+s.status+"\"><div class=\"hub-roadmap-dot\"></div><div class=\"hub-roadmap-label\">"+s.label+"</div><div class=\"hub-roadmap-date\">"+s.date+"</div></div>";
+  }).join("");
+}
+function fmtDate(s){
+  if(!s) return "";
+  var d = new Date(s);
+  if(isNaN(d.getTime())) return s;
+  return d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
+}
+// SharePoint returns Lookup columns as {..., Value:"X"} and Person
+// columns as {..., DisplayName:"X"} rather than plain text — unwrap both.
+function pickValue(v){
+  if(v && typeof v === "object"){
+    if("Value" in v) return v.Value;
+    if("DisplayName" in v) return v.DisplayName;
+  }
+  return v;
+}
+function stripHtml(html){
+  var div = document.createElement("div");
+  div.innerHTML = html || "";
+  return (div.textContent || "").trim();
+}
+
+// SharePoint's Image column can come back as a plain URL, a JSON string,
+// or an already-parsed object depending on how the flow's Select maps it
+// — try each shape and pull out a serverRelativeUrl/url if present.
+var SP_ORIGIN = "https://turley365.sharepoint.com";
+function pickPhotoUrl(v){
+  if(!v) return "";
+  var url = "";
+  if(typeof v === "string"){
+    if(v.indexOf("http") === 0) url = v;
+    else { try{ v = JSON.parse(v); }catch(e){ return ""; } }
+  }
+  if(!url && typeof v === "object"){
+    var rel = v.serverRelativeUrl || v.ServerRelativeUrl || v.url || v.Url;
+    if(rel) url = rel.indexOf("http") === 0 ? rel : SP_ORIGIN + rel;
+  }
+  if(!url) return "";
+  // SharePoint/OneDrive "copy link" URLs serve an interactive viewer page
+  // by default — append download=1 to get the raw image bytes an <img>
+  // tag actually needs.
+  if(url.indexOf("sharepoint.com") !== -1 && url.indexOf("download=1") === -1){
+    url += (url.indexOf("?") === -1 ? "?" : "&") + "download=1";
+  }
+  return url;
+}
+function initials(name){
+  var parts = (name||"").trim().split(/\s+/);
+  return ((parts[0]||"")[0]||"") + ((parts[1]||"")[0]||"");
+}
+function avatarHtml(photo, name){
+  var url = pickPhotoUrl(photo);
+  var fallback = "<div class=\"hub-avatar-fallback\">"+initials(name).toUpperCase()+"</div>";
+  if(!url) return fallback;
+  var escaped = fallback.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+  return "<img class=\"hub-avatar\" src=\""+url+"\" alt=\"\" onerror=\"this.outerHTML='"+escaped+"'\"/>";
+}
+function truncate(s, n){ return s.length > n ? s.slice(0,n).trim()+"…" : s; }
+
+function renderRadial(pos, neu, neg, total){
+  var svg = document.getElementById("hub-radial-svg");
+  var legend = document.getElementById("hub-radial-legend");
+  var NS = "http://www.w3.org/2000/svg";
+  var items = [
+    {label:"Positive", value:pos, color:"#3a8f6f", r:90},
+    {label:"Neutral", value:neu, color:"#c7cbd1", r:68},
+    {label:"Negative", value:neg, color:"#5b616b", r:46}
+  ];
+  var strokeW = 15;
+  svg.innerHTML = "";
+  items.forEach(function(it){
+    var c = 2*Math.PI*it.r;
+    var share = total>0 ? it.value/total : 0;
+    var bg = document.createElementNS(NS,"circle");
+    bg.setAttribute("cx","100"); bg.setAttribute("cy","100"); bg.setAttribute("r",it.r);
+    bg.setAttribute("fill","none"); bg.setAttribute("stroke","#e9ebee"); bg.setAttribute("stroke-width",strokeW);
+    svg.appendChild(bg);
+    var fg = document.createElementNS(NS,"circle");
+    fg.setAttribute("cx","100"); fg.setAttribute("cy","100"); fg.setAttribute("r",it.r);
+    fg.setAttribute("fill","none"); fg.setAttribute("stroke",it.color); fg.setAttribute("stroke-width",strokeW);
+    fg.setAttribute("stroke-linecap","round");
+    fg.setAttribute("stroke-dasharray", c.toFixed(2));
+    fg.setAttribute("stroke-dashoffset", (c*(1-share)).toFixed(2));
+    fg.setAttribute("transform","rotate(-90 100 100)");
+    svg.appendChild(fg);
+  });
+  legend.innerHTML = items.map(function(it){
+    return "<div class=\"hub-radial-legend-item\"><span class=\"hub-radial-legend-dot\" style=\"background:"+it.color+"\"></span>"+it.label+" <span class=\"hub-radial-legend-count\">"+it.value+"</span></div>";
+  }).join("");
+}
+
+var gaRange = "months";
+function gaDataset(range){
+  if(range==="days"){
+    var vals=[]; for(var i=0;i<30;i++){ vals.push(Math.round(60 + Math.sin(i/3)*16 + i*1.6 + (i%5)*4)); }
+    return {vals:vals, pillText:"+8% vs yesterday"};
+  }
+  return {vals:[420,460,410,530,610,590,700,680,750,820,860,900], pillText:"+12% vs last month"};
+}
+function loadGA(){
+  var ds=gaDataset(gaRange);
+  var demo=ds.vals;
+  var total=demo.reduce(function(a,b){return a+b;},0);
+  document.getElementById("hub-ga-total").textContent = total.toLocaleString();
+  document.getElementById("hub-ga-pill").innerHTML = "<span class=\"hub-pill\">"+ds.pillText+"</span>";
+  var svg=document.getElementById("hub-ga-spark");
+  var max=Math.max.apply(null,demo), min=Math.min.apply(null,demo);
+  var pts=demo.map(function(v,i){ var x=(i/(demo.length-1))*200; var y=50-((v-min)/(max-min||1))*44-3; return x+","+y; }).join(" ");
+  svg.innerHTML="<polyline points=\""+pts+"\"/>";
+}
+Array.prototype.forEach.call(document.querySelectorAll(".hub-range-btn"), function(btn){
+  btn.addEventListener("click", function(){
+    Array.prototype.forEach.call(document.querySelectorAll(".hub-range-btn"), function(b){ b.classList.remove("on"); });
+    btn.classList.add("on");
+    gaRange = btn.getAttribute("data-range");
+    loadGA();
+  });
+});
+
+function loadFeedback(){
+  if(!FB_URL){
+    var demoPos=41, demoNeu=18, demoNeg=9, demoTotal=demoPos+demoNeu+demoNeg;
+    renderFeedback([demoPos,demoNeu,demoNeg], demoTotal, 27, demoTotal);
+    renderPill("hub-fb-pill", 6, "this week");
+    return;
+  }
+  fetch(FB_URL).then(function(r){return r.json();}).then(function(rows){
+    if(!Array.isArray(rows)) throw new Error();
+    var pos=0,neg=0,neu=0;
+    var visitors={};
+    rows.forEach(function(r){
+      var c=(r.category||"").toLowerCase();
+      if(c==="support") pos++; else if(c==="object") neg++; else neu++;
+      if(r.visitorId) visitors[r.visitorId]=true;
+    });
+    document.getElementById("hub-fb-total").textContent = rows.length;
+    renderPill("hub-fb-pill", countRecent(rows,7), "this week");
+    var uniqueCount = Object.keys(visitors).length;
+    renderFeedback([pos,neu,neg], pos+neu+neg, uniqueCount, rows.length);
+  }).catch(function(){
+    document.getElementById("hub-fb-total").textContent="Could not load";
+    document.getElementById("hub-fb-unique").textContent="Could not load";
+    document.getElementById("hub-sentiment-tag").textContent="Could not load";
+  });
+}
+function renderFeedback(counts, total, uniqueCount, pinTotal){
+  var pos=counts[0], neu=counts[1], neg=counts[2];
+  document.getElementById("hub-fb-total").textContent = pinTotal;
+  document.getElementById("hub-fb-unique").textContent = uniqueCount || "—";
+  document.getElementById("hub-fb-unique-sub").textContent = pinTotal ? Math.round((uniqueCount/pinTotal)*100)+"% of "+pinTotal+" pins" : "Have Your Say visitors";
+  document.getElementById("hub-fb-sentiment").innerHTML =
+    "<div class=\"hub-sentiment-item hub-sentiment-pos\"><div class=\"hub-sentiment-num\">"+pos+"</div><div class=\"hub-sentiment-lbl\">Positive</div></div>"
+    +"<div class=\"hub-sentiment-item hub-sentiment-neu\"><div class=\"hub-sentiment-num\">"+neu+"</div><div class=\"hub-sentiment-lbl\">Neutral</div></div>"
+    +"<div class=\"hub-sentiment-item hub-sentiment-neg\"><div class=\"hub-sentiment-num\">"+neg+"</div><div class=\"hub-sentiment-lbl\">Negative</div></div>";
+  var card=document.getElementById("hub-sentiment-card");
+  var scoreEl=document.getElementById("hub-sentiment-score");
+  var tagEl=document.getElementById("hub-sentiment-tag");
+  var totalEl=document.getElementById("hub-sentiment-total");
+  var msgEl=document.getElementById("hub-sentiment-msg");
+  if(total>0){
+    var pct=Math.round((pos/total)*100);
+    var negShare=neg/total;
+    var tone,tag;
+    if(pct>=55 && negShare<0.3){ tone="tone-positive"; tag="Mostly Positive"; }
+    else if(pct<35 || negShare>=0.45){ tone="tone-attention"; tag="Needs Attention"; }
+    else { tone="tone-mixed"; tag="Mixed"; }
+    card.className="hub-card hub-tile-sentiment "+tone;
+    scoreEl.textContent=pct+"%";
+    tagEl.textContent=tag;
+    totalEl.textContent=total;
+    msgEl.innerHTML = "From "+total+" Have Your Say responses";
+    renderRadial(pos, neu, neg, total);
+  } else {
+    scoreEl.textContent="—";
+    tagEl.textContent="No data yet";
+    document.getElementById("hub-radial-svg").innerHTML="";
+    document.getElementById("hub-radial-legend").innerHTML="";
+  }
+  renderHealthConsultation(pos, neu, neg, total);
+}
+
+function loadQuestions(){
+  if(!SQ_URL){
+    document.getElementById("hub-sq-total").textContent = "63";
+    renderPill("hub-sq-pill", 5, "this week");
+    return;
+  }
+  fetch(SQ_URL).then(function(r){return r.json();}).then(function(rows){
+    if(!Array.isArray(rows)) throw new Error();
+    document.getElementById("hub-sq-total").textContent = rows.length;
+    renderPill("hub-sq-pill", countRecent(rows,7), "this week");
+  }).catch(function(){ document.getElementById("hub-sq-total").textContent="Could not load"; });
+}
+
+var GREEN_SHADES = ["#1f5c45","#3a8f6f","#6fbb96","#a8dcc0","#c9e9d8"];
+function loadCodesign(){
+  var status=document.getElementById("hub-cd-status");
+  if(!CD_URL){
+    renderCodesign([{label:"Community Garden",count:34},{label:"Play Area",count:27},{label:"Allotments",count:19},{label:"Wildflower Meadow",count:12},{label:"Outdoor Gym",count:8}]);
+    return;
+  }
+  fetch(CD_URL).then(function(r){return r.json();}).then(function(rows){
+    if(!Array.isArray(rows)) throw new Error();
+    var valid=rows.filter(function(r){return r&&r.choice;});
+    if(!valid.length){ if(status)status.textContent = rows.length ? "Found responses but couldn’t read them — check the sheet’s column headers." : "No responses yet."; document.getElementById("hub-cd-total").textContent="0"; return; }
+    var counts={};
+    valid.forEach(function(r){ counts[r.choice]=(counts[r.choice]||0)+1; });
+    var ranked=Object.keys(counts).map(function(k){return {label:k,count:counts[k]};}).sort(function(a,b){return b.count-a.count;});
+    renderCodesign(ranked);
+  }).catch(function(){ if(status)status.textContent="Could not load results."; });
+}
+function renderCodesign(ranked){
+  var max=ranked[0].count;
+  var total=ranked.reduce(function(a,r){return a+r.count;},0);
+  document.getElementById("hub-cd-total").textContent = total;
+  document.getElementById("hub-cd-sub").textContent = "Top pick: "+ranked[0].label;
+  var list=document.getElementById("hub-cd-list");
+  list.innerHTML = ranked.slice(0,5).map(function(r,i){
+    var pct = Math.round((r.count/max)*100);
+    var color = GREEN_SHADES[Math.min(i,GREEN_SHADES.length-1)];
+    return "<div class=\"hub-cd-row\"><div class=\"hub-cd-row-label\">"+r.label+"</div><div class=\"hub-cd-row-track\"><div class=\"hub-cd-row-fill\" style=\"width:"+pct+"%;background:"+color+"\"></div></div><div class=\"hub-cd-row-count\">"+r.count+"</div></div>";
+  }).join("");
+}
 
 function loadGether(){
   if(!GETHER_URL){
@@ -67,7 +793,7 @@ function loadGether(){
   document.getElementById("hub-gether-badge").style.display = "none";
   document.getElementById("hub-gether-note").textContent = "";
   fetch(GETHER_URL).then(function(r){ return r.json(); }).then(function(d){
-    document.getElementById("hub-gether-letters").textContent = (d.lettersSent!=null ? d.lettersSent : "—").toLocaleString ? d.lettersSent.toLocaleString() : d.lettersSent;
+    document.getElementById("hub-gether-letters").textContent = d.lettersSent!=null ? d.lettersSent.toLocaleString() : "—";
     document.getElementById("hub-gether-reach").textContent = d.metaReach!=null ? d.metaReach.toLocaleString() : "—";
     document.getElementById("hub-gether-spend").textContent = d.metaSpend!=null ? "£"+d.metaSpend.toLocaleString() : "—";
   }).catch(function(){
@@ -76,7 +802,182 @@ function loadGether(){
     document.getElementById("hub-gether-spend").textContent = "Could not load";
   });
 }
-loadGether();
+
+// Set once a Muck Rack API relay/flow is connected — their coverage API
+// returns results shaped roughly like MUCKRACK_DEMO below (headline, outlet,
+// published_at, url, sentiment, plus aggregate mentions/reach). Adjust field
+// names here once you see the real payload from the API.
+var MUCKRACK_URL = "";
+var MUCKRACK_DEMO = {
+  mentions: 14,
+  reach: 182000,
+  results: [
+    {headline:"Manchester unveils plans for new riverside neighbourhood", outlet:"Manchester Evening News", published_at:"2026-07-18", url:"https://example.com/article-1", sentiment:"positive"},
+    {headline:"Residents raise concerns over new development at drop-in event", outlet:"BBC Manchester", published_at:"2026-07-12", url:"https://example.com/article-2", sentiment:"neutral"},
+    {headline:"Local business association backs riverside masterplan", outlet:"Place North West", published_at:"2026-07-08", url:"https://example.com/article-3", sentiment:"positive"},
+    {headline:"Councillor welcomes riverside regeneration proposals", outlet:"ITV Granada", published_at:"2026-07-05", url:"https://example.com/article-4", sentiment:"positive"},
+    {headline:"What the new neighbourhood means for traffic on the A56", outlet:"Manchester Evening News", published_at:"2026-06-29", url:"https://example.com/article-5", sentiment:"neutral"},
+    {headline:"Community group calls for more green space in riverside plan", outlet:"The Meteor", published_at:"2026-06-21", url:"https://example.com/article-6", sentiment:"negative"}
+  ]
+};
+function loadMuckRack(){
+  if(!MUCKRACK_URL){ renderMuckRack(MUCKRACK_DEMO); return; }
+  document.getElementById("hub-muckrack-badge").style.display = "none";
+  document.getElementById("hub-muckrack-note").textContent = "";
+  fetch(MUCKRACK_URL).then(function(r){ return r.json(); }).then(renderMuckRack).catch(function(){
+    document.getElementById("hub-muckrack-mentions").textContent = "Could not load";
+    document.getElementById("hub-muckrack-reach").textContent = "Could not load";
+    document.getElementById("hub-muckrack-positive").textContent = "Could not load";
+  });
+}
+function renderMuckRack(d){
+  var results = d.results || [];
+  var pos = results.filter(function(r){ return (r.sentiment||"").toLowerCase()==="positive"; }).length;
+  document.getElementById("hub-muckrack-mentions").textContent = d.mentions!=null ? d.mentions.toLocaleString() : results.length;
+  document.getElementById("hub-muckrack-reach").textContent = d.reach!=null ? (d.reach>=1000 ? Math.round(d.reach/1000)+"k" : d.reach) : "—";
+  document.getElementById("hub-muckrack-positive").textContent = pos;
+  document.getElementById("hub-muckrack-list").innerHTML = results.slice(0,6).map(function(r){
+    return "<div class=\"hub-bulletin-item\">"
+      + "<div class=\"hub-bulletin-head\"><span class=\"hub-bulletin-type\">"+(r.sentiment ? r.sentiment.charAt(0).toUpperCase()+r.sentiment.slice(1) : "")+"</span><span class=\"hub-bulletin-date\">"+fmtDate(r.published_at)+"</span></div>"
+      + "<div class=\"hub-bulletin-who\"><a href=\""+r.url+"\" target=\"_blank\" rel=\"noopener\">"+r.headline+"</a></div>"
+      + "<div class=\"hub-bulletin-notes\">"+r.outlet+"</div>"
+      + "</div>";
+  }).join("");
+}
+
+var STAKE_DEMO = [
+  {id:1, name:"Sarah Whitfield", organisation:"Riverside Residents Association", shType:"Community Group", priority:"High", owner:"J. Davison"},
+  {id:2, name:"Cllr. Tom Reid", organisation:"Manchester City Council", shType:"Councillor", priority:"High", owner:"C. Hemsley"},
+  {id:3, name:"Amina Yusuf", organisation:"Resident, Oak Street", shType:"Resident", priority:"Medium", owner:"J. Davison"},
+  {id:4, name:"Greater Manchester Chamber", organisation:"Business", shType:"Business", priority:"Low", owner:"C. Hemsley"},
+  {id:5, name:"Historic England", organisation:"Statutory Consultee", shType:"Statutory Consultee", priority:"High", owner:"J. Davison"}
+];
+function loadStakeholders(){
+  if(!STAKEHOLDERS_URL){ renderStakeholders(STAKE_DEMO, true); return; }
+  fetch(STAKEHOLDERS_URL).then(function(r){return r.json();}).then(function(rows){
+    if(!Array.isArray(rows)) throw new Error();
+    renderStakeholders(rows, false);
+  }).catch(function(){
+    document.getElementById("hub-stake-list").innerHTML = "<div class=\"hub-stake-empty\">Could not load stakeholders.</div>";
+  });
+}
+function renderStakeholders(rows, isDemo){
+  var countEl = document.getElementById("hub-stake-count");
+  countEl.textContent = isDemo ? rows.length+" (demo)" : rows.length;
+  var list = document.getElementById("hub-stake-list");
+  if(!rows.length){ list.innerHTML = "<div class=\"hub-stake-empty\">No stakeholders logged yet.</div>"; return; }
+  list.innerHTML = rows.map(function(r){
+    var pr = (r.priority||"").toLowerCase();
+    var photoUrl = pickPhotoUrl(r.profilePicture);
+    var cells = "<div>"+avatarHtml(r.profilePicture, r.name)+"</div>"
+      + "<div class=\"hub-stake-name\">"+(r.name||"")+"</div>"
+      + "<div class=\"hub-stake-org\">"+(r.organisation||"")+"</div>"
+      + "<div><span class=\"hub-stake-type\">"+(r.shType||"")+"</span></div>"
+      + "<div class=\"hub-stake-priority "+pr+"\">"+(r.priority||"")+"</div>";
+    if(r.id!=null){
+      var qs = "id="+encodeURIComponent(r.id)
+        +"&name="+encodeURIComponent(r.name||"")
+        +"&organisation="+encodeURIComponent(r.organisation||"")
+        +"&shType="+encodeURIComponent(r.shType||"")
+        +"&priority="+encodeURIComponent(r.priority||"")
+        +"&owner="+encodeURIComponent(r.owner||"")
+        +"&photo="+encodeURIComponent(photoUrl);
+      return "<a class=\"hub-stake-row\" href=\"stakeholder.html?"+qs+"\">"+cells+"</a>";
+    }
+    return "<div class=\"hub-stake-row\">"+cells+"</div>";
+  }).join("");
+}
+
+var ENGAGEMENT_DEMO = [
+  {enType:{Value:"Meeting"}, Date:"2026-07-20", Notes:"<p>Introductory meeting with residents group, walked through the emerging masterplan.</p>", loggedBy:{DisplayName:"J. Davison"}, Follow_x002d_upDate:"2026-08-05", Stakeholders:[{Value:"Sarah Whitfield"}], Sentiment:{Value:"Positive"}},
+  {enType:{Value:"Call"}, Date:"2026-07-18", Notes:"<p>Follow-up call regarding parking concerns raised at the last drop-in.</p>", loggedBy:{DisplayName:"C. Hemsley"}, Follow_x002d_upDate:null, Stakeholders:[{Value:"Cllr. Tom Reid"}], Sentiment:{Value:"Neutral"}},
+  {enType:{Value:"Leaflet Drop"}, Date:"2026-07-15", Notes:"<p>200 leaflets dropped across Oak Street and surrounding roads.</p>", loggedBy:{DisplayName:"J. Davison"}, Follow_x002d_upDate:null, Stakeholders:[], Sentiment:null},
+  {enType:{Value:"Letter"}, Date:"2026-07-10", Notes:"<p>Sent letter of support template to the local business association.</p>", loggedBy:{DisplayName:"C. Hemsley"}, Follow_x002d_upDate:"2026-07-30", Stakeholders:[{Value:"Greater Manchester Chamber"}], Sentiment:{Value:"Positive"}}
+];
+function renderBulletin(rows){
+  var el = document.getElementById("hub-bulletin-list");
+  var recent = rows.slice().sort(function(a,b){ return new Date(b.Date) - new Date(a.Date); }).slice(0,5);
+  if(!recent.length){ el.innerHTML = "<div class=\"hub-stake-empty\">No activity logged yet.</div>"; return; }
+  el.innerHTML = recent.map(function(r){
+    var enType = pickValue(r.enType);
+    var who = (r.Stakeholders && r.Stakeholders[0]) ? pickValue(r.Stakeholders[0]) : "";
+    var notes = truncate(stripHtml(r.Notes||""), 90);
+    return "<div class=\"hub-bulletin-item\">"
+      + "<div class=\"hub-bulletin-head\"><span class=\"hub-bulletin-type\">"+(enType||"")+"</span><span class=\"hub-bulletin-date\">"+fmtDate(r.Date)+"</span></div>"
+      + (who ? "<div class=\"hub-bulletin-who\">"+who+"</div>" : "")
+      + (notes ? "<div class=\"hub-bulletin-notes\">"+notes+"</div>" : "")
+      + "</div>";
+  }).join("");
+}
+function renderUpcoming(rows){
+  var el = document.getElementById("hub-upcoming-list");
+  var today = new Date(); today.setHours(0,0,0,0);
+  var upcoming = rows.filter(function(r){
+    var f = r.Follow_x002d_upDate;
+    if(!f) return false;
+    var d = new Date(f);
+    return !isNaN(d.getTime()) && d>=today;
+  }).sort(function(a,b){ return new Date(a.Follow_x002d_upDate) - new Date(b.Follow_x002d_upDate); }).slice(0,5);
+  if(!upcoming.length){ el.innerHTML = "<div class=\"hub-stake-empty\">Nothing scheduled.</div>"; return; }
+  el.innerHTML = upcoming.map(function(r){
+    var enType = pickValue(r.enType);
+    var who = (r.Stakeholders && r.Stakeholders[0]) ? pickValue(r.Stakeholders[0]) : "";
+    return "<div class=\"hub-upcoming-item\">"
+      + "<div><div class=\"hub-bulletin-who\">"+(who||"Project-wide")+"</div><span class=\"hub-bulletin-type\">"+(enType||"")+"</span></div>"
+      + "<div class=\"hub-bulletin-date\">"+fmtDate(r.Follow_x002d_upDate)+"</div>"
+      + "</div>";
+  }).join("");
+}
+function loadActivityFeed(){
+  if(!ENGAGEMENTLOG_URL){
+    renderBulletin(ENGAGEMENT_DEMO); renderUpcoming(ENGAGEMENT_DEMO); renderHealthStakeholders(ENGAGEMENT_DEMO); renderNotifications(ENGAGEMENT_DEMO);
+    return;
+  }
+  fetch(ENGAGEMENTLOG_URL).then(function(r){return r.json();}).then(function(rows){
+    if(!Array.isArray(rows)) throw new Error();
+    renderBulletin(rows); renderUpcoming(rows); renderHealthStakeholders(rows); renderNotifications(rows);
+  }).catch(function(){
+    document.getElementById("hub-bulletin-list").innerHTML = "<div class=\"hub-stake-empty\">Could not load activity.</div>";
+    document.getElementById("hub-upcoming-list").innerHTML = "<div class=\"hub-stake-empty\">Could not load.</div>";
+    document.getElementById("app-notif-list").innerHTML = "<div class=\"app-notif-empty\">Could not load activity.</div>";
+  });
+}
+
+function renderNotifications(rows){
+  var listEl = document.getElementById("app-notif-list");
+  var badgeEl = document.getElementById("app-notif-badge");
+  if(!rows.length){ listEl.innerHTML = "<div class=\"app-notif-empty\">No recent activity.</div>"; badgeEl.style.display = "none"; return; }
+  var recent = rows.slice().sort(function(a,b){ return new Date(b.Date) - new Date(a.Date); }).slice(0,6);
+  listEl.innerHTML = recent.map(function(r){
+    var enType = pickValue(r.enType);
+    var who = (r.Stakeholders && r.Stakeholders[0]) ? pickValue(r.Stakeholders[0]) : "Project-wide";
+    return "<div class=\"app-notif-item\">"
+      + "<div class=\"app-notif-item-head\"><span class=\"hub-bulletin-type\">"+(enType||"")+"</span><span class=\"hub-bulletin-date\">"+fmtDate(r.Date)+"</span></div>"
+      + "<div class=\"app-notif-who\">"+who+"</div>"
+      + "</div>";
+  }).join("");
+  var cutoff = daysAgo(7);
+  var recentCount = rows.filter(function(r){ var d = new Date(r.Date); return !isNaN(d.getTime()) && d.getTime()>=cutoff; }).length;
+  if(recentCount>0){ badgeEl.textContent = recentCount>9 ? "9+" : recentCount; badgeEl.style.display = "flex"; }
+  else { badgeEl.style.display = "none"; }
+}
+
+document.getElementById("app-notif-btn").addEventListener("click", function(e){
+  e.stopPropagation();
+  document.getElementById("app-notif-panel").classList.toggle("show");
+});
+document.addEventListener("click", function(e){
+  var panel = document.getElementById("app-notif-panel");
+  if(panel.classList.contains("show") && !panel.contains(e.target) && e.target.id!=="app-notif-btn"){
+    panel.classList.remove("show");
+  }
+});
+
+function loadAll(){
+  loadGA(); loadFeedback(); loadCodesign(); loadQuestions(); loadGether(); loadMuckRack(); loadStakeholders(); loadActivityFeed();
+  renderRoadmap();
+}
+loadAll();
 
 document.querySelectorAll(".hub-info-btn").forEach(function(btn){
   btn.addEventListener("click", function(e){
