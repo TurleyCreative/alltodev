@@ -264,6 +264,7 @@ input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:2
     <div class="tab" id="tab-mk">Markers</div>
     <div class="tab" id="tab-zn">Zones</div>
     <div class="tab" id="tab-ln">Lines</div>
+    <div class="tab" id="tab-pr">Props</div>
     <div class="tab" id="tab-ov">Images</div>
   </div>
   <div class="tc on" id="tc-sc">
@@ -281,6 +282,12 @@ input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:2
     <div class="ps">
       <div class="st"><span>Lines <button type="button" class="rs-info" data-info="Draw lines on &lt;a href=&quot;https://geojson.io&quot; target=&quot;_blank&quot;&gt;geojson.io&lt;/a&gt; then paste GeoJSON. Accepts LineString or MultiLineString." aria-label="More info">i</button></span><div style="display:flex;gap:4px"><button class="ab" id="btn-add-ln-grp" title="New group" aria-label="Add line group"><span data-icon="folder-plus" data-icon-size="13"></span></button><button class="ab" id="btn-add-ln" aria-label="Add line"><span data-icon="plus" data-icon-size="13"></span></button></div></div>
       <div id="line-list"></div>
+    </div>
+  </div>
+    <div class="tc" id="tc-pr">
+    <div class="ps">
+      <div class="st"><span>Props <button type="button" class="rs-info" data-info="Low-poly 3D decorations — trees, cars, street furniture — that appear alongside your 3D Buildings, using the same extrusion technique so nothing extra needs to load. Only visible on scenes with 3D Buildings or Orbit switched on." aria-label="More info">i</button></span><div style="display:flex;gap:4px"><button class="ab" id="btn-add-pr-grp" title="New group" aria-label="Add prop group"><span data-icon="folder-plus" data-icon-size="13"></span></button><button class="ab" id="btn-add-pr" aria-label="Add prop"><span data-icon="plus" data-icon-size="13"></span></button></div></div>
+      <div id="prop-list"></div>
     </div>
   </div>
     <div class="tc" id="tc-ov">
@@ -595,6 +602,87 @@ function bindImageUpload(fieldId, maxDim, setter) {
 // Auto-rotated scene-tag dot colors, used unless a scene sets its own tagColor
 var SCENE_TAG_COLORS = ['#c0392b','#d4820a','#2a7c6b','#2255aa','#8b5cf6','#c0392b','#d4820a'];
 
+// Low-poly 3D "prop" presets — small decorative extrusions (trees, cars, street furniture) that
+// reuse the exact same fill-extrusion technique as the 3D buildings layer, so they need no new
+// rendering system, no model files, and cost nothing extra for a visitor to load. Each preset is
+// one or more "parts": a simple rectangle/square/hexagon footprint given a vertical base→height
+// range, so a shape can either sit on the ground (base:0) or float above another part — that's
+// how the tree's hexagonal "canopy" sits above its trunk without needing a tapered/rounded shape.
+// w/l are footprint size in metres before the placed prop's own scale multiplier is applied.
+// colorable marks which part(s) take the prop's colour override, if the editor sets one —
+// everything else keeps its preset colour regardless (overriding a tree's colour tints the
+// canopy, not the trunk; a car has one colorable body). This exact table is mirrored inside
+// buildJS() below for the exported site — kept in sync by hand, same as bldGJ()/bldCustomGJ().
+var PROP_PRESETS = {
+  tree:    { label:'Tree', icon:'trees', parts:[
+    { shape:'square', w:0.6, base:0,   height:2.2, color:'#6b4a2f', colorable:false },
+    { shape:'hex',     w:2.6, base:1.8, height:5.2, color:'#3f7d4a', colorable:true  }
+  ]},
+  pine:    { label:'Pine Tree', icon:'tree-pine', parts:[
+    { shape:'square', w:0.5, base:0,   height:1.6, color:'#5c4433', colorable:false },
+    { shape:'hex',     w:1.8, base:1.2, height:6.5, color:'#2d5a3a', colorable:true  }
+  ]},
+  // A rounded, layered canopy built from stacked circular slices (rather than the single hex
+  // blob the plain Tree preset uses) — same fill-extrusion technique, just more slices tracing
+  // an oval silhouette, each shaded from dark (underside) to light (top) for a bit of depth.
+  // Loosely adapted from willymaps/treegen's Turf.js approach, simplified to a fixed set of
+  // slices baked in below instead of that project's runtime random-circle generation, so it's
+  // one static preset like every other prop rather than something regenerated on every edit.
+  realistic_tree: { label:'Realistic Tree', icon:'trees', parts:[
+    { shape:'circle', sides:8,  w:0.7,   base:0,     height:3,     color:'#9c7a52', colorable:false },
+    { shape:'circle', sides:10, w:0.876, base:2.7,   height:3.4,   color:'#1c4f28', colorable:true },
+    { shape:'circle', sides:10, w:2.542, base:3.4,   height:4.1,   color:'#285c31', colorable:true },
+    { shape:'circle', sides:10, w:3.96,  base:4.1,   height:4.8,   color:'#346939', colorable:true },
+    { shape:'circle', sides:10, w:4.99,  base:4.8,   height:5.5,   color:'#3f7741', colorable:true },
+    { shape:'circle', sides:10, w:5.531, base:5.5,   height:6.2,   color:'#4b844a', colorable:true },
+    { shape:'circle', sides:10, w:5.531, base:6.2,   height:6.9,   color:'#579152', colorable:true },
+    { shape:'circle', sides:10, w:4.99,  base:6.9,   height:7.6,   color:'#639e5b', colorable:true },
+    { shape:'circle', sides:10, w:3.96,  base:7.6,   height:8.3,   color:'#6fac63', colorable:true },
+    { shape:'circle', sides:10, w:2.542, base:8.3,   height:9,     color:'#7ab96b', colorable:true },
+    { shape:'circle', sides:10, w:0.876, base:9,     height:9.7,   color:'#86c674', colorable:true }
+  ]},
+  shrub:   { label:'Shrub', icon:'flower-2', parts:[
+    { shape:'hex', w:1.4, base:0, height:1.1, color:'#4a8a52', colorable:true }
+  ]},
+  car:     { label:'Car', icon:'car', parts:[
+    { shape:'rect', w:1.8, l:4.2, base:0, height:1.4, color:'#4a4f57', colorable:true }
+  ]},
+  bus_stop:{ label:'Bus Stop', icon:'bus', parts:[
+    { shape:'rect', w:0.1, l:2.4, base:0,   height:2.1, color:'#7a8590', colorable:false },
+    { shape:'rect', w:1.3, l:2.6, base:2.0, height:2.3, color:'#34495e', colorable:true  }
+  ]},
+  bollard: { label:'Bollard', icon:'traffic-cone', parts:[
+    { shape:'square', w:0.3, base:0, height:0.9, color:'#2f2f2f', colorable:true }
+  ]},
+  lamp:    { label:'Lamp Post', icon:'zap', parts:[
+    { shape:'square', w:0.25, base:0,   height:3.8, color:'#3a3a3a', colorable:false },
+    { shape:'square', w:0.5,  base:3.6, height:4.1, color:'#e8c468', colorable:true  }
+  ]},
+  bench:   { label:'Bench', icon:'square', parts:[
+    { shape:'rect', w:0.6, l:1.8, base:0, height:0.45, color:'#8a6d4f', colorable:true }
+  ]}
+};
+var PROP_TYPES = Object.keys(PROP_PRESETS);
+
+// Real 3D tree models Mapbox itself ships and renders automatically in its "Standard" basemap
+// style (the "trees" layer in mapbox://styles/mapbox/standard, source-layer "tree") — confirmed
+// from Mapbox's own style source. They're addressed via a mapbox://models/... URL, which
+// map.addModel() resolves through the same general-purpose, style-independent URL normalisation
+// Mapbox uses for fonts/sprites/tiles (not something scoped to the Standard style itself), so
+// these work as Custom 3D Models on this project's normal (non-Standard) basemap too — no upload,
+// no style change, same placement/scale/rotation pipeline as any other custom model. LOD1 (their
+// highest-detail variant) is used throughout since these are fetched at render time rather than
+// embedded in the export, so there's no file-size cost to picking the nicest-looking one.
+var MAPBOX_BUILTIN_TREES = [
+  { id:'oak1',   label:'Oak Tree (Mapbox)',   url:'mapbox://models/mapbox/oak1-lod1.glb' },
+  { id:'oak2',   label:'Oak Tree 2 (Mapbox)', url:'mapbox://models/mapbox/oak2-lod1.glb' },
+  { id:'maple1', label:'Maple Tree (Mapbox)', url:'mapbox://models/mapbox/maple1-lod1.glb' },
+  { id:'maple2', label:'Maple Tree 2 (Mapbox)', url:'mapbox://models/mapbox/maple2-lod1.glb' },
+  { id:'palm1',  label:'Palm Tree (Mapbox)',  url:'mapbox://models/mapbox/palm1-lod1.glb' },
+  { id:'pine1',  label:'Pine Tree (Mapbox)',  url:'mapbox://models/mapbox/pine1-lod1.glb' },
+  { id:'pine2',  label:'Pine Tree 2 (Mapbox)', url:'mapbox://models/mapbox/pine2-lod1.glb' }
+];
+
 // Shared curated icon list — used by the marker icon picker and the co-design options icon picker
 var ICON_CATEGORIES = {
   'Places':  ['map-pin','map','navigation','home','building','building-2','landmark','castle','warehouse','store','hotel','school','hospital','church','library','book-open','stadium','tent','tree-pine'],
@@ -636,6 +724,13 @@ var DEF = {
   zoneGroups:[],
   lines:[],
   lineGroups:[],
+  props:[],
+  propGroups:[],
+  // Uploaded/linked .glb models a prop can use instead of a built-in low-poly preset — see
+  // PROP_PRESETS above for the preset system this sits alongside. url is either a data: URI
+  // (from an upload, self-contained in the project/export) or an external URL the author
+  // pastes in (keeps the exported file small, but depends on that URL staying reachable).
+  customModels:[],
   codesignEnabled:false,
   // Each entry is one independent participatory-budgeting exercise — its own options, its
   // own submit/read URLs, its own zones and its own scene. zone.codesignGroupId and
@@ -677,9 +772,36 @@ function migrateProject(data) {
   if(!data.markerGroups) data.markerGroups = [];
   if(!data.zoneGroups) data.zoneGroups = [];
   if(!data.lineGroups) data.lineGroups = [];
+  if(!data.props) data.props = [];
+  if(!data.propGroups) data.propGroups = [];
+  if(!data.customModels) data.customModels = [];
+  // Optional "entrance path" a prop group's whole membership animates in along together, once,
+  // the first time a scene brings any of its props into view — see applyProps() in the exported
+  // site for the playback side. animPath uses the same {coordinates:[[lng,lat],...]} shape as
+  // P.redLine, authored the same way (paste a LineString drawn on geojson.io).
+  (data.propGroups||[]).forEach(function(g){
+    if(g.animEnabled===undefined) g.animEnabled=false;
+    if(g.animPath===undefined) g.animPath=null;
+    if(g.animDuration===undefined) g.animDuration=1500;
+    if(g.animEasing===undefined) g.animEasing='easeOut';
+    if(g.animDelay===undefined) g.animDelay=0;
+    if(g.animEasingCurve===undefined) g.animEasingCurve=[0.42,0,0.58,1];
+  });
   (data.markers||[]).forEach(function(m){ if(m.groupId===undefined) m.groupId=null; });
-  (data.zones||[]).forEach(function(z){ if(z.groupId===undefined) z.groupId=null; });
+  // base3d lets a 3D zone extrude starting above ground instead of always from 0 — e.g. one
+  // floor's slice of a building (base3d:12, height3d:15 = a 3m-tall floor plate from 12-15m)
+  // that's still clickable/hoverable like any other zone, rather than a whole solid block
+  // from the ground up.
+  (data.zones||[]).forEach(function(z){ if(z.groupId===undefined) z.groupId=null; if(z.base3d===undefined) z.base3d=0; if(z.interactive===undefined) z.interactive=true; });
   (data.lines||[]).forEach(function(ln){ if(ln.groupId===undefined) ln.groupId=null; });
+  (data.props||[]).forEach(function(p){
+    if(p.groupId===undefined) p.groupId=null;
+    if(p.rotation===undefined) p.rotation=0;
+    if(p.scale===undefined) p.scale=1;
+    if(p.color===undefined) p.color='';
+    if(p.modelId===undefined) p.modelId=null;
+    if(!p.scenes) p.scenes=[];
+  });
   if(data.codesignEnabled===undefined) data.codesignEnabled=false;
   if(data.sheetdbReadUrl===undefined) data.sheetdbReadUrl='';
   if(data.questionsReadUrl===undefined) data.questionsReadUrl='';
@@ -743,6 +865,10 @@ function migrateProject(data) {
     delete sc.layers.codesign;
     if(sc.layers.buildings === undefined) sc.layers.buildings = true;
     if(!sc.camera) sc.camera = {zoom:14,pitch:0,bearing:0,duration:2000};
+    // null = re-centre on the site-wide Site Centre (Settings > Map) like every scene always
+    // did before; a [lng,lat] pair overrides that for just this one scene, e.g. zooming into
+    // one floor plan on a co-design scene without moving where every other scene points.
+    if(sc.camera.center === undefined) sc.camera.center = null;
     if(!sc.questions) sc.questions = (sc.question && sc.question.type && sc.question.type!=='none') ? [sc.question] : [];
     delete sc.question;
   });
@@ -761,7 +887,7 @@ try {
 } catch(e) {}
 // Migrate old projects - add any missing properties
 P = migrateProject(P);
-var AS = 0, AM = null, AZ = null, ALN = -1;
+var AS = 0, AM = null, AZ = null, ALN = -1, AP = null;
 var pMap = null, pReady = false, pCtxMarkers = [];
 var isDirty = false;       // unsaved changes
 var lastSaved = null;      // timestamp of last save
@@ -1193,6 +1319,288 @@ function renderLineEditor(i) {
   });
 }
 
+// ═══════════════════════════════════════════════════
+//  3D PROPS (low-poly trees/cars/street furniture — see PROP_PRESETS above)
+// ═══════════════════════════════════════════════════
+function renderProps() {
+  var ul = el('prop-list');
+  if(!ul) return;
+  ul.innerHTML = '';
+  if(!(P.props||[]).length) { ul.innerHTML = '<div class="es">No props yet. Click + to add.</div>'; return; }
+  var groups = grpArr('propGroups');
+  var selRef = {get:function(){return AP;}, set:function(v){AP=v;}};
+  function afterMove() { renderProps(); refreshProps(); }
+
+  function rowEl(p, i) {
+    var preset = PROP_PRESETS[p.type] || {label:'Custom Model', icon:'upload'};
+    var div = mk('div', 'li' + (i===AP?' on':'')+(p.groupId?' grp-item':''));
+    div.innerHTML =
+      '<span style="width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-right:8px">'+lucideSVG(preset.icon,14,'var(--ghost)')+'</span>'+
+      '<span class="nm">' + h(p.name||preset.label) + '</span>' +
+      '<div class="ia">' +
+        (i>0 ? '<button class="ib" data-i="'+i+'" data-a="up" title="Move up">'+lucideSVG('arrow-up',12,'currentColor')+'</button>' : '') +
+        (i<P.props.length-1 ? '<button class="ib" data-i="'+i+'" data-a="dn" title="Move down">'+lucideSVG('arrow-down',12,'currentColor')+'</button>' : '') +
+        '<button class="ib" data-i="'+i+'" data-a="dup" title="Duplicate">'+lucideSVG('copy',12,'currentColor')+'</button>' +
+        '<button class="ib d" data-i="'+i+'" data-a="del" title="Delete">'+lucideSVG('trash-2',12,'currentColor')+'</button>' +
+      '</div>';
+    div.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-a]');
+      if(btn) {
+        e.stopPropagation();
+        var idx=parseInt(btn.dataset.i), act=btn.dataset.a;
+        if(act==='up'){ moveItemInScope('props', idx, -1, afterMove, selRef); return; }
+        if(act==='dn'){ moveItemInScope('props', idx, 1, afterMove, selRef); return; }
+        if(act==='del') { if(confirm('Delete this prop?')){ P.props.splice(idx,1); if(AP>=P.props.length) AP=P.props.length-1; markDirty(); renderProps(); refreshProps(); renderPropEditor(AP); } }
+        if(act==='dup') { var c=JSON.parse(JSON.stringify(P.props[idx])); c.id='pr'+Date.now(); c.name=(c.name||'Prop')+' (copy)'; P.props.splice(idx+1,0,c); markDirty(); renderProps(); refreshProps(); }
+        return;
+      }
+      AP = i; ensureEditorTab(); renderProps(); renderPropEditor(i); switchTab('pr');
+    });
+    makeRowDraggable(div, 'props', i, afterMove);
+    return div;
+  }
+
+  P.props.forEach(function(p, i) { if(!p.groupId) ul.appendChild(rowEl(p, i)); });
+  groups.forEach(function(g, gi) {
+    ul.appendChild(renderGroupHeader(g, gi, groups, 'props', afterMove));
+    var animRow = groupAnimRowEl(g);
+    ul.appendChild(animRow); // must append before binding — bindGroupAnimRow looks elements up by id, which only resolves once they're live in the document
+    bindGroupAnimRow(g, gi);
+    if(!g.collapsed) P.props.forEach(function(p, i) { if(p.groupId===g.id) ul.appendChild(rowEl(p, i)); });
+  });
+  makeListContainerDroppable(ul, 'props', afterMove);
+}
+
+// Whether each prop group's "animate entrance" panel is expanded — purely a UI convenience,
+// not saved with the project (keyed by group id so it survives group reordering).
+var _pgAnimOpen = {};
+
+// One prop group can optionally animate its whole membership in together along a shared path
+// the first time a scene brings it into view (see applyProps()/animatePropGroupsEntrance() in
+// the exported site) — this renders that group's collapsible settings row in the props list.
+// Built unbound (like rowEl/renderGroupHeader); bindGroupAnimRow() wires it up after it's
+// appended into the live #prop-list, since animControlsHTML's controls bind by element id.
+function groupAnimRowEl(g) {
+  var open = !!_pgAnimOpen[g.id];
+  var wrap = mk('div', 'pg-anim-row');
+  wrap.style.cssText = 'margin:0 0 6px 8px;border:1px solid var(--border2);border-radius:8px;overflow:hidden';
+  var head = mk('div');
+  head.style.cssText = 'display:flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer;font-size:11px;color:var(--ink)';
+  head.innerHTML = lucideSVG('route',13,g.animEnabled?'var(--accent)':'var(--ghost)')
+    + '<span style="flex:1">Animate group entrance</span>'
+    + (g.animEnabled ? '<span style="font-size:9px;color:var(--accent);font-family:var(--mono);margin-right:2px">ON</span>' : '')
+    + lucideSVG(open?'chevron-up':'chevron-down',13,'var(--ghost)');
+  head.addEventListener('click', function(){ _pgAnimOpen[g.id] = !open; renderProps(); });
+  wrap.appendChild(head);
+  if(open) {
+    var body = mk('div');
+    body.style.cssText = 'padding:0 10px 10px';
+    var pathLen = (g.animPath && g.animPath.coordinates || []).length;
+    body.innerHTML =
+      '<div class="lr" style="margin-bottom:8px"><span class="ll">Enabled</span><button class="tg'+(g.animEnabled?' on':'')+'" id="pg-anim-tog-'+g.id+'"></button></div>'
+      + '<div class="f"><label class="fl">Entrance path'+infoBtn('Where this group animates in from. Draw it directly on the map, or draw one on geojson.io (e.g. starting off-site and ending near where you\'ve placed these props) and paste it below — the whole thing you copy from geojson.io works directly, same as pasting into a Line. Every prop in this group moves together along it — preserving their relative spacing — arriving exactly at their placed positions. Plays once, the first time a scene brings this group into view, the same way marker drop-ins and line draw-ins already do.')+'</label>'
+      + '<button class="btn btn-g btn-ic" id="pg-anim-draw-btn-'+g.id+'" style="width:100%;margin-bottom:8px;justify-content:center">'+lucideSVG('pencil',13,'currentColor')+'Draw on map</button>'
+      + '<textarea id="pg-anim-path-'+g.id+'" style="min-height:80px;font-family:var(--mono);font-size:10px" placeholder="Paste GeoJSON from geojson.io (Feature/FeatureCollection/LineString), or a raw [[lng,lat],...] array">'+h(JSON.stringify((g.animPath&&g.animPath.coordinates)||[]))+'</textarea>'
+      + '<div id="pg-anim-path-status-'+g.id+'" style="font-size:10px;color:var(--ghost);font-family:var(--mono);margin-top:4px">'+(pathLen>=2?(pathLen+' points set'):'No path set yet — needs at least 2 points')+'</div>'
+      + '</div>'
+      + animControlsHTML('pg-anim-'+g.id, g.animDuration, g.animEasing, g.animDelay, g.animEasingCurve);
+    wrap.appendChild(body);
+  }
+  return wrap;
+}
+// Pulls a LineString's coordinate array out of whatever shape was pasted — a raw [[lng,lat],...]
+// array (the same convention P.redLine/zones already use), or full GeoJSON straight out of
+// geojson.io's copy/save (Feature, FeatureCollection, LineString, MultiLineString), matching
+// what the Lines feature already accepts. Returns null if nothing usable was found, rather than
+// silently no-op'ing the way the bare-array-only version of this used to.
+function extractLineCoords(v) {
+  if(!v) return null;
+  if(Array.isArray(v)) return v.length ? v : null;
+  if(v.type==='FeatureCollection' && Array.isArray(v.features)) {
+    for(var i=0;i<v.features.length;i++) {
+      var c = v.features[i] && v.features[i].geometry && extractLineCoords(v.features[i].geometry);
+      if(c) return c;
+    }
+    return null;
+  }
+  if(v.type==='Feature') return v.geometry ? extractLineCoords(v.geometry) : null;
+  if(v.type==='LineString' && Array.isArray(v.coordinates)) return v.coordinates;
+  if(v.type==='MultiLineString' && Array.isArray(v.coordinates) && v.coordinates.length) return v.coordinates[0];
+  return null;
+}
+function bindGroupAnimRow(g, gi) {
+  var tog = el('pg-anim-tog-'+g.id);
+  if(tog) tog.addEventListener('click', function(){ g.animEnabled=!g.animEnabled; markDirty(); renderProps(); });
+  var drawBtn = el('pg-anim-draw-btn-'+g.id);
+  if(drawBtn) drawBtn.addEventListener('click', function(){ openDraw('propGroupPath', gi); });
+  var pathTa = el('pg-anim-path-'+g.id);
+  if(pathTa) pathTa.addEventListener('input', function(){
+    var status = el('pg-anim-path-status-'+g.id);
+    try {
+      var v = JSON.parse(this.value);
+      var coords = extractLineCoords(v);
+      if(coords) {
+        g.animPath = {coordinates:coords};
+        markDirty();
+        if(status) status.textContent = coords.length>=2 ? (coords.length+' points set') : 'Needs at least 2 points';
+      } else {
+        if(status) status.textContent = 'Valid JSON, but no line found — paste a LineString (or Feature/FeatureCollection containing one) from geojson.io, or a raw [[lng,lat],...] array.';
+      }
+    } catch(e) { if(status) status.textContent = 'Not valid JSON yet'; }
+  });
+  bindAnimControls('pg-anim-'+g.id,
+    function(v){ g.animDuration=v; markDirty(); },
+    function(v){ g.animEasing=v; markDirty(); },
+    function(v){ g.animDelay=v; markDirty(); },
+    function(){ return g.animEasingCurve || DEFAULT_EASING_CURVE.slice(); },
+    function(curve){ g.animEasingCurve=curve; markDirty(); });
+}
+
+function addProp() {
+  P.props = P.props||[];
+  var base = (pMap && pReady) ? [pMap.getCenter().lng, pMap.getCenter().lat] : (P.siteCentre ? [P.siteCentre[0]+0.001, P.siteCentre[1]+0.001] : [0,0]);
+  P.props.push({
+    id:'pr'+Date.now(), name:'Tree', type:'tree', modelId:null,
+    coords:[parseFloat(base[0].toFixed(6)), parseFloat(base[1].toFixed(6))],
+    rotation:0, scale:1, color:'', scenes:[], groupId:null
+  });
+  AP = P.props.length-1;
+  markDirty(); ensureEditorTab(); renderProps(); refreshProps(); renderPropEditor(AP); switchTab('pr');
+}
+
+function renderPropEditor(i) {
+  if(i==null || i<0 || !P.props || !P.props[i]) { setHTML('rpc','<div class="es">Select a prop to edit</div>'); return; }
+  var p = P.props[i];
+  var isModel = p.type==='model';
+  var preset = isModel ? null : (PROP_PRESETS[p.type] || PROP_PRESETS[PROP_TYPES[0]]);
+  var colorableDefault = isModel ? '#ffffff' : preset.parts.filter(function(pt){return pt.colorable;})[0].color;
+  var curModel = isModel ? (P.customModels||[]).filter(function(m){return m.id===p.modelId;})[0] : null;
+  var html = '<div class="rh"><div class="re">Prop</div><div class="rt">'+h(p.name||(isModel?(curModel?curModel.name:'Custom Model'):preset.label))+'</div></div>';
+
+  html += '<div class="rs"><div class="st">Details</div>';
+  html += fld('Name','pr-name',h(p.name||''));
+  html += '<div class="f"><label class="fl">Group</label><select id="pr-group">'+groupSelectOptions('propGroups', p.groupId)+'</select></div>';
+  html += '</div>';
+
+  html += '<div class="rs"><div class="st">Type</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+  PROP_TYPES.forEach(function(t){
+    var pr = PROP_PRESETS[t];
+    var sel = p.type===t;
+    html += '<button type="button" data-ptype="'+t+'" style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;border:1px solid '+(sel?'var(--accent)':'var(--border2)')+';background:'+(sel?'rgba(32,122,182,.1)':'var(--bg)')+';cursor:pointer;text-align:left">'
+      + lucideSVG(pr.icon,15,sel?'var(--accent)':'var(--ghost)')
+      + '<span style="font-size:11px;color:var(--ink)">'+pr.label+'</span>'
+      + '</button>';
+  });
+  html += '<button type="button" data-ptype="model" style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;border:1px solid '+(isModel?'var(--accent)':'var(--border2)')+';background:'+(isModel?'rgba(32,122,182,.1)':'var(--bg)')+';cursor:pointer;text-align:left">'
+    + lucideSVG('upload',15,isModel?'var(--accent)':'var(--ghost)')
+    + '<span style="font-size:11px;color:var(--ink)">Custom Model</span>'
+    + '</button>';
+  html += '</div>';
+  if(isModel) {
+    if(!(P.customModels||[]).length) {
+      html += '<div class="nt w" style="margin-top:8px">No custom models uploaded yet — add one in Settings &gt; Custom 3D Models.</div>';
+    } else {
+      html += '<div class="f" style="margin-top:8px"><label class="fl">Which model</label><select id="pr-model-select"><option value="">Choose…</option>'
+        + P.customModels.map(function(m){ return '<option value="'+h(m.id)+'"'+(p.modelId===m.id?' selected':'')+'>'+h(m.name||'Untitled model')+'</option>'; }).join('')
+        + '</select></div>';
+      if(p.modelId && !curModel) html += '<div class="nt w" style="margin-top:8px">This prop was pointed at a model that\'s since been deleted — pick another above.</div>';
+    }
+  }
+  html += '</div>';
+
+  html += '<div class="rs"><div class="st">Appearance</div>';
+  html += rng('pr-rot','Rotation',0,355,5,p.rotation||0,'°');
+  html += rng('pr-scale','Scale',0.5,3,0.1,p.scale||1,'×');
+  html += '<div class="f"><label class="fl">'+(isModel?'Colour tint (optional)':'Colour override')+infoBtn(isModel
+      ? 'Leave blank to show the model\'s own materials/textures unaltered. Setting a colour blends a moderate tint over the whole model — it doesn\'t recolour it completely, since a real model\'s shading and texture detail still show through.'
+      : 'Leave blank to use this preset\'s natural colour. On a Tree only the canopy takes an override — the trunk stays brown either way; the other presets are one solid colour throughout.')+'</label>'
+    + '<div class="cr"><input type="color" id="pr-col-p" value="'+h(p.color||colorableDefault)+'"/><input type="text" id="pr-col-t" value="'+h(p.color||'')+'" placeholder="Default"/>'
+    + '<button class="btn btn-g" id="pr-col-clear" style="font-size:10px;padding:6px 8px">Reset</button>'
+    + '</div></div>';
+  html += '</div>';
+
+  html += '<div class="rs"><div class="st">Position</div>';
+  html += '<button class="btn btn-g btn-ic" id="pr-place-btn" style="width:100%;margin-bottom:8px;justify-content:center">'+lucideSVG('crosshair',13,'currentColor')+'Click map to place</button>';
+  html += '<div class="f2"><div class="f">'+fldInner('Longitude','pr-lng',p.coords[0])+'</div>';
+  html += '<div class="f">'+fldInner('Latitude','pr-lat',p.coords[1])+'</div></div>';
+  html += '</div>';
+
+  html += '<div class="rs"><div class="st">Visible on scenes'+infoBtn('Tick the scenes where this prop should appear. Leave all unticked to show on every scene that has 3D Buildings or Orbit switched on — props never show on scenes with 3D Buildings off, regardless of this list.')+'</div>';
+  var pScenes = p.scenes || [];
+  if(!P.scenes.length) {
+    html += '<div style="font-size:11px;color:var(--ghost);font-family:var(--mono)">No scenes yet — add scenes first.</div>';
+  } else {
+    P.scenes.forEach(function(sc, si) {
+      var checked = pScenes.indexOf(sc.id) >= 0;
+      html += '<div class="lr" style="margin-bottom:5px">'
+        + '<span class="ll">'+h(sc.label||'Scene '+(si+1))+'</span>'
+        + '<button class="tg'+(checked?' on':'')+'" id="pr-sc-'+si+'"></button>'
+        + '</div>';
+    });
+  }
+  html += '</div>';
+
+  setHTML('rpc', html);
+
+  bindInput('pr-name', function(v){ P.props[i].name=v; renderProps(); });
+  bindGroupSelect('pr-group', 'propGroups', P.props[i], function(){ renderProps(); renderPropEditor(i); });
+
+  document.querySelectorAll('[data-ptype]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      P.props[i].type = this.dataset.ptype;
+      markDirty(); refreshProps(); renderPropEditor(i); renderProps();
+    });
+  });
+  bindInput('pr-model-select', function(v){ P.props[i].modelId = v || null; renderProps(); refreshProps(); });
+
+  bindRng('pr-rot', function(v){ P.props[i].rotation=v; refreshProps(); });
+  bindRng('pr-scale', function(v){ P.props[i].scale=v; refreshProps(); });
+  var colP = el('pr-col-p'), colT = el('pr-col-t');
+  if(colP) colP.addEventListener('input', function(){ P.props[i].color=this.value; if(colT)colT.value=this.value; markDirty(); refreshProps(); });
+  if(colT) colT.addEventListener('input', function(){ P.props[i].color=this.value; if(colP)colP.value=this.value; markDirty(); refreshProps(); });
+  var colClear = el('pr-col-clear');
+  if(colClear) colClear.addEventListener('click', function(){ P.props[i].color=''; markDirty(); refreshProps(); renderPropEditor(i); });
+
+  bindInputNum('pr-lng', function(v){ P.props[i].coords[0]=v; markDirty(); refreshProps(); });
+  bindInputNum('pr-lat', function(v){ P.props[i].coords[1]=v; markDirty(); refreshProps(); });
+  var placeBtn = el('pr-place-btn');
+  if(placeBtn) placeBtn.addEventListener('click', function() {
+    if(!pMap || !pReady) return;
+    placeBtn.innerHTML = lucideSVG('crosshair',13,'currentColor')+'Click map to place...';
+    placeBtn.style.background = 'var(--accent)';
+    pMap.getCanvas().style.cursor = 'crosshair';
+    pMap.once('click', function(e) {
+      pMap.getCanvas().style.cursor = '';
+      placeBtn.innerHTML = lucideSVG('crosshair',13,'currentColor')+'Click map to place';
+      placeBtn.style.background = '';
+      P.props[i].coords = [parseFloat(e.lngLat.lng.toFixed(6)), parseFloat(e.lngLat.lat.toFixed(6))];
+      var lngEl = el('pr-lng'), latEl = el('pr-lat');
+      if(lngEl) lngEl.value = P.props[i].coords[0];
+      if(latEl) latEl.value = P.props[i].coords[1];
+      markDirty(); refreshProps();
+    });
+  });
+
+  P.scenes.forEach(function(sc, si) {
+    var tog = el('pr-sc-'+si);
+    if(tog) tog.addEventListener('click', function(){
+      var arr = P.props[i].scenes || (P.props[i].scenes=[]);
+      var six = arr.indexOf(sc.id);
+      if(six>=0) arr.splice(six,1); else arr.push(sc.id);
+      this.classList.toggle('on', arr.indexOf(sc.id)>=0);
+      markDirty();
+    });
+  });
+}
+
+function refreshProps() {
+  if(!pMap||!pReady) return;
+  registerCustomModels();
+  if(pMap.getSource('p-props')) pMap.getSource('p-props').setData(propsGJ());
+  if(pMap.getSource('p-custom-models')) pMap.getSource('p-custom-models').setData(customModelsGJ());
+}
+
 function renderBuildings() {
   var ul = document.getElementById('building-list');
   if(!ul) return;
@@ -1369,6 +1777,88 @@ function renderBuildingEditor(i) {
     markDirty(); refreshBuildings();
     el('bld-geojson').style.borderColor='var(--accent)';
     setTimeout(function(){ el('bld-geojson').style.borderColor=''; },1000);
+  });
+}
+
+// Builds the ground-plan ring (metres, centred on 0,0) for one PROP_PRESETS "part", rotated
+// and scaled, then projects it onto the globe around the prop's actual [lng,lat]. Uses a flat
+// equirectangular approximation (111,320m per degree longitude, scaled by cos(latitude); a
+// constant 110,540m per degree latitude) — accurate enough at the metre scale these shapes are
+// drawn at; the same approximation this codebase would need anywhere it converts small
+// real-world distances to map coordinates, since nothing here currently does that conversion.
+function propPartRing(center, part, rotationDeg, scale) {
+  var pts;
+  if(part.shape==='hex') {
+    var rad = (part.w/2)*scale;
+    pts = [];
+    for(var i=0;i<6;i++){ var a=i*60*Math.PI/180; pts.push([rad*Math.cos(a), rad*Math.sin(a)]); }
+  } else if(part.shape==='circle') {
+    var rad = (part.w/2)*scale;
+    var sides = part.sides||10;
+    pts = [];
+    for(var i=0;i<sides;i++){ var a=i*(360/sides)*Math.PI/180; pts.push([rad*Math.cos(a), rad*Math.sin(a)]); }
+  } else {
+    var hw=(part.w/2)*scale, hl=((part.l!=null?part.l:part.w)/2)*scale;
+    pts = [[-hl,-hw],[hl,-hw],[hl,hw],[-hl,hw]];
+  }
+  var rRad = (rotationDeg||0)*Math.PI/180, cosR=Math.cos(rRad), sinR=Math.sin(rRad);
+  var mPerDegLng = 111320*Math.cos(center[1]*Math.PI/180), mPerDegLat = 110540;
+  var ring = pts.map(function(p){
+    var rx = p[0]*cosR - p[1]*sinR, ry = p[0]*sinR + p[1]*cosR;
+    return [center[0] + rx/mPerDegLng, center[1] + ry/mPerDegLat];
+  });
+  ring.push(ring[0]);
+  return ring;
+}
+function propFeatures(props) {
+  var features = [];
+  (props||[]).forEach(function(p){
+    var preset = PROP_PRESETS[p.type];
+    if(!preset) return;
+    var scale = p.scale||1, rot = p.rotation||0;
+    preset.parts.forEach(function(part){
+      var ring = propPartRing(p.coords, part, rot, scale);
+      var color = (part.colorable && p.color) ? p.color : part.color;
+      features.push({type:'Feature', geometry:{type:'Polygon', coordinates:[ring]}, properties:{color:color, base:(part.base||0)*scale, height:part.height*scale}});
+    });
+  });
+  return features;
+}
+function propsGJ() {
+  return {type:'FeatureCollection', features:propFeatures(P.props)};
+}
+// Props whose type is 'model' skip the extrusion system above entirely (propFeatures()
+// silently drops them — no matching PROP_PRESETS entry) and go through this separate
+// pipeline instead, since a real glTF model needs Mapbox's "model" layer type, not
+// fill-extrusion. scaleArr/rotArr are built here as plain [x,y,z] arrays and read back
+// as-is by the model-scale/model-rotation paint properties (["get","scaleArr"] etc.) —
+// simpler and more reliable than trying to construct an array from scalars inside a style
+// expression, and GeoJSON feature properties can hold arrays natively.
+function customModelFeatures(props) {
+  var features = [];
+  (props||[]).forEach(function(p){
+    if(p.type!=='model' || !p.modelId) return;
+    var m = (P.customModels||[]).filter(function(cm){return cm.id===p.modelId;})[0];
+    if(!m || !m.url) return;
+    var scale = p.scale||1, rot = p.rotation||0;
+    features.push({type:'Feature', geometry:{type:'Point', coordinates:p.coords}, properties:{
+      modelId:m.id, scaleArr:[scale,scale,scale], rotArr:[0,0,rot],
+      tintColor:p.color||'#ffffff', colorMix:p.color?0.4:0
+    }});
+  });
+  return features;
+}
+function customModelsGJ() {
+  return {type:'FeatureCollection', features:customModelFeatures(P.props)};
+}
+// addModel() is safe to call again for a model id already registered (re-registering just
+// re-loads it), so this can run on every refresh without tracking what's already loaded —
+// simpler than bookkeeping, and it's how a model uploaded/edited mid-session gets picked up.
+function registerCustomModels() {
+  if(!pMap || !pMap.addModel) return;
+  (P.customModels||[]).forEach(function(m){
+    if(!m.url) return;
+    try { pMap.addModel(m.id, m.url); } catch(e){}
   });
 }
 
@@ -1568,7 +2058,7 @@ function renderOverlayEditor(i) {
 }
 
 function renderAll() {
-  renderScenes(); renderMarkers(); renderZones(); renderLines(); renderBuildings(); renderOverlays(); renderRightPanel();
+  renderScenes(); renderMarkers(); renderZones(); renderLines(); renderProps(); renderBuildings(); renderOverlays(); renderRightPanel();
 }
 function clearAutoSave() {
   try { localStorage.removeItem(autoSaveKey); } catch(e) {}
@@ -1607,6 +2097,7 @@ document.addEventListener('DOMContentLoaded', function() {
     renderMarkers();
     renderZones();
     renderLines();
+    renderProps();
     renderBuildings();
     renderOverlays();
     renderRightPanel();
@@ -1717,6 +2208,7 @@ function bindLeftPanel() {
   el('tab-mk').addEventListener('click', function() { switchTab('mk'); });
   el('tab-zn').addEventListener('click', function() { switchTab('zn'); });
   el('tab-ln').addEventListener('click', function() { switchTab('ln'); });
+  el('tab-pr').addEventListener('click', function() { switchTab('pr'); });
   el('tab-ov').addEventListener('click', function() { switchTab('ov'); });
   el('btn-add-sc').addEventListener('click', addScene);
   el('btn-add-mk').addEventListener('click', addMarker);
@@ -1739,6 +2231,10 @@ function bindLeftPanel() {
   if(importCancel) importCancel.addEventListener('click', function() { var mo=el('import-modal'); if(mo)mo.style.display='none'; });
   var addLn = el('btn-add-ln');
   if(addLn) addLn.addEventListener('click', addLine);
+  var addPrGrp = el('btn-add-pr-grp');
+  if(addPrGrp) addPrGrp.addEventListener('click', function(){ addGroup('propGroups', renderProps); });
+  var addPr = el('btn-add-pr');
+  if(addPr) addPr.addEventListener('click', addProp);
   var addOv = el('btn-add-ov');
   if(addOv) addOv.addEventListener('click', addOverlay);
 
@@ -1774,7 +2270,7 @@ function bindLeftPanel() {
 
 var AOV = -1;
 function switchTab(t) {
-  ['sc','mk','zn','ln','ov'].forEach(function(x) {
+  ['sc','mk','zn','ln','pr','ov'].forEach(function(x) {
     el('tab-'+x).classList.toggle('on', x===t);
     var tc = el('tc-'+x); if(tc) tc.classList.toggle('on', x===t);
   });
@@ -1782,6 +2278,7 @@ function switchTab(t) {
   else if(t==='mk') { renderMarkerEditor(AM); }
   else if(t==='zn') { renderZoneEditor(AZ); }
   else if(t==='ln') { renderLineEditor(ALN); }
+  else if(t==='pr') { renderPropEditor(AP); }
   else if(t==='ov') { renderOverlays(); renderOverlayEditor(AOV); }
 }
 
@@ -2254,7 +2751,7 @@ function renderZones() {
 function selZone(i) { AZ=i; AM=null; ensureEditorTab(); renderZones(); renderZoneEditor(i); updateCtxMarkerSelection(); }
 function addZone() {
   var c = P.siteCentre;
-  markDirty(); P.zones.push({id:'z'+Date.now(),name:'New Zone',popup:'Description.',color:'#2255aa',opacity:0.2,smoothRadius:0,render3d:false,height3d:20,clipMap:false,scenes:[],codesignGroupId:null,lightbox:{enabled:false,layout:'popover',heading:'',subheading:'',body:'',img:'',imgCaption:'',embedUrl:''},coordinates:[[c[0]-0.005,c[1]-0.004],[c[0]+0.005,c[1]-0.004],[c[0]+0.005,c[1]+0.004],[c[0]-0.005,c[1]+0.004],[c[0]-0.005,c[1]-0.004]],groupId:null});
+  markDirty(); P.zones.push({id:'z'+Date.now(),name:'New Zone',popup:'Description.',color:'#2255aa',opacity:0.2,smoothRadius:0,render3d:false,height3d:20,base3d:0,interactive:true,clipMap:false,scenes:[],codesignGroupId:null,lightbox:{enabled:false,layout:'popover',heading:'',subheading:'',body:'',img:'',imgCaption:'',embedUrl:''},coordinates:[[c[0]-0.005,c[1]-0.004],[c[0]+0.005,c[1]-0.004],[c[0]+0.005,c[1]+0.004],[c[0]-0.005,c[1]+0.004],[c[0]-0.005,c[1]-0.004]],groupId:null});
   AZ = P.zones.length-1;
   ensureEditorTab(); renderZones(); renderZoneEditor(AZ); refreshZN();
 }
@@ -2403,6 +2900,17 @@ function renderRightPanel() {
   html += rng('sc-zoom','Zoom',8,20,0.5,sc.camera.zoom,'');
   html += rng('sc-pitch','Pitch',0,85,5,sc.camera.pitch,'°');
   html += rng('sc-bearing','Bearing',-180,180,5,sc.camera.bearing,'°');
+  html += '<div class="lr" style="margin-top:10px"><span class="ll">Custom focal point'+infoBtn('By default every scene re-centres on your Site Centre (Settings > Map). Turn this on to point this one scene at a different spot instead — e.g. zooming into a single floor plan or plot on a co-design scene — without moving where every other scene points.')+'</span><button class="tg'+(sc.camera.center?' on':'')+'" id="sc-cam-custom-tog"></button></div>';
+  if(sc.camera.center) {
+    html += '<div class="f" style="margin-top:8px"><label class="fl">Focal point</label>'
+      + '<div style="display:flex;gap:6px">'
+      + '<input type="number" id="sc-cam-lng" step="0.0001" value="'+sc.camera.center[0]+'" style="flex:1"/>'
+      + '<input type="number" id="sc-cam-lat" step="0.0001" value="'+sc.camera.center[1]+'" style="flex:1"/>'
+      + '<button class="btn btn-g btn-ic" id="btn-sc-cam-use-view" style="white-space:nowrap;flex-shrink:0;font-size:10px" title="Use current map view centre">'+lucideSVG('crosshair',11,'currentColor')+'Map</button>'
+      + '</div>'
+      + '<div style="font-size:10px;color:var(--ghost);margin-top:4px;font-family:var(--mono)">lng, lat &nbsp;&mdash;&nbsp; or click Map to use current preview camera</div>'
+      + '</div>';
+  }
   html += '</div>';
   html += '<div class="rs"><div class="st">Visible Layers</div><div class="lt">';
   html += lyr('sc-l-redline','Red Line Boundary', sc.layers.redline);
@@ -2570,6 +3078,30 @@ function renderRightPanel() {
   bindRng('sc-zoom', function(v) { P.scenes[AS].camera.zoom=v; if(pMap)pMap.setZoom(v); });
   bindRng('sc-pitch', function(v) { P.scenes[AS].camera.pitch=v; if(pMap)pMap.setPitch(v); });
   bindRng('sc-bearing', function(v) { P.scenes[AS].camera.bearing=v; if(pMap)pMap.setBearing(v); });
+  var camCustomTog = el('sc-cam-custom-tog');
+  if(camCustomTog) camCustomTog.addEventListener('click', function(){
+    var cam = P.scenes[AS].camera;
+    if(cam.center) {
+      cam.center = null;
+    } else {
+      var base = (pMap && pReady) ? [pMap.getCenter().lng, pMap.getCenter().lat] : P.siteCentre;
+      cam.center = [parseFloat(base[0].toFixed(6)), parseFloat(base[1].toFixed(6))];
+    }
+    markDirty(); renderRightPanel(); updatePreview();
+  });
+  bindInputNum('sc-cam-lng', function(v){ if(P.scenes[AS].camera.center){ P.scenes[AS].camera.center[0]=v; markDirty(); updatePreview(); } });
+  bindInputNum('sc-cam-lat', function(v){ if(P.scenes[AS].camera.center){ P.scenes[AS].camera.center[1]=v; markDirty(); updatePreview(); } });
+  var useViewBtn = el('btn-sc-cam-use-view');
+  if(useViewBtn) useViewBtn.addEventListener('click', function(){
+    if(!pMap) { alert('Open Settings and add your Mapbox token first to activate the preview.'); return; }
+    var ctr = pMap.getCenter();
+    var cam = P.scenes[AS].camera;
+    cam.center = [parseFloat(ctr.lng.toFixed(6)), parseFloat(ctr.lat.toFixed(6))];
+    var lngEl = el('sc-cam-lng'), latEl = el('sc-cam-lat');
+    if(lngEl) lngEl.value = cam.center[0];
+    if(latEl) latEl.value = cam.center[1];
+    markDirty();
+  });
   bindTg('sc-l-redline', function(v) { P.scenes[AS].layers.redline=v; updatePreview(); });
   bindTg('sc-l-context', function(v) { P.scenes[AS].layers.context=v; updatePreview(); });
   bindTg('sc-l-constraints', function(v) { P.scenes[AS].layers.constraints=v; updatePreview(); });
@@ -2583,7 +3115,7 @@ function renderRightPanel() {
   if (pcb) pcb.addEventListener('click', function() {
     if (!pMap) return;
     var c = P.scenes[AS].camera;
-    pMap.flyTo({center:P.siteCentre,zoom:c.zoom,pitch:c.pitch,bearing:c.bearing,duration:900});
+    pMap.flyTo({center:c.center||P.siteCentre,zoom:c.zoom,pitch:c.pitch,bearing:c.bearing,duration:900});
   });
 }
 
@@ -2979,12 +3511,17 @@ function renderZoneEditor(i) {
   html += '<div class="f"><label class="fl">Corner rounding <span id="zn-sm-v" style="font-family:var(--mono);color:var(--ink)">'+(z.smoothRadius||0)+'</span></label>';
   html += '<input type="range" id="zn-sm" min="0" max="1" step="0.05" value="'+(z.smoothRadius||0)+'"/></div>';
   html += '</div>';
+  html += '<div class="rs"><div class="lr"><span class="ll">Interactive'+infoBtn('Turn off to make this zone a pure colour wash — no outline, no hover highlight or tooltip, no cursor change, and clicks fall straight through to whatever\'s underneath (so it never opens a lightbox and never blocks pin placement on Have Your Say). Useful for a soft land-use tint you want visible but not clickable, e.g. shading a whole neighbourhood without every zone competing for attention as a distinct feature. Leave on for anything meant to be a distinct, clickable feature.')+'</span>'
+    + '<button class="tg'+(z.interactive!==false?' on':'')+'" id="zn-interactive-tog"></button></div>';
+  html += '</div>';
   html += '<div class="rs"><div class="st">3D Building</div>';
   html += '<div class="lr"><span class="ll">Render as 3D building</span>'
     + '<button class="tg'+(z.render3d?' on':'')+' " id="zn-3d-tog"></button></div>';
   if(z.render3d){
-    html += '<div class="f"><label class="fl">Height (metres)</label>'
-      + '<input type="number" id="zn-3d-h" value="'+(z.height3d||20)+'" min="1" max="500" step="1"/></div>';
+    html += '<div class="f"><label class="fl">Base height (metres)'+infoBtn('Where the extrusion starts above ground — 0 is a normal building rising from street level. Set this above 0 to make the zone a floating slice instead, e.g. one floor of a building: base 12, height 15 draws a 3m-tall plate from 12m to 15m up, still clickable/hoverable like any other zone. Combine several zones at different base/height ranges over the same footprint to make each floor its own interactive element.')+'</label>'
+      + '<input type="number" id="zn-3d-base" value="'+(z.base3d||0)+'" min="0" max="499" step="0.1"/></div>';
+    html += '<div class="f"><label class="fl">Height (metres)'+infoBtn('Top of the extrusion, measured from the ground — not from the base above. Must be greater than the base height, or nothing will render. Fractional values work too, e.g. 0.1 or 0.5 for a thin marker line or kerb-height slice.')+'</label>'
+      + '<input type="number" id="zn-3d-h" value="'+(z.height3d||20)+'" min="0.1" max="500" step="0.1"/></div>';
   }
   html += '</div>';
   html += '<div class="rs"><div class="st">Clip Map</div>';
@@ -3063,10 +3600,10 @@ function renderZoneEditor(i) {
   bindInput('zn-name', function(v) { P.zones[i].name=v; renderZones(); refreshZN(); });
   bindGroupSelect('zn-group', 'zoneGroups', P.zones[i], function(){ renderZones(); renderZoneEditor(i); });
   bindTA('zn-popup', function(v) { P.zones[i].popup=v; });
-  var hoverTog = el('zn-hover-tog');
-  if(hoverTog) hoverTog.addEventListener('click', function(){
-    P.zones[i].showHover = (P.zones[i].showHover === false);
-    markDirty(); renderZoneEditor(i);
+  var interactiveTog = el('zn-interactive-tog');
+  if(interactiveTog) interactiveTog.addEventListener('click', function(){
+    P.zones[i].interactive = P.zones[i].interactive===false ? true : false;
+    markDirty(); renderZoneEditor(i); refreshZN();
   });
   var clipTog = el('zn-clip-tog');
   if(clipTog) clipTog.addEventListener('click', function(){
@@ -3084,7 +3621,8 @@ function renderZoneEditor(i) {
     P.zones[i].render3d = !P.zones[i].render3d;
     markDirty(); renderZoneEditor(i); refreshZN();
   });
-  bindInput('zn-3d-h', function(v){ P.zones[i].height3d=parseInt(v)||20; markDirty(); refreshZN(); });
+  bindInput('zn-3d-base', function(v){ P.zones[i].base3d=parseFloat(v)||0; markDirty(); refreshZN(); });
+  bindInput('zn-3d-h', function(v){ P.zones[i].height3d=parseFloat(v)||20; markDirty(); refreshZN(); });
   var cp = el('zn-col-p'), ct = el('zn-col-t');
   if (cp) cp.addEventListener('input', function() { P.zones[i].color=this.value; if(ct)ct.value=this.value; renderZones(); refreshZN(); });
   if (ct) ct.addEventListener('input', function() { P.zones[i].color=this.value; if(cp)cp.value=this.value; renderZones(); refreshZN(); });
@@ -3366,6 +3904,31 @@ function renderSettings() {
     });
     html += '<button class="btn btn-g btn-ic" id="btn-cd-add-group" style="width:100%;justify-content:center">'+lucideSVG('plus',13,'currentColor')+'Add participatory budget</button>';
   }
+  html += '</div>';
+  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('upload',14,'currentColor')+'Custom 3D Models</span>'+infoBtn('Upload your own .glb model — or paste a link to one hosted elsewhere — to use as a Prop instead of the built-in low-poly shapes. Placed, rotated and scaled the same way as any other prop, but with real geometry and textures. Uploaded files are embedded directly in your exported site (simple and self-contained, but can meaningfully add to its file size for anything beyond a small model); a pasted link keeps the export small but depends on that link staying reachable. This uses an experimental part of Mapbox\'s renderer — real and shipped by others, but less battle-tested than everything else in this tool.')+'</div>';
+  (P.customModels||[]).forEach(function(cm, mi){
+    html += '<div class="cd-group-card" style="border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:12px">';
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+      + '<input type="text" id="cfg-cm-name-'+mi+'" value="'+h(cm.name||'')+'" placeholder="Model name, e.g. Oak Tree" style="flex:1;font-weight:600"/>'
+      + '<button class="ib d cm-del" data-mi="'+mi+'" title="Delete this model" aria-label="Delete this model">'+lucideSVG('trash-2',12,'currentColor')+'</button>'
+      + '</div>';
+    html += '<div class="f"><label class="fl">Model file (.glb)</label>'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+      + '<label class="btn btn-g btn-ic" style="cursor:pointer;font-size:11px;padding:6px 12px">'+lucideSVG('upload',12,'currentColor')+'Upload .glb<input type="file" id="cfg-cm-upload-'+mi+'" accept=".glb,model/gltf-binary" style="display:none"/></label>'
+      + '<span id="cfg-cm-upload-status-'+mi+'" style="font-size:10px;color:var(--ghost)">'+(cm.url&&cm.url.indexOf('data:')===0?'Model uploaded':'')+'</span>'
+      + '</div>'
+      + '<input type="text" id="cfg-cm-url-'+mi+'" value="'+h((cm.url&&cm.url.indexOf('data:')===0)?'':(cm.url||''))+'" placeholder="...or paste a URL to a .glb hosted elsewhere"/>'
+      + '</div>';
+    html += '</div>';
+  });
+  html += '<button class="btn btn-g btn-ic" id="btn-cm-add" style="width:100%;justify-content:center">'+lucideSVG('plus',13,'currentColor')+'Add custom model</button>';
+  html += '<div style="display:flex;align-items:center;gap:6px;margin:10px 0 4px;font-size:10px;color:var(--ghost);font-family:var(--mono)">'
+    + '<span style="flex:1;border-top:1px solid var(--border2)"></span>or<span style="flex:1;border-top:1px solid var(--border2)"></span></div>';
+  html += '<div class="f"><label class="fl">Add one of Mapbox\'s built-in trees'+infoBtn('Real 3D tree models Mapbox itself ships and renders automatically on its "Standard" basemap style — fetched from Mapbox at render time using your existing Mapbox token, so nothing to upload and no change to your map style. Works the same as any Custom 3D Model once added: place, scale, rotate, tint.')+'</label>'
+    + '<div style="display:flex;gap:6px">'
+    + '<select id="cfg-cm-builtin-pick" style="flex:1">' + MAPBOX_BUILTIN_TREES.map(function(t){ return '<option value="'+h(t.id)+'">'+h(t.label)+'</option>'; }).join('') + '</select>'
+    + '<button class="btn btn-g btn-ic" id="btn-cm-add-builtin" style="white-space:nowrap">'+lucideSVG('plus',13,'currentColor')+'Add</button>'
+    + '</div></div>';
   html += '</div>';
   html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('play',14,'currentColor')+'Entrance Animations</span></div>';
   html += '<div class="lr"><span class="ll">Animate markers &amp; lines on entry'+infoBtn('Markers drop in and lines draw on progressively whenever a scene brings them into view.')+'</span>'
@@ -3698,6 +4261,63 @@ function renderSettings() {
       {id:'co'+Date.now()+'a',label:'Option A',color:'#2255aa',icon:''},
       {id:'co'+Date.now()+'b',label:'Option B',color:'#c0392b',icon:''}
     ]});
+    markDirty(); renderSettings();
+  });
+
+  // Custom 3D models — each card wired up by its own index (mi), same pattern as the
+  // participatory-budget cards above. Deleting a model clears it off any prop still using it
+  // rather than leaving them pointed at a reference that no longer exists.
+  (P.customModels||[]).forEach(function(cm, mi){
+    bindInput('cfg-cm-name-'+mi, function(v){ P.customModels[mi].name=v; renderProps(); });
+    bindInput('cfg-cm-url-'+mi, function(v){ P.customModels[mi].url=v; refreshProps(); });
+    var upInput = el('cfg-cm-upload-'+mi);
+    if(upInput) upInput.addEventListener('change', function(){
+      var file = this.files[0];
+      var status = el('cfg-cm-upload-status-'+mi);
+      if(!file) return;
+      if(!/\.glb$/i.test(file.name)) { if(status) status.textContent = 'Please choose a .glb file.'; return; }
+      if(file.size > 8*1024*1024) { if(status) status.textContent = 'Too large (max 8MB) — try a lower-poly export, or paste a URL to it instead.'; return; }
+      if(status) status.textContent = 'Uploading…';
+      var reader = new FileReader();
+      reader.onload = function(ev){
+        var bytes = new Uint8Array(ev.target.result);
+        var binary = '';
+        for(var b=0;b<bytes.length;b++) binary += String.fromCharCode(bytes[b]);
+        var dataUri = 'data:model/gltf-binary;base64,' + btoa(binary);
+        P.customModels[mi].url = dataUri;
+        var urlInput = el('cfg-cm-url-'+mi);
+        if(urlInput) urlInput.value = '';
+        var kb = Math.max(1, Math.round(dataUri.length * 0.75 / 1024));
+        if(status) status.textContent = 'Model uploaded (' + kb + ' KB)';
+        markDirty(); refreshProps();
+      };
+      reader.onerror = function(){ if(status) status.textContent = 'Could not read that file.'; };
+      reader.readAsArrayBuffer(file);
+    });
+  });
+  document.querySelectorAll('.cm-del').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var mi = parseInt(this.dataset.mi);
+      var cm = P.customModels[mi];
+      if(!confirm('Delete "'+(cm.name||'this model')+'"? Any props using it will need a new model picked.')) return;
+      var cmid = cm.id;
+      P.customModels.splice(mi,1);
+      (P.props||[]).forEach(function(p){ if(p.modelId===cmid) p.modelId=null; });
+      markDirty(); renderSettings(); renderProps(); refreshProps();
+    });
+  });
+  var addCmBtn = el('btn-cm-add');
+  if(addCmBtn) addCmBtn.addEventListener('click', function(){
+    P.customModels = P.customModels||[];
+    P.customModels.push({id:'cm'+Date.now(), name:'New Model', url:''});
+    markDirty(); renderSettings();
+  });
+  var addCmBuiltinBtn = el('btn-cm-add-builtin');
+  if(addCmBuiltinBtn) addCmBuiltinBtn.addEventListener('click', function(){
+    var pick = el('cfg-cm-builtin-pick');
+    var chosen = MAPBOX_BUILTIN_TREES.filter(function(t){ return t.id===(pick&&pick.value); })[0] || MAPBOX_BUILTIN_TREES[0];
+    P.customModels = P.customModels||[];
+    P.customModels.push({id:'cm'+Date.now(), name:chosen.label, url:chosen.url});
     markDirty(); renderSettings();
   });
 
@@ -4644,6 +5264,7 @@ function openDraw(type, idx) {
   // Pre-load existing geometry if any
   var existing = type === 'zone' ? (P.zones[idx] && P.zones[idx].coordinates) : null;
   var existingGJ = type === 'line' ? (P.lines[idx] && P.lines[idx].geojson) : null;
+  var existingPath = type === 'propGroupPath' ? (P.propGroups[idx] && P.propGroups[idx].animPath && P.propGroups[idx].animPath.coordinates) : null;
 
   if(existing && existing.length > 2) {
     pDraw.add({ type:'Feature', geometry:{ type:'Polygon', coordinates:[existing] }, properties:{} });
@@ -4653,6 +5274,8 @@ function openDraw(type, idx) {
       if(gj.type === 'FeatureCollection') gj.features.forEach(function(f){ pDraw.add(f); });
       else pDraw.add(gj);
     } catch(e) {}
+  } else if(existingPath && existingPath.length > 1) {
+    pDraw.add({ type:'Feature', geometry:{ type:'LineString', coordinates:existingPath }, properties:{} });
   }
 
   // Show toolbar, hide draw mode selector
@@ -4661,7 +5284,7 @@ function openDraw(type, idx) {
   var polyBtn = el('draw-poly-btn');
   var lineBtn = el('draw-line-btn');
   if(polyBtn) polyBtn.style.display = (type === 'zone' || type === 'building') ? 'block' : 'none';
-  if(lineBtn) lineBtn.style.display = (type === 'line') ? 'block' : 'none';
+  if(lineBtn) lineBtn.style.display = (type === 'line' || type === 'propGroupPath') ? 'block' : 'none';
 
   // Auto-start the right draw mode
   if(type === 'zone' || type === 'building') {
@@ -4722,6 +5345,19 @@ function applyDraw() {
     closeDraw();
     renderLineEditor(_lIdx);
     refreshLines();
+  } else if(drawTargetType === 'propGroupPath' && drawTargetIdx >= 0) {
+    // Get the LAST drawn line — same "last one wins" rule the zone branch above uses, so
+    // re-drawing over a pre-loaded existing path replaces it rather than keeping both.
+    var _pgLineFeats = data.features.filter(function(f){ return f.geometry && (f.geometry.type==='LineString'||f.geometry.type==='MultiLineString'); });
+    var pgLine = _pgLineFeats[_pgLineFeats.length - 1];
+    if(!pgLine) { alert('No line found — double-click to finish drawing, then Apply'); return; }
+    var pgCoords = pgLine.geometry.type==='MultiLineString' ? pgLine.geometry.coordinates[0] : pgLine.geometry.coordinates;
+    var _gIdx = drawTargetIdx;
+    P.propGroups[_gIdx].animPath = {coordinates:pgCoords};
+    markDirty();
+    closeDraw();
+    _pgAnimOpen[P.propGroups[_gIdx].id] = true; // keep the panel open so the redrawn path is visible
+    renderProps();
   } else {
     closeDraw();
   }
@@ -4765,6 +5401,20 @@ function addPreviewLayers() {
 pMap.addLayer({id:'p-ln-pt',type:'circle',source:'p-ln-pts',paint:{'circle-radius':['get','radius'],'circle-color':['get','color'],'circle-opacity':['get','opacity']},layout:{visibility:'visible'}});
   pMap.addLayer({id:'p-ln-lb',type:'symbol',source:'p-ln',layout:{'text-field':['get','label'],'text-font':['DIN Pro Medium','Arial Unicode MS Regular'],'text-size':['get','labelSize'],'symbol-placement':'line-center','symbol-spacing':500,'text-allow-overlap':true,'text-ignore-placement':true,'text-background':true,visibility:'visible'},paint:{'text-color':['get','labelColor'],'text-background-color':['get','labelBg'],'text-background-opacity':1,'text-background-padding':[8,14,8,14]}});
     pMap.addSource('p-bld', {type:'geojson', data:bldGJ()});
+  pMap.addSource('p-props', {type:'geojson', data:propsGJ()});
+  pMap.addLayer({id:'p-props-ex',type:'fill-extrusion',source:'p-props',
+    paint:{'fill-extrusion-color':['get','color'],'fill-extrusion-height':['get','height'],'fill-extrusion-base':['get','base'],'fill-extrusion-opacity':0.85},
+    layout:{visibility:'visible'}});
+  // "model" is an experimental Mapbox GL layer type (real glTF models, not fill-extrusion
+  // shapes) — wrapped in try/catch like the other experimental layers below (con-clip-ex,
+  // con-3d) so an unsupported style/version degrades to "no custom models render" instead
+  // of breaking preview setup entirely.
+  registerCustomModels();
+  pMap.addSource('p-custom-models', {type:'geojson', data:customModelsGJ()});
+  try { pMap.addLayer({id:'p-custom-models-layer',type:'model',source:'p-custom-models',
+    layout:{'model-id':['get','modelId'],visibility:'none'},
+    paint:{'model-scale':['get','scaleArr'],'model-rotation':['get','rotArr'],'model-color':['get','tintColor'],'model-color-mix-intensity':['get','colorMix'],'model-opacity':1}
+  }); } catch(e){ console.warn('custom model layer:', e); }
   pMap.addSource('p-zn', {type:'geojson', data:znGJ()});
   // Clip mask layer for preview
   pMap.addSource('p-zn-clip', {type:'geojson', data:{type:'FeatureCollection',features:[]}});
@@ -4774,8 +5424,17 @@ pMap.addLayer({id:'p-ln-pt',type:'circle',source:'p-ln-pts',paint:{'circle-radiu
     filter:['boolean',['get','extrude'],false],
     paint:{'fill-extrusion-color':['get','color'],'fill-extrusion-height':['get','extrudeHeight'],'fill-extrusion-base':0,'fill-extrusion-opacity':0.85},
     layout:{visibility:'none'}});
+  // "Render as 3D building" zones (z.render3d/height3d/base3d) — was previously missing
+  // entirely from the preview, so 3D zones (and floor-style zones using base3d) only ever
+  // showed up once you downloaded and opened the exported site. Mirrors con-3d in the
+  // exported site: same source data (p-zn, already carries render3d/height3d/base3d via
+  // znGJ()), filtered to just the zones with render3d on, base offset instead of a fixed 0.
+  pMap.addLayer({id:'p-zn-3d',type:'fill-extrusion',source:'p-zn',
+    filter:['boolean',['get','render3d'],false],
+    paint:{'fill-extrusion-color':['get','color'],'fill-extrusion-height':['get','height3d'],'fill-extrusion-base':['get','base3d'],'fill-extrusion-opacity':0.85},
+    layout:{visibility:'none'}});
   pMap.addLayer({id:'p-zn-f',type:'fill',source:'p-zn',paint:{'fill-color':['get','color'],'fill-opacity':['get','opacity']},layout:{visibility:'none'}});
-  pMap.addLayer({id:'p-zn-s',type:'line',source:'p-zn',paint:{'line-color':['get','color'],'line-width':1.5},layout:{visibility:'none'}});
+  pMap.addLayer({id:'p-zn-s',type:'line',source:'p-zn',paint:{'line-color':['get','color'],'line-width':1.5,'line-opacity':['case',['get','interactive'],1,0]},layout:{visibility:'none'}});
 }
 
 function makeCtxMarkerEl(color, icon) {
@@ -4877,7 +5536,7 @@ function refreshLines() {
   if(pMap.getSource('p-ln')) pMap.getSource('p-ln').setData(lnGJ());
   if(pMap.getSource('p-ln-pts')) pMap.getSource('p-ln-pts').setData(lnPtsGJ());
 }
-function znGJ() { return {type:'FeatureCollection',features:P.zones.map(function(z){var co=z.smoothRadius>0.01?smoothPolygon(z.coordinates,z.smoothRadius):z.coordinates;return{type:'Feature',geometry:{type:'Polygon',coordinates:[co]},properties:{color:z.color,opacity:z.opacity,extrude:!!z.extrude,extrudeHeight:z.extrudeHeight||20,render3d:!!z.render3d,height3d:z.height3d||20}};})};  }
+function znGJ() { return {type:'FeatureCollection',features:P.zones.map(function(z){var co=z.smoothRadius>0.01?smoothPolygon(z.coordinates,z.smoothRadius):z.coordinates;return{type:'Feature',geometry:{type:'Polygon',coordinates:[co]},properties:{color:z.color,opacity:z.opacity,extrude:!!z.extrude,extrudeHeight:z.extrudeHeight||20,render3d:!!z.render3d,height3d:z.height3d||20,base3d:z.base3d||0,interactive:z.interactive!==false}};})};  }
 
 function ps(id,v) { if(pMap&&pMap.getLayer(id))pMap.setLayoutProperty(id,'visibility',v?'visible':'none'); }
 
@@ -4891,9 +5550,17 @@ function updatePreview() {
   var L = sc.layers;
   ps('p-rl-f',L.redline); ps('p-rl-s',L.redline);
   if(pMap.getSource('p-bld')) pMap.getSource('p-bld').setData(bldGJ());
+  if(pMap.getSource('p-props')) pMap.getSource('p-props').setData(propsGJ());
+  if(pMap.getSource('p-custom-models')) pMap.getSource('p-custom-models').setData(customModelsGJ());
   // Toggle style-native building extrusion layers in preview
+  // (this sweep also covers p-props-ex below, same as it does p-bld's real building layer —
+  // props only actually render once a scene's 3D Buildings/Orbit layer is switched on, matching
+  // how they were asked for: little 3D objects alongside the 3D buildings, not a separate layer)
   var _pShowBld = L.buildings3d||L.orbit;
   var _pOp = _pShowBld ? 0.85 : 0;
+  // "model" layers aren't fill-extrusion, so the opacity sweep below never touches this one —
+  // visibility is the only thing gating it, same idea as the fill-extrusion props above.
+  ps('p-custom-models-layer', _pShowBld);
   // Mapbox Standard style
   try{ pMap.setConfigProperty('basemap','show3dObjects',_pShowBld); }catch(e){}
   try{ pMap.setConfigProperty('basemap','showBuildings',_pShowBld); }catch(e){}
@@ -4920,6 +5587,7 @@ function updatePreview() {
   });
   // Per-zone scene visibility in preview
   ps('p-zn-ex', false);
+  ps('p-zn-3d', L.constraints);
   ps('p-zn-f', L.constraints);
   ps('p-zn-s', L.constraints);
   if(pMap && pMap.getSource('p-zn') && L.constraints) {
@@ -4951,7 +5619,7 @@ function updatePreview() {
   el('pl').textContent = 'Scene '+(AS+1)+' \u00b7 '+(sc.label||'');
 
   // Only fly when switching scenes, not on data refreshes
-  if(!window._pNoFly) pMap.flyTo({center:P.siteCentre,zoom:sc.camera.zoom,pitch:sc.camera.pitch,bearing:sc.camera.bearing,duration:700});
+  if(!window._pNoFly) pMap.flyTo({center:sc.camera.center||P.siteCentre,zoom:sc.camera.zoom,pitch:sc.camera.pitch,bearing:sc.camera.bearing,duration:700});
   refreshLines();
 }
 
@@ -5853,7 +6521,11 @@ function buildCfg() {
   var scenes = P.scenes.map(function(sc, i) {
     return '  {\n'
       + '    label: ' + JSON.stringify(sc.label||('Scene '+(i+1))) + ',\n'
-      + '    camera: { center:SITE_CENTRE, zoom:'+((sc.camera&&sc.camera.zoom)||14)+', pitch:'+((sc.camera&&sc.camera.pitch)||0)+', bearing:'+((sc.camera&&sc.camera.bearing)||0)+', duration:'+((sc.camera&&sc.camera.duration)||2000)+' },\n'
+      // A scene without its own focal point stays as a live reference to SITE_CENTRE (the
+      // var, not a copy) so it keeps tracking Settings > Map > Site Centre the way every
+      // scene always did; one with a custom focal point gets its own fixed [lng,lat] baked
+      // in instead, e.g. to zoom into a single floor plan on a co-design scene.
+      + '    camera: { center:'+((sc.camera&&sc.camera.center)?JSON.stringify(sc.camera.center):'SITE_CENTRE')+', zoom:'+((sc.camera&&sc.camera.zoom)||14)+', pitch:'+((sc.camera&&sc.camera.pitch)||0)+', bearing:'+((sc.camera&&sc.camera.bearing)||0)+', duration:'+((sc.camera&&sc.camera.duration)||2000)+' },\n'
       + '    layers: { redline:'+!!(sc.layers&&sc.layers.redline)+', context:'+!!(sc.layers&&sc.layers.context)+', constraints:'+!!(sc.layers&&sc.layers.constraints)+', buildings3d:'+!!(sc.layers&&sc.layers.buildings3d)+', orbit:'+!!(sc.layers&&sc.layers.orbit)+' }\n'
       + '  }';
   }).join(',\n');
@@ -5862,7 +6534,7 @@ function buildCfg() {
 
   var markers = {type:'FeatureCollection',features:P.markers.map(function(m){return{type:'Feature',geometry:{type:'Point',coordinates:m.coords},properties:{name:m.name,desc:m.desc,icon:m.icon||'',color:m.color,flyCamera:!!m.flyCamera,camZoom:m.camZoom||15,camPitch:m.camPitch||45,camBearing:m.camBearing||0,lightboxEnabled:!!(m.lightbox&&m.lightbox.enabled),lightboxLayout:(m.lightbox&&m.lightbox.layout)||'card',lightboxHeading:(m.lightbox&&m.lightbox.heading)||'',lightboxSubheading:(m.lightbox&&m.lightbox.subheading)||'',lightboxBody:(m.lightbox&&m.lightbox.body)||'',lightboxImg:(m.lightbox&&m.lightbox.img)||'',lightboxImgCaption:(m.lightbox&&m.lightbox.imgCaption)||'',lightboxImages:JSON.stringify((m.lightbox&&m.lightbox.images)||[]),lightboxEmbedUrl:(m.lightbox&&m.lightbox.embedUrl)||'',lightboxEmbedRatio:(m.lightbox&&m.lightbox.embedRatio)||'16:9',lightboxEmbedBg:(m.lightbox&&m.lightbox.embedBg)||'#111111',lightboxBlocks:JSON.stringify((m.lightbox&&m.lightbox.blocks)||[]),scenes:(m.scenes||[]).map(function(sid){var si=P.scenes.findIndex(function(s){return s.id===sid;});return si>=0?si:-1;}).filter(function(si){return si>=0;}).join(','),showInDrawer:m.showInDrawer!==false}};})};
 
-  var constraints = {type:'FeatureCollection',features:P.zones.map(function(z){var zco=z.smoothRadius>0.01?smoothPolygon(z.coordinates,z.smoothRadius):z.coordinates;var zlb=z.lightbox||{};return{type:'Feature',geometry:{type:'Polygon',coordinates:[zco]},properties:{id:z.id||z.name,name:z.name,color:z.color,opacity:z.opacity,scenes:(z.scenes||[]).map(function(sid){var si=P.scenes.findIndex(function(s){return s.id===sid;});return si>=0?si:-1;}).filter(function(si){return si>=0;}).join(','),showHover:z.showHover!==false,extrude:!!z.extrude,extrudeHeight:z.extrudeHeight||20,render3d:!!z.render3d,height3d:z.height3d||20,clipMap:!!z.clipMap,lightboxEnabled:!!zlb.enabled,lightboxLayout:zlb.layout||'popover',lightboxHeading:zlb.heading||'',lightboxSubheading:zlb.subheading||'',lightboxBody:zlb.body||'',lightboxImg:zlb.img||'',lightboxImgCaption:zlb.imgCaption||'',lightboxEmbedUrl:zlb.embedUrl||'',lightboxEmbedRatio:zlb.embedRatio||'16:9',lightboxEmbedBg:zlb.embedBg||'#111111',lightboxBlocks:JSON.stringify(zlb.blocks||[]),showInDrawer:z.showInDrawer!==false,codesignGroupId:z.codesignGroupId||'',baseColor:z.color}};})};
+  var constraints = {type:'FeatureCollection',features:P.zones.map(function(z){var zco=z.smoothRadius>0.01?smoothPolygon(z.coordinates,z.smoothRadius):z.coordinates;var zlb=z.lightbox||{};return{type:'Feature',geometry:{type:'Polygon',coordinates:[zco]},properties:{id:z.id||z.name,name:z.name,color:z.color,opacity:z.opacity,scenes:(z.scenes||[]).map(function(sid){var si=P.scenes.findIndex(function(s){return s.id===sid;});return si>=0?si:-1;}).filter(function(si){return si>=0;}).join(','),interactive:z.interactive!==false,extrude:!!z.extrude,extrudeHeight:z.extrudeHeight||20,render3d:!!z.render3d,height3d:z.height3d||20,base3d:z.base3d||0,clipMap:!!z.clipMap,lightboxEnabled:!!zlb.enabled,lightboxLayout:zlb.layout||'popover',lightboxHeading:zlb.heading||'',lightboxSubheading:zlb.subheading||'',lightboxBody:zlb.body||'',lightboxImg:zlb.img||'',lightboxImgCaption:zlb.imgCaption||'',lightboxEmbedUrl:zlb.embedUrl||'',lightboxEmbedRatio:zlb.embedRatio||'16:9',lightboxEmbedBg:zlb.embedBg||'#111111',lightboxBlocks:JSON.stringify(zlb.blocks||[]),showInDrawer:z.showInDrawer!==false,codesignGroupId:z.codesignGroupId||'',baseColor:z.color}};})};
 
   var ciLines = P.zones.map(function(z){return '  '+JSON.stringify(z.id||z.name)+': { title:'+JSON.stringify(z.name)+', body:'+JSON.stringify(z.popup||'')+' }';}).join(',\n');
 
@@ -5874,6 +6546,26 @@ function buildCfg() {
       }).filter(function(si){return si>=0;});
       return JSON.stringify({color:b.color||'#8899aa',height:b.height||20,opacity:b.opacity||0.85,scenes:sceneIdxs,geojson:b.geojson||''});
     }).join(',') + '];',
+    // Low-poly 3D props (trees, cars, street furniture) — PROP_PRESETS in the exported JS
+    // holds the actual shapes; this just carries each placed instance's position/type/
+    // rotation/scale/colour-override/scene list, same pattern as BUILDINGS above.
+    'var PROPS = ' + JSON.stringify((P.props||[]).map(function(p){
+      var sceneIdxs = (p.scenes||[]).map(function(sid){
+        var si=P.scenes.findIndex(function(s){return s.id===sid;}); return si>=0?si:-1;
+      }).filter(function(si){return si>=0;});
+      return {id:p.id, type:p.type||'tree', modelId:p.modelId||null, coords:p.coords, rotation:p.rotation||0, scale:p.scale||1, color:p.color||'', scenes:sceneIdxs, groupId:p.groupId||null};
+    })) + ';',
+    // Only the fields applyProps()/animatePropGroupsEntrance() actually need at runtime — a
+    // group's editor-only fields (name, collapsed) stay out of the export, same as BUILDINGS/
+    // PROPS above dropping their own editor-only fields.
+    'var PROP_GROUPS = ' + JSON.stringify((P.propGroups||[]).map(function(g){
+      return {id:g.id, animEnabled:!!g.animEnabled, animPath:g.animPath||null, animDuration:g.animDuration||1500, animEasing:g.animEasing||'easeOut', animDelay:g.animDelay||0, animEasingCurve:g.animEasingCurve||[0.42,0,0.58,1]};
+    })) + ';',
+    // Uploaded/linked .glb files a "Custom Model" prop can point at — see PROPS above and
+    // customModelFeatures()/registerCustomModels() below.
+    'var CUSTOM_MODELS = ' + JSON.stringify((P.customModels||[]).map(function(m){
+      return {id:m.id, url:m.url||''};
+    })) + ';',
     'var MAPBOX_TOKEN = ' + JSON.stringify(P.mapboxToken||'') + ';',
     'var MAPBOX_STYLE = ' + JSON.stringify(P.mapboxStyle||'mapbox://styles/mapbox/dark-v11') + ';',
     'var ANIMATE_ENTRANCES = ' + (P.animateEntrances!==false) + ';',
@@ -5954,6 +6646,12 @@ function buildJS() {
 '}',
 'setTimeout(function(){ _esAnimDone=true; _esMaybeHide(); },5100);',
 'var lnAnimSess=0,prevVisLines={};',
+// groupAnimOffsets holds a live [dLng,dLat] per prop-group id while its entrance animation is
+// playing (read by propFeaturesFor/customModelFeaturesFor below); prevVisPropGroups tracks which
+// groups had a visible prop last time applyProps() ran, so a group only replays its entrance the
+// first time it becomes visible after being hidden — same "was invisible, now visible" trigger
+// already used for prevVisLines/marker drop-ins above.
+'var pgAnimSess=0,prevVisPropGroups={},groupAnimOffsets={};',
 'function bezierEasing(x1,y1,x2,y2){',
 '  function A(a1,a2){return 1-3*a2+3*a1;}',
 '  function B(a1,a2){return 3*a2-6*a1;}',
@@ -6060,6 +6758,9 @@ function buildJS() {
 '  map.addSource("con",{type:"geojson",data:CONSTRAINTS});',
 '  var c=SITE_CENTRE;',
 '  map.addSource("bld-custom",{type:"geojson",data:bldCustomGJ()});',
+'  map.addSource("props",{type:"geojson",data:propsGJ()});',
+'  registerCustomModels();',
+'  map.addSource("custom-models",{type:"geojson",data:customModelsGJ()});',
 '  map.addSource("ln-all",{type:"geojson",data:lnAllGJ()});',
 '  map.addSource("ln-pts",{type:"geojson",data:lnPtsAllGJ()});',
 '  map.addSource("wo",{type:"geojson",data:{type:"Feature",geometry:{type:"Polygon",coordinates:[[[-180,-90],[180,-90],[180,90],[-180,90],[-180,-90]]]}}} );',
@@ -6080,11 +6781,11 @@ function buildJS() {
     +'layout:{"clip-layer-types":["model","symbol"]}}); }catch(e){ console.warn("clip:",e); }',
 
 '  try{ map.addLayer({id:"con-3d",type:"fill-extrusion",source:"con3d",'  +
-    'paint:{"fill-extrusion-color":["get","color"],"fill-extrusion-height":["get","height3d"],"fill-extrusion-base":0,"fill-extrusion-opacity":0.85},'
+    'paint:{"fill-extrusion-color":["get","color"],"fill-extrusion-height":["get","height3d"],"fill-extrusion-base":["get","base3d"],"fill-extrusion-opacity":0.85},'
     +'layout:{visibility:"none"}}); }catch(e){ console.warn("con-3d:",e); }',
 
 '  map.addLayer({id:"con-f",type:"fill",source:"con",paint:{"fill-color":["get","color"],"fill-opacity":["get","opacity"]},layout:{visibility:"none"}});',
-'  map.addLayer({id:"con-s",type:"line",source:"con",paint:{"line-color":["get","color"],"line-width":1.5},layout:{visibility:"none"}});',
+'  map.addLayer({id:"con-s",type:"line",source:"con",paint:{"line-color":["get","color"],"line-width":1.5,"line-opacity":["case",["get","interactive"],1,0]},layout:{visibility:"none"}});',
 '  // ctx-c and ctx-l replaced by HTML markers — see addCtxMarkers()',
 '  var fs=map.getStyle().layers.find(function(l){return l.type==="symbol";});',
 '  try{if(map.getSource("composite")){map.addLayer({id:"bld",type:"fill-extrusion",source:"composite","source-layer":"building",filter:["==","extrude","true"],minzoom:14,paint:{"fill-extrusion-color":BLD_COLOR,"fill-extrusion-height":["get","height"],"fill-extrusion-base":["get","min_height"],"fill-extrusion-opacity":0.85},layout:{visibility:"none"}},fs?fs.id:undefined);}}catch(e){}',
@@ -6098,6 +6799,16 @@ function buildJS() {
 '  map.addLayer({id:"bld-custom-ex",type:"fill-extrusion",source:"bld-custom",'
     +'paint:{"fill-extrusion-color":["get","color"],"fill-extrusion-height":["get","height"],"fill-extrusion-base":0,"fill-extrusion-opacity":0.85},'
     +'layout:{visibility:"none"}});',
+'  map.addLayer({id:"props-ex",type:"fill-extrusion",source:"props",'
+    +'paint:{"fill-extrusion-color":["get","color"],"fill-extrusion-height":["get","height"],"fill-extrusion-base":["get","base"],"fill-extrusion-opacity":0.85},'
+    +'layout:{visibility:"none"}});',
+// "model" is an experimental Mapbox GL layer type for real glTF models — wrapped in try/catch
+// like con-3d/con-clip-ex above it, so a visitor on an unsupported browser/style just doesn\'t
+// see custom-model props instead of the whole site failing to set up.
+'  try{ map.addLayer({id:"custom-models-layer",type:"model",source:"custom-models",'
+    +'layout:{"model-id":["get","modelId"],visibility:"none"},'
+    +'paint:{"model-scale":["get","scaleArr"],"model-rotation":["get","rotArr"],"model-color":["get","tintColor"],"model-color-mix-intensity":["get","colorMix"],"model-opacity":1}'
+    +'}); }catch(e){ console.warn("custom model layer:",e); }',
 // Feedback pins render as HTML markers (mkFbEl), not a GL circle+symbol layer pair — same
 // reasoning as ctx-c/ctx-l above: real Lucide icons need real DOM (img tags), not the map
 // style\'s SDF glyph set, so there\'s no GL layer here to add. See addFBPin()/mkFbEl().
@@ -6309,6 +7020,16 @@ function buildJS() {
 '  }',
 '  return coords;',
 '}',
+// A prop group\'s entrance path is authored as "where the group arrives" (its last point lines
+// up with props\' own placed positions) rather than "where it starts", so this returns how far
+// off that arrival point the group still is at progress t — [0,0] once t reaches 1. Reuses
+// sliceLinePlanar\'s point-at-t math above rather than duplicating line-interpolation logic.
+'function pathOffsetAt(coords,t){',
+'  if(!coords||coords.length<2) return [0,0];',
+'  var sliced=sliceLinePlanar(coords,t);',
+'  var pT=sliced[sliced.length-1], end=coords[coords.length-1];',
+'  return [pT[0]-end[0], pT[1]-end[1]];',
+'}',
 'function animateLinesDrawIn(lf,pf){',
 '  map.getSource("ln-pts").setData({type:"FeatureCollection",features:pf});',
 '  var start=null,mySess=++lnAnimSess;',
@@ -6403,6 +7124,167 @@ function buildJS() {
 '  var hasAny=features.length>0;',
 '  if(map.getLayer("bld-custom-ex")) map.setLayoutProperty("bld-custom-ex","visibility",hasAny?"visible":"none");',
 '}',
+// Mirrors PROP_PRESETS/propPartRing/propFeatures in the editor above — kept in sync by hand,
+// same as bldGJ()/bldCustomGJ() are two independent copies of the same building logic.
+'var PROP_PRESETS={',
+'  tree:{parts:[',
+'    {shape:"square",w:0.6,base:0,height:2.2,color:"#6b4a2f",colorable:false},',
+'    {shape:"hex",w:2.6,base:1.8,height:5.2,color:"#3f7d4a",colorable:true}',
+'  ]},',
+'  pine:{parts:[',
+'    {shape:"square",w:0.5,base:0,height:1.6,color:"#5c4433",colorable:false},',
+'    {shape:"hex",w:1.8,base:1.2,height:6.5,color:"#2d5a3a",colorable:true}',
+'  ]},',
+'  realistic_tree:{parts:[',
+'    {shape:"circle",sides:8,w:0.7,base:0,height:3,color:"#9c7a52",colorable:false},',
+'    {shape:"circle",sides:10,w:0.876,base:2.7,height:3.4,color:"#1c4f28",colorable:true},',
+'    {shape:"circle",sides:10,w:2.542,base:3.4,height:4.1,color:"#285c31",colorable:true},',
+'    {shape:"circle",sides:10,w:3.96,base:4.1,height:4.8,color:"#346939",colorable:true},',
+'    {shape:"circle",sides:10,w:4.99,base:4.8,height:5.5,color:"#3f7741",colorable:true},',
+'    {shape:"circle",sides:10,w:5.531,base:5.5,height:6.2,color:"#4b844a",colorable:true},',
+'    {shape:"circle",sides:10,w:5.531,base:6.2,height:6.9,color:"#579152",colorable:true},',
+'    {shape:"circle",sides:10,w:4.99,base:6.9,height:7.6,color:"#639e5b",colorable:true},',
+'    {shape:"circle",sides:10,w:3.96,base:7.6,height:8.3,color:"#6fac63",colorable:true},',
+'    {shape:"circle",sides:10,w:2.542,base:8.3,height:9,color:"#7ab96b",colorable:true},',
+'    {shape:"circle",sides:10,w:0.876,base:9,height:9.7,color:"#86c674",colorable:true}',
+'  ]},',
+'  shrub:{parts:[{shape:"hex",w:1.4,base:0,height:1.1,color:"#4a8a52",colorable:true}]},',
+'  car:{parts:[{shape:"rect",w:1.8,l:4.2,base:0,height:1.4,color:"#4a4f57",colorable:true}]},',
+'  bus_stop:{parts:[',
+'    {shape:"rect",w:0.1,l:2.4,base:0,height:2.1,color:"#7a8590",colorable:false},',
+'    {shape:"rect",w:1.3,l:2.6,base:2.0,height:2.3,color:"#34495e",colorable:true}',
+'  ]},',
+'  bollard:{parts:[{shape:"square",w:0.3,base:0,height:0.9,color:"#2f2f2f",colorable:true}]},',
+'  lamp:{parts:[',
+'    {shape:"square",w:0.25,base:0,height:3.8,color:"#3a3a3a",colorable:false},',
+'    {shape:"square",w:0.5,base:3.6,height:4.1,color:"#e8c468",colorable:true}',
+'  ]},',
+'  bench:{parts:[{shape:"rect",w:0.6,l:1.8,base:0,height:0.45,color:"#8a6d4f",colorable:true}]}',
+'};',
+'function propPartRing(center,part,rotationDeg,scale){',
+'  var pts;',
+'  if(part.shape==="hex"){',
+'    var rad=(part.w/2)*scale;',
+'    pts=[];',
+'    for(var i=0;i<6;i++){ var a=i*60*Math.PI/180; pts.push([rad*Math.cos(a),rad*Math.sin(a)]); }',
+'  } else if(part.shape==="circle"){',
+'    var rad=(part.w/2)*scale, sides=part.sides||10;',
+'    pts=[];',
+'    for(var i=0;i<sides;i++){ var a=i*(360/sides)*Math.PI/180; pts.push([rad*Math.cos(a),rad*Math.sin(a)]); }',
+'  } else {',
+'    var hw=(part.w/2)*scale, hl=((part.l!=null?part.l:part.w)/2)*scale;',
+'    pts=[[-hl,-hw],[hl,-hw],[hl,hw],[-hl,hw]];',
+'  }',
+'  var rRad=(rotationDeg||0)*Math.PI/180, cosR=Math.cos(rRad), sinR=Math.sin(rRad);',
+'  var mPerDegLng=111320*Math.cos(center[1]*Math.PI/180), mPerDegLat=110540;',
+'  var ring=pts.map(function(p){',
+'    var rx=p[0]*cosR-p[1]*sinR, ry=p[0]*sinR+p[1]*cosR;',
+'    return [center[0]+rx/mPerDegLng, center[1]+ry/mPerDegLat];',
+'  });',
+'  ring.push(ring[0]);',
+'  return ring;',
+'}',
+// pgOffset(p) reads the live entrance-animation offset for p\'s group, if any (default [0,0] —
+// most props aren\'t in an animating group, or its animation already finished) — shared by both
+// propFeaturesFor and customModelFeaturesFor below so a group with a mix of preset props and
+// custom-model props still moves as one formation.
+'function pgOffset(p){ return (p.groupId&&groupAnimOffsets[p.groupId])||[0,0]; }',
+'function propFeaturesFor(list){',
+'  var features=[];',
+'  (list||[]).forEach(function(p){',
+'    var preset=PROP_PRESETS[p.type];',
+'    if(!preset) return;',
+'    var scale=p.scale||1, rot=p.rotation||0;',
+'    var off=pgOffset(p), coords=[p.coords[0]+off[0],p.coords[1]+off[1]];',
+'    preset.parts.forEach(function(part){',
+'      var ring=propPartRing(coords,part,rot,scale);',
+'      var color=(part.colorable&&p.color)?p.color:part.color;',
+'      features.push({type:"Feature",geometry:{type:"Polygon",coordinates:[ring]},properties:{color:color,base:(part.base||0)*scale,height:part.height*scale}});',
+'    });',
+'  });',
+'  return features;',
+'}',
+'function propsGJ(){ return {type:"FeatureCollection",features:propFeaturesFor(PROPS)}; }',
+// Plays each newly-visible animated group\'s entrance once (per the "was invisible, now visible"
+// trigger already used for lines/markers), then hands off to animatePropGroupsEntrance() below
+// for the actual per-frame playback — this only computes the trigger and seeds the t=0 offset so
+// the very first frame rendered (right below) already shows the group at its starting position
+// instead of flashing at rest before the animation loop\'s first tick.
+'function applyProps(idx,anim){',
+'  if(!map.getSource("props")) return;',
+'  var visible=(PROPS||[]).filter(function(p){ return p.scenes.length===0||p.scenes.indexOf(idx)>=0; });',
+'  var curVisGroups={};',
+'  visible.forEach(function(p){ if(p.groupId) curVisGroups[p.groupId]=true; });',
+'  var animatingGroups=[];',
+'  if(ANIMATE_ENTRANCES&&anim){',
+'    (PROP_GROUPS||[]).forEach(function(g){',
+'      if(!g.animEnabled||!g.animPath||!g.animPath.coordinates||g.animPath.coordinates.length<2) return;',
+'      if(curVisGroups[g.id]&&!prevVisPropGroups[g.id]){',
+'        animatingGroups.push({group:g,dur:g.animDuration||1500,ease:g.animEasing||"easeOut",delay:g.animDelay||0,curve:g.animEasingCurve||[0.42,0,0.58,1]});',
+'      }',
+'    });',
+'  }',
+'  prevVisPropGroups=curVisGroups;',
+'  animatingGroups.forEach(function(ag){ groupAnimOffsets[ag.group.id]=pathOffsetAt(ag.group.animPath.coordinates,0); });',
+'  map.getSource("props").setData({type:"FeatureCollection",features:propFeaturesFor(visible)});',
+'  if(animatingGroups.length) animatePropGroupsEntrance(animatingGroups,visible);',
+'}',
+// rAF loop mirroring animateLinesDrawIn above: advances every currently-entering group\'s offset
+// together each frame and re-renders both prop-backed sources (a group can mix preset props and
+// custom-model props) until all of them reach their placed position. pgAnimSess invalidates any
+// still-running loop from a previous scene switch, the same guard lnAnimSess uses for lines.
+'function animatePropGroupsEntrance(animatingGroups,visible){',
+'  var start=null,mySess=++pgAnimSess;',
+'  function frame(ts){',
+'    if(mySess!==pgAnimSess)return;',
+'    if(!start)start=ts;',
+'    var elapsedGlobal=ts-start,allDone=true;',
+'    animatingGroups.forEach(function(ag){',
+'      var elapsed=elapsedGlobal-ag.delay;',
+'      var raw=elapsed<0?0:Math.min(1,elapsed/ag.dur);',
+'      if(raw<1)allDone=false;',
+'      var t=EASE_FN(raw,ag.ease,ag.curve);',
+'      groupAnimOffsets[ag.group.id]=pathOffsetAt(ag.group.animPath.coordinates,t);',
+'    });',
+'    if(map.getSource("props"))map.getSource("props").setData({type:"FeatureCollection",features:propFeaturesFor(visible)});',
+'    if(map.getSource("custom-models"))map.getSource("custom-models").setData({type:"FeatureCollection",features:customModelFeaturesFor(visible)});',
+'    if(!allDone)requestAnimationFrame(frame);',
+'  }',
+'  requestAnimationFrame(frame);',
+'}',
+// Mirrors propFeaturesFor/propsGJ/applyProps above, but for props whose type is "model" —
+// those never have a PROP_PRESETS entry so propFeaturesFor() silently skips them; this is
+// their separate pipeline via Mapbox\'s "model" layer instead of fill-extrusion. Storing
+// scaleArr/rotArr as plain [x,y,z] arrays here (not a style expression trying to build one
+// from scalars) is what model-scale/model-rotation actually read back via ["get",...].
+'function customModelFeaturesFor(list){',
+'  var features=[];',
+'  (list||[]).forEach(function(p){',
+'    if(p.type!=="model"||!p.modelId) return;',
+'    var m=(CUSTOM_MODELS||[]).filter(function(cm){return cm.id===p.modelId;})[0];',
+'    if(!m||!m.url) return;',
+'    var scale=p.scale||1, rot=p.rotation||0;',
+'    var off=pgOffset(p), coords=[p.coords[0]+off[0],p.coords[1]+off[1]];',
+'    features.push({type:"Feature",geometry:{type:"Point",coordinates:coords},properties:{',
+'      modelId:m.id, scaleArr:[scale,scale,scale], rotArr:[0,0,rot],',
+'      tintColor:p.color||"#ffffff", colorMix:p.color?0.4:0',
+'    }});',
+'  });',
+'  return features;',
+'}',
+'function customModelsGJ(){ return {type:"FeatureCollection",features:customModelFeaturesFor(PROPS)}; }',
+'function applyCustomModels(idx){',
+'  if(!map.getSource("custom-models")) return;',
+'  var visible=(PROPS||[]).filter(function(p){ return p.scenes.length===0||p.scenes.indexOf(idx)>=0; });',
+'  map.getSource("custom-models").setData({type:"FeatureCollection",features:customModelFeaturesFor(visible)});',
+'}',
+'function registerCustomModels(){',
+'  if(!map||!map.addModel) return;',
+'  (CUSTOM_MODELS||[]).forEach(function(m){',
+'    if(!m.url) return;',
+'    try{ map.addModel(m.id,m.url); }catch(e){}',
+'  });',
+'}',
 'function setupOverlays(){',
 '  if(!OVERLAYS||!OVERLAYS.length) return;',
 '  OVERLAYS.forEach(function(ov,i){',
@@ -6426,29 +7308,51 @@ function buildJS() {
 'function setupPopups(){',
 '  // ctx marker clicks handled by HTML marker elements',
 '  var _zonePopup = new mapboxgl.Popup({offset:8,closeButton:false,closeOnClick:false,className:"zone-hover-popup"});',
-'  map.on("mouseenter","con-f",function(e){',
+// Mapbox\'s per-layer mouseenter only fires once when the pointer enters the layer\'s feature
+// area at all — moving directly from one zone into an adjacent one (shared border, same
+// layer) never re-fires it, so a naive mouseenter-only implementation would leave the first
+// zone\'s popup/cursor state stuck while hovering the second one. Tracking _zoneHoverId and
+// re-running the same setup on every mousemove (only rebuilding when the feature actually
+// changed) keeps both zones\' interactive/non-interactive state and popup content correct as
+// the pointer crosses between them, not just on first entry.
+'  var _zoneHoverId=null;',
+'  function updateZoneHover(e){',
 '    if(!e.features.length) return;',
-'    map.getCanvas().style.cursor="pointer";',
 '    var p=e.features[0].properties;',
-'    if(p.showHover) map.setPaintProperty("con-f","fill-opacity",["case",["==",["get","id"],p.id],Math.min((p.opacity||0.2)+0.15,0.55),["get","opacity"]]);',
-'    var info=CONSTRAINT_INFO[p.id]||CONSTRAINT_INFO[p.name];',
-'    var ptitle=info?info.title:p.name, pbody=info?info.body:"";',
-'    if(!ptitle) return;',
-'    var html="<strong>"+ptitle+"</strong>"+(pbody?"<span>"+pbody+"</span>":"");',
-'    if(CODESIGN_ENABLED && p.codesignGroupId) html+="<div style=\\"font-size:10px;margin-top:4px;opacity:.7;font-style:italic\\">Click to choose a use here &#8594;</div>";',
-'    else if(p.lightboxEnabled) html+="<div style=\\"font-size:10px;margin-top:4px;opacity:.7;font-style:italic\\">Click for more &#8594;</div>";',
-'    _zonePopup.setLngLat(e.lngLat).setHTML(html).addTo(map);',
-'  });',
-'  map.on("mousemove","con-f",function(e){ _zonePopup.setLngLat(e.lngLat); });',
+'    if(!p.interactive){',
+'      if(_zoneHoverId!==null){ map.getCanvas().style.cursor=""; map.setPaintProperty("con-f","fill-opacity",["get","opacity"]); _zonePopup.remove(); _zoneHoverId=null; }',
+'      return;',
+'    }',
+'    if(p.id!==_zoneHoverId){',
+'      _zoneHoverId=p.id;',
+'      map.getCanvas().style.cursor="pointer";',
+'      map.setPaintProperty("con-f","fill-opacity",["case",["==",["get","id"],p.id],Math.min((p.opacity||0.2)+0.15,0.55),["get","opacity"]]);',
+'      var info=CONSTRAINT_INFO[p.id]||CONSTRAINT_INFO[p.name];',
+'      var ptitle=info?info.title:p.name, pbody=info?info.body:"";',
+'      if(!ptitle){ _zonePopup.remove(); }',
+'      else {',
+'        var html="<strong>"+ptitle+"</strong>"+(pbody?"<span>"+pbody+"</span>":"");',
+'        if(CODESIGN_ENABLED && p.codesignGroupId) html+="<div style=\\"font-size:10px;margin-top:4px;opacity:.7;font-style:italic\\">Click to choose a use here &#8594;</div>";',
+'        else if(p.lightboxEnabled) html+="<div style=\\"font-size:10px;margin-top:4px;opacity:.7;font-style:italic\\">Click for more &#8594;</div>";',
+'        _zonePopup.setLngLat(e.lngLat).setHTML(html).addTo(map);',
+'      }',
+'    } else {',
+'      _zonePopup.setLngLat(e.lngLat);',
+'    }',
+'  }',
+'  map.on("mouseenter","con-f",updateZoneHover);',
+'  map.on("mousemove","con-f",updateZoneHover);',
 '  map.on("mouseleave","con-f",function(){',
 '    map.getCanvas().style.cursor="";',
 '    map.setPaintProperty("con-f","fill-opacity",["get","opacity"]);',
 '    _zonePopup.remove();',
+'    _zoneHoverId=null;',
 '  });',
 '  map.on("click","con-f",function(e){',
 '    if(!e.features.length) return;',
-'    e.preventDefault();',
 '    var p=e.features[0].properties;',
+'    if(!p.interactive) return;',
+'    e.preventDefault();',
 '    if(CODESIGN_ENABLED && p.codesignGroupId){ _zonePopup.remove(); openCodesignPicker(p,e.lngLat); return; }',
 '    if(!p.lightboxEnabled) return;',
 '    _zonePopup.remove();',
@@ -6955,7 +7859,7 @@ function buildJS() {
 '  // Toggle style fill-extrusion layers by opacity (excludes our own layers)',
 '  try{',
 '    map.getStyle().layers.forEach(function(l){',
-'      if(l.type==="fill-extrusion"&&l.id!=="bld"&&l.id!=="con-ex"&&l.id!=="con-3d"&&l.id!=="bld-custom-ex"){',
+'      if(l.type==="fill-extrusion"&&l.id!=="bld"&&l.id!=="con-ex"&&l.id!=="con-3d"&&l.id!=="bld-custom-ex"&&l.id!=="props-ex"){',
 '        map.setPaintProperty(l.id,"fill-extrusion-opacity",v);',
 '      }',
 '    });',
@@ -6973,6 +7877,8 @@ function buildJS() {
 '  applyLines(idx,anim);',
 '  applyBuildings(idx);',
 '  if(map.getLayer("bld-custom-ex")) map.setLayoutProperty("bld-custom-ex","visibility",(L.buildings!==false)?"visible":"none");',
+'  applyProps(idx,anim);',
+'  applyCustomModels(idx);',
 '  stopOrbit();if(orbitTO){clearTimeout(orbitTO);orbitTO=null;}',
 '  document.getElementById("orbit-btn").style.display="none";',
 '  if(anim)map.flyTo({center:sc.camera.center,zoom:sc.camera.zoom,pitch:sc.camera.pitch,bearing:sc.camera.bearing,duration:sc.camera.duration,essential:true});',
@@ -7001,6 +7907,8 @@ function buildJS() {
 '  // Always restore con-ex opacity to data-driven (in case hideStyleExtrusions zeroed it)',
 '  // opacity is constant 0.85 - Standard style does not support data expressions for fill-extrusion-opacity',
 '  sv("bld",L.buildings3d||L.orbit);',
+'  sv("props-ex",L.buildings3d||L.orbit);',
+'  sv("custom-models-layer",L.buildings3d||L.orbit);',
 '  var _showBld=L.buildings3d||L.orbit;',
 '  if(_showBld){ showStyleExtrusions(); }',
 '  else{ hideStyleExtrusions(); setTimeout(hideStyleExtrusions,200); setTimeout(hideStyleExtrusions,600); }',
