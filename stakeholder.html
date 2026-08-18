@@ -214,15 +214,6 @@ body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;font-we
           <input type="text" id="entry-attendees" placeholder="Names, comma separated"/>
         </div>
         <div class="sh-field">
-          <label class="sh-field-label" for="entry-sentiment">Sentiment</label>
-          <select id="entry-sentiment">
-            <option value="">Select sentiment…</option>
-            <option>Positive</option>
-            <option>Neutral</option>
-            <option>Negative</option>
-          </select>
-        </div>
-        <div class="sh-field">
           <label class="sh-field-label">Notes</label>
           <div class="sh-rte-toolbar">
             <button type="button" class="sh-rte-btn" data-cmd="bold"><b>B</b></button>
@@ -459,7 +450,6 @@ document.getElementById("sh-add-form").addEventListener("submit", function(e){
     followUp: document.getElementById("entry-followup").value || null,
     loggedBy: document.getElementById("entry-loggedby").value,
     attendees: document.getElementById("entry-attendees").value,
-    sentiment: document.getElementById("entry-sentiment").value,
     actions: document.getElementById("entry-actions").value,
     attachments: document.getElementById("entry-attachments").value,
     notes: sanitizeHtml(document.getElementById("entry-notes").innerHTML)
