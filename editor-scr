@@ -614,6 +614,7 @@ var DEF = {
   zoneGroups:[],
   lines:[],
   lineGroups:[],
+  buildingColorOverrides:[],
   codesignEnabled:false, codesignSheetdbUrl:'',
   codesignOptions:[
     {id:'lib',label:'Library',color:'#2255aa',icon:'book-open'},
@@ -631,6 +632,7 @@ var DEF = {
 function migrateProject(data) {
   if(!data) return data;
   if(!data.lines) data.lines = [];
+  if(!data.buildingColorOverrides) data.buildingColorOverrides = [];
   if(!data.buildings) data.buildings = [];
   (data.markers||[]).forEach(function(m){ if(m.flyCamera===undefined) m.flyCamera=false; });
   if(!data.overlays) data.overlays = [];
@@ -683,6 +685,7 @@ try {
 P = migrateProject(P);
 var AS = 0, AM = null, AZ = null, ALN = -1;
 var pMap = null, pReady = false, pCtxMarkers = [];
+var _bldPickActive = false;
 var isDirty = false;       // unsaved changes
 var lastSaved = null;      // timestamp of last save
 var mainTab = 'editor';
@@ -3220,6 +3223,23 @@ function renderSettings() {
   html += '<div class="f"><label class="fl">3D building colour</label><div class="cr">'
     + '<input type="color" id="cfg-bld-p" value="'+(P.buildingColor||'#2a3a4a')+'"/>'
     + '<input type="text" id="cfg-bld-t" value="'+(P.buildingColor||'#2a3a4a')+'"/></div></div>';
+  html += '<div class="f"><label class="fl">Per-building colour overrides</label>';
+  html += '<div class="nt" style="margin-bottom:8px">Recolour an individual real building on the map (e.g. to highlight a neighbour). Buildings only render in the preview once you\'re zoomed in close.</div>';
+  html += '<button type="button" class="btn btn-g btn-ic" id="btn-bld-pick" style="width:100%;justify-content:center;margin-bottom:8px'+(_bldPickActive?';background:var(--accent);color:#fff':'')+'">'
+    + lucideSVG(_bldPickActive?'square':'crosshair',13,'currentColor') + (_bldPickActive?'Cancel':'Pick a building on the map') + '</button>';
+  html += '<div id="bld-pick-status" style="font-size:11px;font-family:var(--mono);margin-bottom:8px;min-height:14px">'+(_bldPickActive?'Zoom in and click a building on the map…':'')+'</div>';
+  if((P.buildingColorOverrides||[]).length) {
+    html += '<div id="bld-override-list">';
+    P.buildingColorOverrides.forEach(function(o, oi) {
+      html += '<div class="cr" style="margin-bottom:6px">'
+        + '<input type="color" class="bld-ov-color" value="'+h(o.color)+'" data-oi="'+oi+'"/>'
+        + '<span style="flex:1;font-size:11px;font-family:var(--mono);color:var(--ghost)">Building #'+h(String(o.id))+'</span>'
+        + '<button class="ib bld-ov-del" data-oi="'+oi+'" aria-label="Remove override">'+lucideSVG('trash-2',12,'currentColor')+'</button>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
   html += '<div class="f"><label class="fl">Accent colour (red line, buttons, highlights)</label><div class="cr"><input type="color" id="cfg-acc-p" value="'+(P.accentColor||'#c0392b')+'"/><input type="text" id="cfg-acc-t" value="'+(P.accentColor||'#c0392b')+'"/></div></div>';
   html += '<div class="f"><label class="fl">Paper colour (prose background)</label><div class="cr"><input type="color" id="cfg-paper-p" value="'+(P.paperColor||'#f8f6f1')+'"/><input type="text" id="cfg-paper-t" value="'+(P.paperColor||'#f8f6f1')+'"/></div></div>';
   html += '<div class="f"><label class="fl">Progress bar end colour</label><div class="cr"><input type="color" id="cfg-prog-p" value="'+(P.progressColor||'#2a7c6b')+'"/><input type="text" id="cfg-prog-t" value="'+(P.progressColor||'#2a7c6b')+'"/></div></div>';
@@ -3334,7 +3354,42 @@ function renderSettings() {
     if(p) p.addEventListener('input', function(){ setter(this.value); if(t)t.value=this.value; markDirty(); applyPreviewCSSVars(); });
     if(t) t.addEventListener('input', function(){ setter(this.value); if(p)p.value=this.value; markDirty(); applyPreviewCSSVars(); });
   }
-  bindColPair('cfg-bld-p','cfg-bld-t', function(v){ P.buildingColor=v; });
+  bindColPair('cfg-bld-p','cfg-bld-t', function(v){
+    P.buildingColor=v;
+    if(pMap&&pMap.getLayer('bld')) pMap.setPaintProperty('bld','fill-extrusion-color',['coalesce',['feature-state','customColor'],v]);
+  });
+  var bldPickBtn = el('btn-bld-pick');
+  if(bldPickBtn) bldPickBtn.addEventListener('click', function(){
+    if(_bldPickActive) {
+      _bldPickActive = false;
+      if(pMap) { pMap.getCanvas().style.cursor=''; updatePreview(); }
+    } else {
+      if(!pMap) { alert('Open the preview first (add your Mapbox token) to pick a building.'); return; }
+      _bldPickActive = true;
+      try{ pMap.setPaintProperty('bld','fill-extrusion-opacity',0.85); }catch(e){}
+      pMap.getCanvas().style.cursor = 'crosshair';
+    }
+    renderSettings();
+  });
+  document.querySelectorAll('.bld-ov-color').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      var o = P.buildingColorOverrides[parseInt(this.dataset.oi)];
+      if(!o) return;
+      o.color = this.value;
+      if(pMap) { try{ pMap.setFeatureState({source:'composite',sourceLayer:'building',id:o.id},{customColor:o.color}); }catch(e){} }
+      markDirty();
+    });
+  });
+  document.querySelectorAll('.bld-ov-del').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var oi = parseInt(this.dataset.oi);
+      var o = P.buildingColorOverrides[oi];
+      if(!o) return;
+      if(pMap) { try{ pMap.removeFeatureState({source:'composite',sourceLayer:'building',id:o.id},'customColor'); }catch(e){} }
+      P.buildingColorOverrides.splice(oi,1);
+      markDirty(); renderSettings();
+    });
+  });
   bindColPair('cfg-acc-p','cfg-acc-t', function(v){P.accentColor=v;});
   bindColPair('cfg-paper-p','cfg-paper-t', function(v){P.paperColor=v;});
   bindColPair('cfg-prog-p','cfg-prog-t', function(v){P.progressColor=v;});
@@ -3842,6 +3897,20 @@ function initPreview() {
     center: P.siteCentre, zoom:14, pitch:30, bearing:0, antialias:true
   });
   pMap.addControl(new mapboxgl.NavigationControl({showCompass:false}), 'top-right');
+  pMap.on('click', function(e){
+    if(!_bldPickActive) return;
+    var feats = pMap.queryRenderedFeatures(e.point, {layers:['bld']});
+    var st = el('bld-pick-status');
+    if(!feats.length) { if(st) st.textContent = 'No building there — zoom in and try again.'; return; }
+    var fid = feats[0].id;
+    if(fid===undefined||fid===null) { if(st) st.textContent = "That building can't be coloured individually."; return; }
+    if(!P.buildingColorOverrides) P.buildingColorOverrides=[];
+    var existing = P.buildingColorOverrides.find(function(o){return o.id===fid;});
+    if(!existing) { existing = {id:fid, color:P.buildingColor||'#2a3a4a'}; P.buildingColorOverrides.push(existing); }
+    pMap.setFeatureState({source:'composite',sourceLayer:'building',id:fid},{customColor:existing.color});
+    markDirty();
+    renderSettings();
+  });
   pMap.on('load', function() {
     pMap.resize();
     addPreviewLayers();
@@ -4027,6 +4096,16 @@ pMap.addLayer({id:'p-ln-pt',type:'circle',source:'p-ln-pts',paint:{'circle-radiu
     layout:{visibility:'none'}});
   pMap.addLayer({id:'p-zn-f',type:'fill',source:'p-zn',paint:{'fill-color':['get','color'],'fill-opacity':['get','opacity']},layout:{visibility:'none'}});
   pMap.addLayer({id:'p-zn-s',type:'line',source:'p-zn',paint:{'line-color':['get','color'],'line-width':1.5},layout:{visibility:'none'}});
+  try{
+    if(pMap.getSource('composite')&&!pMap.getLayer('bld')){
+      pMap.addLayer({id:'bld',type:'fill-extrusion',source:'composite','source-layer':'building',filter:['==','extrude','true'],minzoom:14,
+        paint:{'fill-extrusion-color':['coalesce',['feature-state','customColor'],P.buildingColor||'#2a3a4a'],'fill-extrusion-height':['get','height'],'fill-extrusion-base':['get','min_height'],'fill-extrusion-opacity':0}});
+      applyPreviewBuildingOverrides();
+      setTimeout(applyPreviewBuildingOverrides,500);
+      setTimeout(applyPreviewBuildingOverrides,1500);
+      setTimeout(applyPreviewBuildingOverrides,3000);
+    }
+  }catch(e){}
 }
 
 function makeCtxMarkerEl(color, icon) {
@@ -4127,6 +4206,12 @@ function refreshLines() {
   if(!pMap||!pReady) return;
   if(pMap.getSource('p-ln')) pMap.getSource('p-ln').setData(lnGJ());
   if(pMap.getSource('p-ln-pts')) pMap.getSource('p-ln-pts').setData(lnPtsGJ());
+}
+function applyPreviewBuildingOverrides() {
+  if(!pMap||!pMap.getLayer('bld')) return;
+  (P.buildingColorOverrides||[]).forEach(function(o){
+    try{ pMap.setFeatureState({source:'composite',sourceLayer:'building',id:o.id},{customColor:o.color}); }catch(e){}
+  });
 }
 function znGJ() { return {type:'FeatureCollection',features:P.zones.map(function(z){var co=z.smoothRadius>0.01?smoothPolygon(z.coordinates,z.smoothRadius):z.coordinates;return{type:'Feature',geometry:{type:'Polygon',coordinates:[co]},properties:{color:z.color,opacity:z.opacity,extrude:!!z.extrude,extrudeHeight:z.extrudeHeight||20,render3d:!!z.render3d,height3d:z.height3d||20}};})};  }
 
@@ -4655,6 +4740,7 @@ function buildCfg() {
 
   return [
     'var BLD_COLOR = ' + JSON.stringify(P.buildingColor||'#2a3a4a') + ';',
+    'var BUILDING_COLOR_OVERRIDES = ' + JSON.stringify((P.buildingColorOverrides||[]).map(function(o){return {id:o.id,color:o.color};})) + ';',
     'var CLIP_COLOR = ' + JSON.stringify(P.paperColor||'#f8f6f1') + ';',
     'var BUILDINGS = [' + (P.buildings||[]).map(function(b){
       var sceneIdxs = (b.scenes||[]).map(function(sid){
@@ -4775,11 +4861,15 @@ function buildJS() {
 '    _esMapReady=true; _esMaybeHide();',
 '    addSrc();addLayers();addPin();setupFbClick();buildNav();map.on("move",positionPopover);',
 '    hideStyleExtrusions();',
+'    applyBuildingColorOverrides();',
 '    // Re-hide on styledata in case tiles load after initial style parse',
-'    map.on("styledata",function(){ hideStyleExtrusions(); });',
+'    map.on("styledata",function(){ hideStyleExtrusions(); applyBuildingColorOverrides(); });',
 '    setTimeout(hideStyleExtrusions,100);',
 '    setTimeout(hideStyleExtrusions,500);',
 '    setTimeout(hideStyleExtrusions,1500);',
+'    setTimeout(applyBuildingColorOverrides,500);',
+'    setTimeout(applyBuildingColorOverrides,1500);',
+'    setTimeout(applyBuildingColorOverrides,3000);',
 '    applyScene(0,false);',
 '    // Close lightbox when clicking map background',
 '    map.on("click", function(e){ if(!e.defaultPrevented) closeLightbox(); });',
@@ -4827,7 +4917,7 @@ function buildJS() {
 '  map.addLayer({id:"con-s",type:"line",source:"con",paint:{"line-color":["get","color"],"line-width":1.5},layout:{visibility:"none"}});',
 '  // ctx-c and ctx-l replaced by HTML markers — see addCtxMarkers()',
 '  var fs=map.getStyle().layers.find(function(l){return l.type==="symbol";});',
-'  try{if(map.getSource("composite")){map.addLayer({id:"bld",type:"fill-extrusion",source:"composite","source-layer":"building",filter:["==","extrude","true"],minzoom:14,paint:{"fill-extrusion-color":BLD_COLOR,"fill-extrusion-height":["get","height"],"fill-extrusion-base":["get","min_height"],"fill-extrusion-opacity":0.85},layout:{visibility:"none"}},fs?fs.id:undefined);}}catch(e){}',
+'  try{if(map.getSource("composite")){map.addLayer({id:"bld",type:"fill-extrusion",source:"composite","source-layer":"building",filter:["==","extrude","true"],minzoom:14,paint:{"fill-extrusion-color":["coalesce",["feature-state","customColor"],BLD_COLOR],"fill-extrusion-height":["get","height"],"fill-extrusion-base":["get","min_height"],"fill-extrusion-opacity":0.85},layout:{visibility:"none"}},fs?fs.id:undefined);}}catch(e){}',
 ,
 '  map.addLayer({id:"ln-l",type:"line",source:"ln-all",'
     +'paint:{"line-color":["get","color"],"line-width":["get","width"],"line-opacity":["get","opacity"],'
@@ -5474,6 +5564,12 @@ function buildJS() {
 '}',
 'function hideStyleExtrusions(){ setStyleExtrusionsOpacity(0); }',
 'function showStyleExtrusions(){ setStyleExtrusionsOpacity(0.85); }',
+'function applyBuildingColorOverrides(){',
+'  if(!map||!map.getLayer("bld")||!BUILDING_COLOR_OVERRIDES.length)return;',
+'  BUILDING_COLOR_OVERRIDES.forEach(function(o){',
+'    try{map.setFeatureState({source:"composite",sourceLayer:"building",id:o.id},{customColor:o.color});}catch(e){}',
+'  });',
+'}',
 'function applyScene(idx,anim){',
 '  if(anim===undefined)anim=true;',
 '  var sc=SCENES[idx];if(!sc||!map)return;',
