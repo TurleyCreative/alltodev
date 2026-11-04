@@ -958,16 +958,18 @@ function applyTheme(theme) {
     logo.src = theme === 'light' ? LOGO_LIGHT : LOGO_DARK;
   }
 }
+var themeAnimTimer = null;
 function toggleTheme() {
   var next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
   applyTheme(next);
   try { localStorage.setItem('editorTheme', next); } catch(e) {}
   var icon = document.querySelector('#btn-theme-toggle .tt-icon-wrap');
   if(icon) {
+    if(themeAnimTimer) clearTimeout(themeAnimTimer);
     icon.classList.remove('tt-to-dark', 'tt-to-light');
     void icon.offsetWidth; // restart animation
     icon.classList.add(next === 'dark' ? 'tt-to-dark' : 'tt-to-light');
-    setTimeout(function() { icon.classList.remove('tt-to-dark', 'tt-to-light'); }, 700);
+    themeAnimTimer = setTimeout(function() { icon.classList.remove('tt-to-dark', 'tt-to-light'); themeAnimTimer = null; }, 700);
   }
 }
 function initTheme() {
