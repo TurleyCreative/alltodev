@@ -2755,10 +2755,60 @@ function renderZones() {
 
   P.zones.forEach(function(z, i) { if(!z.groupId) ul.appendChild(rowEl(z, i)); });
   groups.forEach(function(g, gi) {
-    ul.appendChild(renderGroupHeader(g, gi, groups, 'zones', afterMove));
+    var hdrEl = renderGroupHeader(g, gi, groups, 'zones', afterMove);
+    var ia = hdrEl.querySelector('.ia');
+    if(ia) {
+      var scBtn = document.createElement('button');
+      scBtn.className = 'ib';
+      scBtn.title = 'Set scene visibility for this group';
+      scBtn.setAttribute('aria-label', 'Set scene visibility for all zones in this group');
+      scBtn.innerHTML = lucideSVG('eye', 11, 'currentColor');
+      scBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        zoneGroupScenePanelOpen[g.id] = !zoneGroupScenePanelOpen[g.id];
+        renderZones();
+      });
+      ia.insertBefore(scBtn, ia.firstChild);
+    }
+    ul.appendChild(hdrEl);
+    if(zoneGroupScenePanelOpen[g.id]) ul.appendChild(renderZoneGroupScenePanel(g));
     if(!g.collapsed) P.zones.forEach(function(z, i) { if(z.groupId===g.id) ul.appendChild(rowEl(z, i)); });
   });
   makeListContainerDroppable(ul, 'zones', afterMove);
+}
+var zoneGroupScenePanelOpen = {};
+function renderZoneGroupScenePanel(g) {
+  var div = mk('div', 'grp-scene-panel');
+  div.style.cssText = 'padding:8px 10px 10px 30px;border-bottom:1px solid var(--border);background:var(--bg)';
+  var members = P.zones.filter(function(z){ return z.groupId===g.id; });
+  if(!P.scenes.length) {
+    div.innerHTML = '<div style="font-size:11px;color:var(--ghost);font-family:var(--mono)">No scenes yet — add scenes first.</div>';
+    return div;
+  }
+  var html = '<div style="font-size:10px;color:var(--ghost);font-family:var(--mono);margin-bottom:6px">Set visibility for all '+members.length+' zone'+(members.length===1?'':'s')+' in this group:</div>';
+  P.scenes.forEach(function(sc, si) {
+    var allOn = members.length>0 && members.every(function(z){ return (z.scenes||[]).indexOf(sc.id)>=0; });
+    html += '<div class="lr" style="margin-bottom:5px">'
+      + '<span class="ll">'+h(sc.label||'Scene '+(si+1))+'</span>'
+      + '<button class="tg'+(allOn?' on':'')+'" data-scid="'+h(sc.id)+'"></button>'
+      + '</div>';
+  });
+  div.innerHTML = html;
+  div.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-scid]');
+    if(!btn) return;
+    var scid = btn.dataset.scid;
+    var allOn = members.length>0 && members.every(function(z){ return (z.scenes||[]).indexOf(scid)>=0; });
+    members.forEach(function(z) {
+      if(!z.scenes) z.scenes = [];
+      var idx = z.scenes.indexOf(scid);
+      if(allOn) { if(idx>=0) z.scenes.splice(idx,1); }
+      else { if(idx<0) z.scenes.push(scid); }
+    });
+    markDirty(); refreshZN();
+    if(AZ>=0 && P.zones[AZ] && P.zones[AZ].groupId===g.id) renderZoneEditor(AZ);
+  });
+  return div;
 }
 function selZone(i) { AZ=i; AM=null; ensureEditorTab(); renderZones(); renderZoneEditor(i); updateCtxMarkerSelection(); }
 function addZone() {
