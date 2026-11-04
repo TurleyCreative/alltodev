@@ -188,33 +188,12 @@ input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:2
 .f input:focus-visible,.f textarea:focus-visible,.f select:focus-visible{outline-offset:1px}
 /* Theme toggle — sun/moon rise & set over a horizon line */
 #btn-theme-toggle{width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;font-size:15px}
-#btn-theme-toggle .tt-icon-wrap{position:relative;width:18px;height:18px}
-#btn-theme-toggle .tt-horizon{position:absolute;left:1px;right:1px;bottom:1px;height:1.5px;border-radius:1px;background:currentColor;opacity:.5;pointer-events:none}
-#btn-theme-toggle .tt-icon-wrap svg{position:absolute;inset:0;opacity:0;transform:translateY(5px) scale(.7)}
-:root[data-theme="light"] #btn-theme-toggle .tt-sun{opacity:1;transform:translateY(0) scale(1);transition:opacity .35s ease,transform .35s ease}
-:root[data-theme="dark"] #btn-theme-toggle .tt-moon{opacity:1;transform:translateY(0) scale(1);transition:opacity .35s ease,transform .35s ease}
-:root[data-theme="light"] #btn-theme-toggle:hover .tt-sunset{opacity:.5;transform:translateY(2px) scale(.88);transition:opacity .25s ease,transform .25s ease}
-:root[data-theme="dark"] #btn-theme-toggle:hover .tt-sunrise{opacity:.5;transform:translateY(2px) scale(.88);transition:opacity .25s ease,transform .25s ease}
-@keyframes tt-set{
-  0%{opacity:1;transform:translateY(0) scale(1)}
-  100%{opacity:0;transform:translateY(5px) scale(.7)}
-}
-@keyframes tt-horizon-pulse{
-  0%{opacity:0;transform:translateY(3px) scale(.82)}
-  30%{opacity:1;transform:translateY(0) scale(1)}
-  70%{opacity:1;transform:translateY(0) scale(1)}
-  100%{opacity:0;transform:translateY(-3px) scale(.86)}
-}
-@keyframes tt-rise{
-  0%{opacity:0;transform:translateY(5px) scale(.7)}
-  100%{opacity:1;transform:translateY(0) scale(1)}
-}
-.tt-icon-wrap.tt-to-dark .tt-sun{animation:tt-set .2s ease forwards}
-.tt-icon-wrap.tt-to-dark .tt-sunset{animation:tt-horizon-pulse .45s ease forwards}
-.tt-icon-wrap.tt-to-dark .tt-moon{animation:tt-rise .28s ease .32s forwards}
-.tt-icon-wrap.tt-to-light .tt-moon{animation:tt-set .2s ease forwards}
-.tt-icon-wrap.tt-to-light .tt-sunrise{animation:tt-horizon-pulse .45s ease forwards}
-.tt-icon-wrap.tt-to-light .tt-sun{animation:tt-rise .28s ease .32s forwards}
+#btn-theme-toggle .tt-icon-wrap{position:relative;width:18px;height:18px;overflow:hidden}
+#btn-theme-toggle .tt-horizon{position:absolute;left:1px;right:1px;bottom:0;height:1.4px;border-radius:1px;background:currentColor;opacity:.55;pointer-events:none}
+#btn-theme-toggle .tt-sun-body,#btn-theme-toggle .tt-moon-body,#btn-theme-toggle .tt-ray{position:absolute;inset:0;fill:currentColor;opacity:0;transform:translateY(100%);transition:opacity .22s ease,transform .28s cubic-bezier(.32,0,.2,1)}
+:root[data-theme="light"] #btn-theme-toggle .tt-sun-body,
+:root[data-theme="light"] #btn-theme-toggle .tt-ray{opacity:1;transform:translateY(0)}
+:root[data-theme="dark"] #btn-theme-toggle .tt-moon-body{opacity:1;transform:translateY(0)}
 /* Unsaved-changes indicator (dot + text, not color-only) */
 #dirty-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:bdp 1.4s infinite;flex-shrink:0}
 .tb-status{font-size:10px;font-family:var(--mono);color:var(--ghost);display:flex;align-items:center;gap:6px}
@@ -262,7 +241,7 @@ input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:2
   <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
     <span id="save-status" class="tb-status" role="status" aria-live="polite"><span id="dirty-dot" style="display:none"></span><span id="save-status-text"></span></span>
     <div class="badge"><div class="bdot"></div>Live Preview</div>
-    <button class="btn btn-g" id="btn-theme-toggle" title="Switch to light mode" aria-label="Switch to light mode" aria-pressed="false"><div class="tt-icon-wrap"><svg class="tt-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg><svg class="tt-sunset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="m16 6-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg><svg class="tt-sunrise" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg><svg class="tt-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg><div class="tt-horizon"></div></div></button>
+    <button class="btn btn-g" id="btn-theme-toggle" title="Switch to light mode" aria-label="Switch to light mode" aria-pressed="false"><div class="tt-icon-wrap"><svg class="tt-moon-body" viewBox="50 50 52 52" aria-hidden="true"><path d="M76 51C76.3182 51 76.6349 51.0068 76.9502 51.0186C76.3342 52.8909 76 54.8912 76 56.9697C76 67.4796 84.5204 76 95.0303 76C97.1085 76 99.1083 75.6647 100.98 75.0488C100.992 75.3644 101 75.6815 101 76C101 89.8071 89.8071 101 76 101C62.1929 101 51 89.8071 51 76C51 62.1929 62.1929 51 76 51Z"/></svg><svg class="tt-sun-body" viewBox="50 50 52 52" aria-hidden="true"><circle cx="76" cy="76" r="11"/></svg><svg class="tt-ray" viewBox="50 50 52 52" aria-hidden="true"><circle cx="54" cy="76" r="4"/></svg><svg class="tt-ray" viewBox="50 50 52 52" aria-hidden="true"><circle cx="76" cy="55" r="4"/></svg><svg class="tt-ray" viewBox="50 50 52 52" aria-hidden="true"><circle cx="98" cy="76" r="4"/></svg><svg class="tt-ray" viewBox="50 50 52 52" aria-hidden="true"><circle cx="76" cy="97" r="4"/></svg><svg class="tt-ray" viewBox="50 50 52 52" aria-hidden="true"><circle cx="60.9" cy="91.6" r="4"/></svg><svg class="tt-ray" viewBox="50 50 52 52" aria-hidden="true"><circle cx="60.9" cy="61.4" r="4"/></svg><svg class="tt-ray" viewBox="50 50 52 52" aria-hidden="true"><circle cx="91.1" cy="60.4" r="4"/></svg><svg class="tt-ray" viewBox="50 50 52 52" aria-hidden="true"><circle cx="91.1" cy="90.6" r="4"/></svg><div class="tt-horizon"></div></div></button>
     <label class="btn btn-g btn-ic" id="btn-open-proj" title="Open project file" style="cursor:pointer"><span class="ico-h" data-icon="folder-open" data-icon-size="13"></span>Open<input type="file" id="open-proj-file" accept=".json" style="display:none"/></label>
     <button class="btn btn-g btn-ic" id="btn-save-proj" title="Save project file"><span class="ico-h" data-icon="save" data-icon-size="13"></span>Save</button>
     <div style="width:1px;height:18px;background:var(--border2);margin:0 2px"></div>
@@ -958,19 +937,10 @@ function applyTheme(theme) {
     logo.src = theme === 'light' ? LOGO_LIGHT : LOGO_DARK;
   }
 }
-var themeAnimTimer = null;
 function toggleTheme() {
   var next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
   applyTheme(next);
   try { localStorage.setItem('editorTheme', next); } catch(e) {}
-  var icon = document.querySelector('#btn-theme-toggle .tt-icon-wrap');
-  if(icon) {
-    if(themeAnimTimer) clearTimeout(themeAnimTimer);
-    icon.classList.remove('tt-to-dark', 'tt-to-light');
-    void icon.offsetWidth; // restart animation
-    icon.classList.add(next === 'dark' ? 'tt-to-dark' : 'tt-to-light');
-    themeAnimTimer = setTimeout(function() { icon.classList.remove('tt-to-dark', 'tt-to-light'); themeAnimTimer = null; }, 700);
-  }
 }
 function initTheme() {
   var saved = 'dark';
