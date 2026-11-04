@@ -186,22 +186,35 @@ input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:2
   outline:2px solid var(--accent);outline-offset:2px;
 }
 .f input:focus-visible,.f textarea:focus-visible,.f select:focus-visible{outline-offset:1px}
-/* Theme toggle */
+/* Theme toggle — sun/moon rise & set over a horizon line */
 #btn-theme-toggle{width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;font-size:15px}
 #btn-theme-toggle .tt-icon-wrap{position:relative;width:18px;height:18px}
-#btn-theme-toggle .tt-icon-wrap svg{position:absolute;inset:0;opacity:0;transition:opacity .3s ease,transform .3s ease;transform:scale(.7) rotate(-20deg)}
-:root[data-theme="light"] #btn-theme-toggle .tt-sun{opacity:1;transform:scale(1) rotate(0deg)}
-:root[data-theme="light"] #btn-theme-toggle:hover .tt-sun{opacity:0;transform:scale(.7) rotate(20deg)}
-:root[data-theme="light"] #btn-theme-toggle:hover .tt-sunset{opacity:1;transform:scale(1) rotate(0deg)}
-:root[data-theme="dark"] #btn-theme-toggle .tt-moon{opacity:1;transform:scale(1) rotate(0deg)}
-:root[data-theme="dark"] #btn-theme-toggle:hover .tt-moon{opacity:0;transform:scale(.7) rotate(20deg)}
-:root[data-theme="dark"] #btn-theme-toggle:hover .tt-sunrise{opacity:1;transform:scale(1) rotate(0deg)}
-@keyframes tt-spin{
-  0%{transform:rotate(0deg) scale(1)}
-  50%{transform:rotate(180deg) scale(.72);opacity:.55}
-  100%{transform:rotate(360deg) scale(1);opacity:1}
+#btn-theme-toggle .tt-horizon{position:absolute;left:1px;right:1px;bottom:1px;height:1.5px;border-radius:1px;background:currentColor;opacity:.5;pointer-events:none}
+#btn-theme-toggle .tt-icon-wrap svg{position:absolute;inset:0;opacity:0;transform:translateY(5px) scale(.7)}
+:root[data-theme="light"] #btn-theme-toggle .tt-sun{opacity:1;transform:translateY(0) scale(1);transition:opacity .35s ease,transform .35s ease}
+:root[data-theme="dark"] #btn-theme-toggle .tt-moon{opacity:1;transform:translateY(0) scale(1);transition:opacity .35s ease,transform .35s ease}
+:root[data-theme="light"] #btn-theme-toggle:hover .tt-sunset{opacity:.5;transform:translateY(2px) scale(.88);transition:opacity .25s ease,transform .25s ease}
+:root[data-theme="dark"] #btn-theme-toggle:hover .tt-sunrise{opacity:.5;transform:translateY(2px) scale(.88);transition:opacity .25s ease,transform .25s ease}
+@keyframes tt-set{
+  0%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(5px) scale(.7)}
 }
-#btn-theme-toggle .tt-icon-wrap.spin{animation:tt-spin .5s cubic-bezier(.4,0,.2,1)}
+@keyframes tt-horizon-pulse{
+  0%{opacity:0;transform:translateY(3px) scale(.82)}
+  30%{opacity:1;transform:translateY(0) scale(1)}
+  70%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-3px) scale(.86)}
+}
+@keyframes tt-rise{
+  0%{opacity:0;transform:translateY(5px) scale(.7)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+.tt-icon-wrap.tt-to-dark .tt-sun{animation:tt-set .2s ease forwards}
+.tt-icon-wrap.tt-to-dark .tt-sunset{animation:tt-horizon-pulse .45s ease forwards}
+.tt-icon-wrap.tt-to-dark .tt-moon{animation:tt-rise .28s ease .32s forwards}
+.tt-icon-wrap.tt-to-light .tt-moon{animation:tt-set .2s ease forwards}
+.tt-icon-wrap.tt-to-light .tt-sunrise{animation:tt-horizon-pulse .45s ease forwards}
+.tt-icon-wrap.tt-to-light .tt-sun{animation:tt-rise .28s ease .32s forwards}
 /* Unsaved-changes indicator (dot + text, not color-only) */
 #dirty-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:bdp 1.4s infinite;flex-shrink:0}
 .tb-status{font-size:10px;font-family:var(--mono);color:var(--ghost);display:flex;align-items:center;gap:6px}
@@ -249,7 +262,7 @@ input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:2
   <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
     <span id="save-status" class="tb-status" role="status" aria-live="polite"><span id="dirty-dot" style="display:none"></span><span id="save-status-text"></span></span>
     <div class="badge"><div class="bdot"></div>Live Preview</div>
-    <button class="btn btn-g" id="btn-theme-toggle" title="Switch to light mode" aria-label="Switch to light mode" aria-pressed="false"><div class="tt-icon-wrap"><svg class="tt-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg><svg class="tt-sunset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m16 6-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg><svg class="tt-sunrise" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg><svg class="tt-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></div></button>
+    <button class="btn btn-g" id="btn-theme-toggle" title="Switch to light mode" aria-label="Switch to light mode" aria-pressed="false"><div class="tt-icon-wrap"><svg class="tt-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg><svg class="tt-sunset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="m16 6-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg><svg class="tt-sunrise" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg><svg class="tt-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg><div class="tt-horizon"></div></div></button>
     <label class="btn btn-g btn-ic" id="btn-open-proj" title="Open project file" style="cursor:pointer"><span class="ico-h" data-icon="folder-open" data-icon-size="13"></span>Open<input type="file" id="open-proj-file" accept=".json" style="display:none"/></label>
     <button class="btn btn-g btn-ic" id="btn-save-proj" title="Save project file"><span class="ico-h" data-icon="save" data-icon-size="13"></span>Save</button>
     <div style="width:1px;height:18px;background:var(--border2);margin:0 2px"></div>
@@ -951,9 +964,10 @@ function toggleTheme() {
   try { localStorage.setItem('editorTheme', next); } catch(e) {}
   var icon = document.querySelector('#btn-theme-toggle .tt-icon-wrap');
   if(icon) {
-    icon.classList.remove('spin');
+    icon.classList.remove('tt-to-dark', 'tt-to-light');
     void icon.offsetWidth; // restart animation
-    icon.classList.add('spin');
+    icon.classList.add(next === 'dark' ? 'tt-to-dark' : 'tt-to-light');
+    setTimeout(function() { icon.classList.remove('tt-to-dark', 'tt-to-light'); }, 700);
   }
 }
 function initTheme() {
