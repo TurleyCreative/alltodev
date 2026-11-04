@@ -265,7 +265,7 @@ input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:2
     <div id="marker-list"></div></div>
   </div>
   <div class="tc" id="tc-zn">
-    <div class="ps"><div class="st"><span>Constraint Zones <button type="button" class="rs-info" data-info="Draw on &lt;a href=&quot;https://geojson.io&quot; target=&quot;_blank&quot;&gt;geojson.io&lt;/a&gt; then paste coordinates." aria-label="More info">i</button></span><div style="display:flex;gap:4px"><button class="ab" id="btn-add-zn-grp" title="New group" aria-label="Add zone group"><span data-icon="folder-plus" data-icon-size="13"></span></button><button class="ab" id="btn-add-zn" aria-label="Add zone"><span data-icon="plus" data-icon-size="13"></span></button></div></div>
+    <div class="ps"><div class="st"><span>Constraint Zones <button type="button" class="rs-info" data-info="Draw on &lt;a href=&quot;https://geojson.io&quot; target=&quot;_blank&quot;&gt;geojson.io&lt;/a&gt; then paste coordinates, or import a GeoJSON file of Polygons." aria-label="More info">i</button></span><div style="display:flex;gap:4px"><button class="ab" id="btn-import-zn" title="Import from GeoJSON" aria-label="Import zones from GeoJSON"><span data-icon="upload" data-icon-size="13"></span></button><button class="ab" id="btn-add-zn-grp" title="New group" aria-label="Add zone group"><span data-icon="folder-plus" data-icon-size="13"></span></button><button class="ab" id="btn-add-zn" aria-label="Add zone"><span data-icon="plus" data-icon-size="13"></span></button></div></div>
     <div id="zone-list"></div></div>
   </div>
   <div class="tc" id="tc-ln">
@@ -342,11 +342,13 @@ input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:2
 <div id="import-modal" style="position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center">
   <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:min(500px,calc(100vw - 40px));box-shadow:0 20px 60px rgba(0,0,0,.5)">
     <div style="padding:22px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <h3 style="font-size:15px;font-weight:500">Import Markers from GeoJSON</h3>
+      <h3 style="font-size:15px;font-weight:500" id="import-modal-title">Import Markers from GeoJSON</h3>
       <button id="btn-import-close" aria-label="Close import dialog" style="width:28px;height:28px;border-radius:8px;background:var(--mid);border:none;cursor:pointer;color:var(--ghost);display:flex;align-items:center;justify-content:center"><span data-icon="x" data-icon-size="13"></span></button>
     </div>
     <div style="padding:20px 24px">
-      <div class="nt" style="margin-bottom:12px">Paste a GeoJSON <code>FeatureCollection</code> of Points from <a href="https://geojson.io" target="_blank">geojson.io</a>. Each point becomes a marker. Properties <code>name</code>, <code>description</code>, and <code>marker-color</code> are read automatically.</div>
+      <div class="nt" id="import-modal-note" style="margin-bottom:12px">Paste a GeoJSON <code>FeatureCollection</code> of Points from <a href="https://geojson.io" target="_blank">geojson.io</a>. Each point becomes a marker. Properties <code>name</code>, <code>description</code>, and <code>marker-color</code> are read automatically.</div>
+      <label for="import-geojson-file" class="btn btn-g" style="cursor:pointer;width:100%;text-align:center;box-sizing:border-box;margin-bottom:10px;display:block">Choose .geojson / .json file…</label>
+      <input type="file" id="import-geojson-file" accept=".json,.geojson,application/geo+json,application/json" style="display:none"/>
       <textarea id="import-geojson" style="width:100%;min-height:140px;resize:vertical;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--ink);font-family:var(--mono);font-size:11px;padding:10px;outline:none" placeholder='{"type":"FeatureCollection","features":[]}'></textarea>
       <div id="import-status" style="font-size:11px;font-family:var(--mono);margin-top:8px;height:18px"></div>
       <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
@@ -2190,11 +2192,44 @@ function bindLeftPanel() {
   if(addZnGrp) addZnGrp.addEventListener('click', function(){ addGroup('zoneGroups', renderZones); });
   var addLnGrp = el('btn-add-ln-grp');
   if(addLnGrp) addLnGrp.addEventListener('click', function(){ addGroup('lineGroups', renderLines); });
+  var importTarget = 'markers';
   var importMk = el('btn-import-mk');
   if(importMk) importMk.addEventListener('click', function() {
+    importTarget = 'markers';
+    el('import-modal-title').textContent = 'Import Markers from GeoJSON';
+    el('import-modal-note').innerHTML = 'Paste or choose a GeoJSON <code>FeatureCollection</code> of Points from <a href="https://geojson.io" target="_blank">geojson.io</a>. Each point becomes a marker. Properties <code>name</code>, <code>description</code>, and <code>marker-color</code> are read automatically.';
+    el('btn-import-confirm').textContent = 'Import Markers';
     var gj = el('import-geojson'); if(gj) gj.value = '';
+    var fi = el('import-geojson-file'); if(fi) fi.value = '';
     var st = el('import-status'); if(st) st.innerHTML = '';
     var mo = el('import-modal'); if(mo) mo.style.display = 'flex';
+  });
+  var importZn = el('btn-import-zn');
+  if(importZn) importZn.addEventListener('click', function() {
+    importTarget = 'zones';
+    el('import-modal-title').textContent = 'Import Zones from GeoJSON';
+    el('import-modal-note').innerHTML = 'Paste or choose a GeoJSON <code>FeatureCollection</code> of Polygons/MultiPolygons from <a href="https://geojson.io" target="_blank">geojson.io</a> or a GIS export. Each polygon becomes a zone. If a property such as <code>name</code>, <code>Proposed_use</code> or <code>type</code> is present, it is used to name, describe, group and colour the zones automatically.';
+    el('btn-import-confirm').textContent = 'Import Zones';
+    var gj = el('import-geojson'); if(gj) gj.value = '';
+    var fi = el('import-geojson-file'); if(fi) fi.value = '';
+    var st = el('import-status'); if(st) st.innerHTML = '';
+    var mo = el('import-modal'); if(mo) mo.style.display = 'flex';
+  });
+  var importFile = el('import-geojson-file');
+  if(importFile) importFile.addEventListener('change', function() {
+    var file = this.files[0]; if(!file) return;
+    var status = el('import-status');
+    if(status) status.innerHTML = 'Reading ' + h(file.name) + '…';
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      el('import-geojson').value = ev.target.result;
+      if(status) status.innerHTML = 'Loaded ' + h(file.name) + ' — click Import to continue.';
+    };
+    reader.onerror = function() {
+      if(status) status.innerHTML = '<span style="color:#c0392b">Error: could not read file.</span>';
+    };
+    reader.readAsText(file);
+    this.value = '';
   });
   var importClose = el('btn-import-close');
   if(importClose) importClose.addEventListener('click', function() { var mo=el('import-modal'); if(mo)mo.style.display='none'; });
@@ -2215,24 +2250,30 @@ function bindLeftPanel() {
     var status = el('import-status');
     try {
       var gj = JSON.parse(raw);
-      if(gj.type !== 'FeatureCollection') throw new Error('Must be a FeatureCollection');
-      var pts = gj.features.filter(function(f) { return f.geometry && f.geometry.type === 'Point'; });
-      if(!pts.length) throw new Error('No Point features found');
-      pts.forEach(function(f) {
-        var p = f.properties || {};
-        P.markers.push({
-          id: 'mk'+Date.now()+Math.random(),
-          name: p.name || p.title || 'Imported marker',
-          desc: p.description || p.desc || '',
-          icon: p.icon || '',
-          color: p['marker-color'] || p.color || '#2255aa',
-          coords: [f.geometry.coordinates[0], f.geometry.coordinates[1]],
-          lightbox: {enabled:false,heading:'',body:'',img:''},
-          scenes: []
+      if(gj.type !== 'FeatureCollection' || !Array.isArray(gj.features)) throw new Error('Must be a FeatureCollection');
+      if(importTarget === 'zones') {
+        var zCount = importZonesFromGeoJSON(gj);
+        markDirty(); renderZones(); refreshZN();
+        el('import-modal').style.display = 'none';
+      } else {
+        var pts = gj.features.filter(function(f) { return f.geometry && f.geometry.type === 'Point'; });
+        if(!pts.length) throw new Error('No Point features found');
+        pts.forEach(function(f) {
+          var p = f.properties || {};
+          P.markers.push({
+            id: 'mk'+Date.now()+Math.random(),
+            name: p.name || p.title || 'Imported marker',
+            desc: p.description || p.desc || '',
+            icon: p.icon || '',
+            color: p['marker-color'] || p.color || '#2255aa',
+            coords: [f.geometry.coordinates[0], f.geometry.coordinates[1]],
+            lightbox: {enabled:false,heading:'',body:'',img:''},
+            scenes: []
+          });
         });
-      });
-      markDirty(); renderMarkers(); refreshMK();
-      el('import-modal').style.display = 'none';
+        markDirty(); renderMarkers(); refreshMK();
+        el('import-modal').style.display = 'none';
+      }
     } catch(e) {
       status.innerHTML = '<span style="color:#c0392b">Error: ' + e.message + '</span>';
     }
@@ -2727,6 +2768,86 @@ function addZone() {
   ensureEditorTab(); renderZones(); renderZoneEditor(AZ); refreshZN();
 }
 function delZone(i) { P.zones.splice(i,1); markDirty(); AZ=null; renderZones(); setHTML('rpc','<div class="es">Select a zone to edit</div>'); refreshZN(); }
+
+// ── IMPORT ZONES FROM GEOJSON (Polygon / MultiPolygon) ──
+var ZONE_CATEGORY_KEYS = ['proposed_use','proposeduse','use','type','category','classification','land_use','landuse','site_type','sitetype'];
+function findZoneCategoryKey(features) {
+  for (var k = 0; k < ZONE_CATEGORY_KEYS.length; k++) {
+    for (var i = 0; i < features.length; i++) {
+      var p = features[i].properties || {};
+      var keys = Object.keys(p);
+      for (var j = 0; j < keys.length; j++) {
+        if (keys[j].toLowerCase() === ZONE_CATEGORY_KEYS[k] && typeof p[keys[j]] === 'string' && p[keys[j]].trim()) return keys[j];
+      }
+    }
+  }
+  return null;
+}
+function zonePopupFromProps(p) {
+  var skip = {name:1,title:1,description:1,desc:1,site_name_popup:1};
+  var lines = [];
+  Object.keys(p).forEach(function(k) {
+    if (skip[k.toLowerCase()]) return;
+    var v = p[k];
+    if (v === null || v === undefined || v === '') return;
+    var s = String(v);
+    if (s.length > 200) return;
+    lines.push(k + ': ' + s);
+  });
+  return lines.slice(0, 12).join('\n');
+}
+function importZonesFromGeoJSON(gj) {
+  var polys = gj.features.filter(function(f) { return f.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon'); });
+  if (!polys.length) throw new Error('No Polygon/MultiPolygon features found');
+  if (!P.zoneGroups) P.zoneGroups = [];
+  var catKey = findZoneCategoryKey(polys);
+  var catGroupId = {}, catColor = {}, paletteIdx = 0;
+  function groupForCategory(val) {
+    if (!catGroupId[val]) {
+      var gid = 'grp' + Date.now() + Math.floor(Math.random() * 100000);
+      P.zoneGroups.push({id: gid, name: String(val), collapsed: false});
+      catGroupId[val] = gid;
+      catColor[val] = SCENE_TAG_COLORS[paletteIdx % SCENE_TAG_COLORS.length];
+      paletteIdx++;
+    }
+    return catGroupId[val];
+  }
+  var count = 0;
+  polys.forEach(function(f) {
+    var p = f.properties || {};
+    var baseName = p.name || p.title || p.site_name_popup || p.Location || p.location || 'Imported zone';
+    var popup = p.description || p.desc || zonePopupFromProps(p);
+    var catVal = catKey ? (p[catKey] || 'Other') : null;
+    var groupId = catVal ? groupForCategory(catVal) : null;
+    var color = catVal ? catColor[catVal] : '#2255aa';
+    var parts = f.geometry.type === 'MultiPolygon' ? f.geometry.coordinates : [f.geometry.coordinates];
+    parts.forEach(function(part, idx) {
+      var outer = part[0];
+      if (!outer || outer.length < 3) return;
+      P.zones.push({
+        id: 'z'+Date.now()+Math.random(),
+        name: parts.length > 1 ? baseName + ' (' + (idx+1) + ')' : baseName,
+        popup: popup,
+        color: color,
+        opacity: 0.25,
+        smoothRadius: 0,
+        render3d: false,
+        height3d: 20,
+        base3d: 0,
+        interactive: true,
+        clipMap: false,
+        scenes: [],
+        codesignGroupId: null,
+        lightbox: {enabled:false,layout:'popover',heading:'',subheading:'',body:'',img:'',imgCaption:'',embedUrl:''},
+        coordinates: outer,
+        groupId: groupId
+      });
+      count++;
+    });
+  });
+  if (!count) throw new Error('No usable polygon rings found');
+  return count;
+}
 
 // ═══════════════════════════════════════════════════
 //  RIGHT PANEL — SCENE EDITOR
