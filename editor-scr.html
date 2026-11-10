@@ -4004,7 +4004,7 @@ function renderSettings() {
     + '<div id="sq-sdb-status" style="font-size:11px;font-family:var(--mono);margin-top:6px;height:16px"></div>'
     + '</div>';
   html += '</div>';
-  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('users',14,'currentColor')+'Co-Design &amp; Participatory Budgeting</span>'+infoBtn('Let visitors click plots you\'ve assigned to a budget below and pick a use for them (library, café, workspace, etc). Plots recolour live as they experiment. Nothing is saved until they hit “Submit your picks” — that sends everything they’ve chosen to that budget’s sheet in one go and resets the map, so the next person can have a go too. Add more than one budget to run several independent participatory-budgeting exercises on the same site — each with its own plots, options, sheet and results.')+'</div>';
+  html += '<div class="rs"><div class="st"><span class="ico-h">'+lucideSVG('users',14,'currentColor')+'Co-Design &amp; Participatory Budgeting</span>'+infoBtn('Let visitors click plots you\'ve assigned to a budget below and pick a use for them (library, café, workspace, etc). Plots recolour live as they experiment. Nothing is saved until they hit “Submit your picks” — that sends everything they’ve chosen to that budget’s sheet in one go and resets the map, so the next person can have a go too. Add more than one budget to run several independent participatory-budgeting exercises on the same site — each with its own plots, options and results, even if they all share the same sheet.')+'</div>';
   html += '<div class="lr" style="margin-bottom:12px"><span class="ll">Enable co-design'+(P.codesignEnabled?infoBtn('Then, for each budget below: (1) on each plot you want voteable for it, open it under Constraint Zones and set “Participatory budget” to it; (2) on the scene where visitors should submit and see its results, open it under Scenes and set “Participatory budget” to it too — that adds the Submit/Results prompts to that scene’s text panel. Each submission writes one row per plot the visitor picked, all sharing the same <code>submissionId</code>, so you can group everything one person submitted in one go — and since the map resets after each submit, several people can use the same device in turn.'):'')+'</span><button class="tg'+(P.codesignEnabled?' on':'')+'" id="cfg-cd-tog"></button></div>';
   if(P.codesignEnabled) {
     (P.codesignGroups||[]).forEach(function(g, gi){
@@ -4013,7 +4013,7 @@ function renderSettings() {
         + '<input type="text" id="cfg-cd-label-'+gi+'" value="'+h(g.label||'')+'" placeholder="Budget name, e.g. Public Realm" style="flex:1;font-weight:600"/>'
         + (P.codesignGroups.length>1 ? '<button class="ib d cd-grp-del" data-gi="'+gi+'" title="Delete this budget" aria-label="Delete this budget">'+lucideSVG('trash-2',12,'currentColor')+'</button>' : '')
         + '</div>';
-      html += '<div class="f"><label class="fl">Submit URL'+infoBtn('Two Power Automate flows: <b>submit</b> receives picks, <b>read</b> returns everyone\'s picks for the results chart. Each budget needs its own pair, pointing at its own SharePoint list.')+'</label>'
+      html += '<div class="f"><label class="fl">Submit URL'+infoBtn('Two Power Automate flows: <b>submit</b> receives picks, <b>read</b> returns everyone\'s picks for the results chart. Every budget can point at the exact same flow pair and SharePoint list — each plot only ever belongs to one budget, so results are automatically kept separate per budget when the chart loads. Only give a budget its own pair if you actually want it in a different SharePoint list.')+'</label>'
         + '<div style="display:flex;gap:6px">'
         + '<input type="text" id="cfg-cd-sdb-'+gi+'" value="'+h(g.submitUrl||'')+'" placeholder="Your Power Automate submit-flow URL"/>'
         + '<button class="btn btn-g" id="btn-test-cd-sdb-'+gi+'" style="white-space:nowrap;flex-shrink:0">Test</button>'
@@ -7974,7 +7974,13 @@ function buildJS() {
 '    if(!res.ok) throw new Error();',
 '    var rows=await res.json();',
 '    if(!Array.isArray(rows)) throw new Error();',
-'    var valid=rows.filter(function(r){ return r && r.zoneName && r.choice; });',
+'    var groupZoneIds={}, groupZoneNames={};',
+'    CONSTRAINTS.features.forEach(function(f){ if(f.properties.codesignGroupId===groupId){ groupZoneIds[f.properties.id]=true; groupZoneNames[f.properties.name]=true; } });',
+'    var valid=rows.filter(function(r){',
+'      if(!r || !r.zoneName || !r.choice) return false;',
+'      if(r.zoneId) return !!groupZoneIds[r.zoneId];',
+'      return !!groupZoneNames[r.zoneName];',
+'    });',
 '    var zoneNames=[], counts={};',
 '    valid.forEach(function(r){',
 '      if(zoneNames.indexOf(r.zoneName)===-1) zoneNames.push(r.zoneName);',
